@@ -47,9 +47,21 @@ jobs:
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       # A tutorial page is the executed copy the journeys harness writes to the
       # gitignored tutorials/_executed/, keyed by the source notebook's content
-      # hash. The harness runs here as an anonymous reader of the public
-      # release; the builds below render its copies and execute nothing.
+      # hash. The previous run's copies are restored here, and with
+      # DP_TUTORIALS_REUSE the harness re-runs only a notebook whose source, or
+      # the library, lock, pinned release or companion scripts, changed since.
+      - name: Restore the executed tutorials
+        uses: actions/cache@v4
+        with:
+          path: tutorials/_executed
+          key: tutorials-${{ hashFiles('tutorials/*.ipynb', 'tutorials/*.py', 'dpstats/**/*.py', 'pyproject.toml', 'uv.lock', 'docs/benchmark.lock') }}
+          restore-keys: |
+            tutorials-
+      # The harness runs here as an anonymous reader of the public release; the
+      # builds below render its copies and execute nothing.
       - name: Execute the tutorials
+        env:
+          DP_TUTORIALS_REUSE: "1"
         run: pytest tests/integration/test_tutorials.py -m slow -n 0
       # Autodoc-coverage gate (stdlib-only, no extra deps): every module a task
       # owes docs/reference/ (its losses module; task types, algorithms and

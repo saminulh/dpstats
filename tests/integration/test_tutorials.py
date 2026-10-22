@@ -35,6 +35,7 @@ never executes a notebook; a missing or stale one stops the site build by name.
 from __future__ import annotations
 
 import ast
+import functools
 import hashlib
 import importlib.util
 import json
@@ -85,6 +86,23 @@ CELL_TIMEOUT = 900  # seconds per notebook cell
 # copies under the local-release directory instead of `_executed/`.
 DOCS_LOCAL_RELEASE_ROOT_ENV = "DOCS_LOCAL_RELEASE_ROOT"
 LOCAL_RELEASE_ROOT = os.environ.get(DOCS_LOCAL_RELEASE_ROOT_ENV)
+
+# With this set, a notebook whose executed copy was written from the same source
+# by the same library is not run again: the site build's way of re-executing
+# only what changed. The gate leaves it unset and runs every notebook.
+REUSE_ENV = "DP_TUTORIALS_REUSE"
+# The executed copy's record of what it was run with, beside the source digest.
+RUN_KEY_KEY = "dp_run_key"
+# What a notebook's outputs depend on in this checkout besides its own source:
+# the library, its locked dependencies, the pinned release and the companion
+# scripts the notebooks import.
+RUN_INPUTS = (
+    "dpstats/**/*.py",
+    "pyproject.toml",
+    "uv.lock",
+    "docs/benchmark.lock",
+    "tutorials/*.py",
+)
 
 # Where this harness writes the executed copy the site renders. The site module
 # imported above owns the directory names and the metadata key.
@@ -163,6 +181,10 @@ SUCCESS_CRITERIA: dict[str, tuple[str, ...]] = {
     "compare_on_the_benchmark.ipynb": (
         "invalid_regime",
         "absolute_error_to_ols",
+        # The released configurations it compares against: a comparison the
+        # release does not carry would leave them out of the table.
+        "AdaSSP, scaled",
+        "SSP, scaled",
     ),
     "tuning_headroom.ipynb": (
         "algorithm_label",
@@ -301,6 +323,23 @@ def _error_outputs(notebook: Any) -> list[str]:
     ]
 
 
+# What ``TaskCollection.load_results`` warns when a selection names trials the
+# loaded trees do not record. A tutorial that compares against results it never
+# loaded draws an incomplete comparison, so the warning fails the run.
+MISSING_TRIALS = re.compile(r"\d+ missing of \d+ expected trials")
+
+
+def _missing_trial_warnings(notebook: Any) -> list[str]:
+    """Each cell of an executed notebook that warned about trials it never loaded."""
+    return [
+        f"cell {index}: {MISSING_TRIALS.search(output['text'])[0]}"
+        for index, cell in enumerate(notebook.cells)
+        for output in cell.get("outputs", [])
+        if output.get("output_type") == "stream"
+        and MISSING_TRIALS.search(output.get("text", ""))
+    ]
+
+
 def _fetch_guard_reason(executed: Any) -> str | None:
     """Return the fetch guard's stated reason if it is the run's first error.
 
@@ -337,6 +376,25 @@ def _result_text(notebook: Any) -> str:
         for cell in (tagged or notebook.cells)
         for output in cell.get("outputs", [])
     )
+
+
+def test_a_warning_about_trials_never_loaded_fails_the_run() -> None:
+    """A comparison drawn from results the release lacks is a failed journey."""
+    notebook = nbformat.v4.new_notebook()
+    warned = nbformat.v4.new_code_cell("results = collection.load_results(sweep)")
+    warned.outputs = [
+        nbformat.v4.new_output(
+            "stream",
+            name="stderr",
+            text="UserWarning: 240 missing of 480 expected trials. Recorded Results are retained.\n",
+        )
+    ]
+    quiet = nbformat.v4.new_code_cell("print(1)")
+    quiet.outputs = [nbformat.v4.new_output("stream", name="stdout", text="1\n")]
+    notebook.cells = [quiet, warned]
+    assert _missing_trial_warnings(notebook) == [
+        "cell 1: 240 missing of 480 expected trials"
+    ]
 
 
 @pytest.mark.parametrize("output_type", ["stream", "execute_result", "display_data"])
@@ -718,10 +776,40 @@ def _output_bytes(executed: Any) -> tuple[int, list[str]]:
     return total, heavy
 
 
+@functools.cache
+def _run_key() -> str:
+    """Digest every input a notebook's outputs depend on besides its source."""
+    digest = hashlib.sha256()
+    for pattern in RUN_INPUTS:
+        for file in sorted(REPOSITORY_ROOT.glob(pattern)):
+            digest.update(file.relative_to(REPOSITORY_ROOT).as_posix().encode())
+            digest.update(hashlib.sha256(file.read_bytes()).digest())
+    return digest.hexdigest()
+
+
+def _reusable(path: Path) -> bool:
+    """Whether reuse is on and this notebook's executed copy is still current.
+
+    Only a copy run against the published release is reused; a skip record is
+    always retried, since the release it could not reach may be reachable now.
+    """
+    if not os.environ.get(REUSE_ENV) or LOCAL_RELEASE_ROOT:
+        return False
+    copy = EXECUTED_DIRECTORY / path.name
+    if not copy.is_file():
+        return False
+    metadata = json.loads(copy.read_text(encoding="utf-8"))["metadata"]
+    return (
+        metadata.get(SOURCE_DIGEST_KEY) == hashlib.sha256(path.read_bytes()).hexdigest()
+        and metadata.get(RUN_KEY_KEY) == _run_key()
+    )
+
+
 def _write_executed(path: Path, executed: Any) -> Path:
     """Write one executed copy, keyed by the source notebook it was run from."""
     EXECUTED_DIRECTORY.mkdir(parents=True, exist_ok=True)
     executed.metadata[SOURCE_DIGEST_KEY] = hashlib.sha256(path.read_bytes()).hexdigest()
+    executed.metadata[RUN_KEY_KEY] = _run_key()
     copy = EXECUTED_DIRECTORY / path.name
     nbformat.write(executed, copy)
     (EXECUTED_DIRECTORY / f"{path.name}{GUARDED_SKIP_SUFFIX}").unlink(missing_ok=True)
@@ -848,15 +936,24 @@ def _execute(
 )
 def test_tutorial_executes_from_the_wheel(
     path: Path,
-    journey_environment: JourneyEnvironment,
-    journey_records: list[dict[str, object]],
+    request: pytest.FixtureRequest,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Run one tutorial against the installed wheel and check its own criterion.
 
     A run that reaches its answer also leaves the executed copy the site
-    renders, so the page and the journey are the same execution.
+    renders, so the page and the journey are the same execution. With
+    ``DP_TUTORIALS_REUSE`` set, a notebook whose copy is current is skipped,
+    and the wheel is built only if some notebook still has to run.
     """
+    if _reusable(path):
+        pytest.skip(f"{path.name}: its executed copy is current; {REUSE_ENV} reuses it")
+    journey_environment: JourneyEnvironment = request.getfixturevalue(
+        "journey_environment"
+    )
+    journey_records: list[dict[str, object]] = request.getfixturevalue(
+        "journey_records"
+    )
     monkeypatch.delenv("PYTHONPATH", raising=False)
     monkeypatch.delenv("PYTHONHOME", raising=False)
     for variable in (
@@ -887,7 +984,7 @@ def test_tutorial_executes_from_the_wheel(
         )
         pytest.skip(guard_reason)
 
-    errors = _error_outputs(executed)
+    errors = _error_outputs(executed) + _missing_trial_warnings(executed)
     result_text = _result_text(executed)
     stripped = _scrub(executed)
     output_bytes, heavy = _output_bytes(executed)
