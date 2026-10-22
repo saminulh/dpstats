@@ -1,0 +1,228 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpstats"
+version = "0.1.0"
+description = "Benchmark for differentially private algorithms on statistical tasks."
+authors = [
+    { name = "Saminul Haque", email = "saminulh@stanford.edu" },
+    { name = "Caroline Choi", email = "cchoi1@stanford.edu" },
+    { name = "John Duchi", email = "jduchi@stanford.edu" },
+]
+maintainers = [
+    { name = "Saminul Haque", email = "saminulh@stanford.edu" },
+    { name = "Caroline Choi", email = "cchoi1@stanford.edu" },
+    { name = "John Duchi", email = "jduchi@stanford.edu" },
+]
+readme = "README.md"
+# Floor verified from the code, not aspiration: PEP 604 `X | Y` annotations
+# are evaluated at runtime (pydantic models; modules without
+# `from __future__ import annotations`) -> 3.10; dp-accounting requires
+# >=3.10; no 3.11+ features in use. The stable-cut floor leg exercises it.
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+
+# Core = what importing `dpstats` and running a sweep actually
+# need. Feature-specific heavyweights live in extras below and are imported
+# lazily where used.
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    # Python 3.13 wheels arrived in 18.0.
+    "pyarrow>=18",
+    "pydantic>=2.13,<3",
+    "tqdm",
+    "dp-accounting>=0.6.0,<0.7",
+    # The SubLasso transformation's frozen block Lasso.
+    "scikit-learn",
+    # Fetching a published release.
+    "huggingface_hub>=1.23.0",
+    # The analysis plots and the tutorials' figures.
+    "plotly>=6",
+    # TypeVar(default=...) (PEP 696) support arrived in 4.4.
+    "typing-extensions>=4.4",
+    # Authored TOML documents; tomllib entered the standard library in 3.11.
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+# The documentation site's build toolchain; the library needs none of it.
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-jupyter",
+    # Site search: the build indexes the finished pages with Pagefind's binary.
+    "pagefind[bin]==1.5.2",
+    "beautifulsoup4",
+    "griffe-inherited-docstrings",
+    "griffe-pydantic",
+    "pybtex>=0.26.1",
+    # Parses the vendored stylesheet that trim_vendor_css.py trims.
+    "tinycss2",
+]
+dev = [
+    "dpstats[docs]",
+    # Gate tools are exact-pinned so any environment reproduces the exact
+    # versions these gates were validated with; version bumps are small
+    # reviewed PRs.
+    "pytest==9.1.1",
+    "pytest-xdist",
+    "setuptools",
+    "pytest-timeout",
+    "pyright==1.1.411",
+    "black==25.1.0",
+    "ruff==0.16.7",
+    "pandas-stubs",
+    "pyarrow-stubs",
+    "scipy-stubs",
+    # Property-based tests of the wire contracts; imported by tests only.
+    "hypothesis",
+    # Headless execution of tutorials/*.ipynb by the journeys harness.
+    "nbclient==0.11.0",
+    "nbformat==5.11.1",
+    # Strips outputs and editor metadata from tutorials/*.ipynb before a commit.
+    "nbstripout==0.8.1",
+    # Kernel for nbclient: the workspace notebook runner executes in this venv.
+    "ipykernel",
+    # Extraction and execution of the fenced Python in docs/*.md.
+    "sybil==9.3.0",
+    # Checks the internal package-layering contracts declared below.
+    "import-linter==2.6",
+]
+
+[tool.importlinter]
+root_package = "dpstats"
+
+[[tool.importlinter.contracts]]
+name = "transport imports nothing above it"
+type = "layers"
+# Every other top-level module shares the upper, non-independent layer, and
+# `exhaustive` refuses any top-level module left undeclared, so a new module
+# is placed above transport before lint-imports passes. The outcome types in
+# `exceptions` sit beneath transport: they import nothing from the library.
+containers = ["dpstats"]
+exhaustive = true
+layers = [
+    "algorithm : analysis : budgets : cli : configure : coordinates : domains : dp_tuning : instance : metric : parameters : results : scripts : simulations : sweep : task : tasks : utils : workspace",
+    "transport",
+    "exceptions",
+]
+
+[[tool.importlinter.contracts]]
+name = "sweep coordinate selection imports no results"
+type = "forbidden"
+source_modules = ["dpstats.sweep.coordinates"]
+forbidden_modules = ["dpstats.results"]
+
+[[tool.importlinter.contracts]]
+name = "layers"
+type = "layers"
+# workspace is not one layer. workspace.collection (with fetch, its
+# independent sibling) is the top-level handle and sits above sweep;
+# workspace.layout and workspace.registries are the path/registry-naming
+# primitives that algorithm.py, instance.py, results/*, and sweep/* all
+# resolve paths through, and so must sit below them, just above transport.
+layers = [
+    "dpstats.analysis",
+    "dpstats.workspace.collection | dpstats.workspace.fetch",
+    "dpstats.sweep",
+    "dpstats.results",
+    "dpstats.algorithm | dpstats.instance",
+    "dpstats.workspace.registries",
+    "dpstats.workspace.layout",
+    "dpstats.transport",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dpstats*"]
+namespaces = false
+# Templates are shipped as package *data* (copied on `generate-task`),
+# not imported — keep them out of the importable package set.
+exclude = ["dpstats.templates*"]
+
+[tool.setuptools.package-data]
+"dpstats" = [
+    "py.typed",
+    "templates/**/*.py",
+    "references.bib",
+]
+
+[project.scripts]
+dpstats = "dpstats.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-q --tb=short -n 4 -m 'not slow and not performance and not requires_unrestricted_processes' --durations=10"
+# A test over this budget fails visibly instead of silently reintroducing the
+# per-test site build the unit gate must never run. `slow`/`performance` tests earn
+# a raised budget instead (see tests/conftest.py's pytest_collection_modifyitems).
+# "signal" (SIGALRM) reports a clean per-test "Timeout" failure under the -n 4
+# xdist workers above; "thread" instead kills and respawns the whole worker
+# process on this suite, which still fails the run but loses the failing
+# test's own traceback.
+timeout = 10
+timeout_method = "signal"
+markers = [
+    "performance: opt-in wall-clock smoke benchmarks; reports smells without binding correctness to machine speed",
+    "slow: resource-heavy tests (e.g. multi-GB memory regression); excluded by default, run with -m slow",
+    "requires_unrestricted_processes: external-process and kill tests blocked by restricted sandboxes",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.black]
+target-version = ["py310", "py311", "py312", "py313"]
+
+# Google-style documentation checks. Per-file exclusions below are limited
+# to the remaining undocumented declarations.
+[tool.ruff.lint]
+select = ["D", "N"]
+ignore = [
+    "D105",  # magic method: the standard does not require dunder docstrings.
+    "D106",  # nested class: the standard does not address nested classes.
+    "D107",  # __init__: field/class docstrings carry the meaning instead.
+    "D401",  # Google permits descriptive or imperative function summaries.
+    "N818",  # Error suffix: InvalidRegime and NoRelease are accepted public
+             # exception names (STYLE.md S1); a rename is a scientific decision.
+]
+
+# Class CapWords, function and variable snake_case (pep8-naming). The allow-list
+# below is the whole exemption: mathematical notation for matrices, Gram and
+# Hessian objects, and class aliases bound to a local. Nothing is exempted by
+# path, and nothing here is inferred from the meaning of a name.
+[tool.ruff.lint.pep8-naming]
+ignore-names = [
+    # Matrices and scalar quantities written in the source's capitals.
+    "A", "B", "C", "G", "H", "M", "N", "R", "S", "T", "U", "X", "Z", "Xi",
+    "A_*", "*_A", "H_*", "C_*", "*_C", "G_*", "G0", "G1", "R_*", "X_*", "*_X",
+    "L_*", "*_L", "log_L_*", "N_hat", "Sigma", "Sigma_*", "Delta_*",
+    # A local bound to a class (a Task's pydantic types, an algorithm under test).
+    "Input", "Output", "Metadata", "_Input", "_Metadata", "AlgClass",
+    "OLS", "EMC", "DEM", "SampleMean", "CoinPress",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Remaining documentation gaps, limited to the affected rule in each file.
+[tool.ruff.lint.per-file-ignores]
+"dpstats/algorithm.py" = ["D102"]
+"dpstats/cli.py" = ["D100", "D103"]
+"dpstats/domains/__init__.py" = ["D102"]
+"dpstats/tasks/single_coefficient_estimation/transformations/domain.py" = ["D102"]
+"dpstats/transport/registry.py" = ["D101"]

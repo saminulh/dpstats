@@ -1,0 +1,21 @@
+{
+  "math": [
+    "math: linear_regression/instances/i5-J5UXZZWTMGPFJ7RA/ shows unrendered math markup ['$'].",
+    "math: single_coefficient_estimation/instances/i5-KW7XTALPP4YR7IVF/ shows unrendered math markup ['$']."
+  ],
+  "results controls": [
+    "results controls: linear_regression/public-results/ draws 6 charts but names the plotted set of 3, and a reader cannot tell which curve is which on a chart that names none.",
+    "results controls: mean_estimation/public-results/ draws 4 charts but names the plotted set of 2, and a reader cannot tell which curve is which on a chart that names none.",
+    "results controls: single_coefficient_estimation/public-results/ draws 6 charts but names the plotted set of 3, and a reader cannot tell which curve is which on a chart that names none."
+  ],
+  "route": [
+    "route: contact/ sits outside every task space and the spec declares no template for it.",
+    "route: m_estimation/definition/MEstimationLoss/ sits outside every task space and the spec declares no template for it.",
+    "route: m_estimation/guide/ no template produces it and the guide split has not removed it.",
+    "route: simple_linear_regression/guide/ no template produces it and the guide split has not removed it.",
+    "route: single_coefficient_estimation/guide/ no template produces it and the guide split has not removed it."
+  ],
+  "vocabulary": [
+    "vocabulary: methodology/ shows 'Performance profile'."
+  ]
+}

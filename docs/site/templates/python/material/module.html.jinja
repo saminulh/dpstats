@@ -1,0 +1,7 @@
+{% extends "_base/module.html.jinja" %}
+{% block docstring scoped %}
+  {% if not config.extra.get("directory_only") %}{{ super() }}{% endif %}
+{% endblock docstring %}
+{% block children scoped %}
+  {% if not config.extra.get("directory_only") %}{{ super() }}{% endif %}
+{% endblock children %}

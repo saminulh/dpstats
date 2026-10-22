@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Site controls regression</title>
+<body>
+<h1>Site controls regression</h1>
+<p>Reads the site built into the checkout's <code>site/</code>. This checks the generated pages.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Page under test" style="width:100%;height:600px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);  // the built site: mkdocs build
+const frame = document.querySelector('iframe');
+const outcomes = [];
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  document.querySelector('#results').textContent = outcomes.join('\n');
+}
+function page(url) {
+  return new Promise(resolve => {
+    frame.addEventListener('load', () => resolve(frame.contentDocument), {once: true});
+    frame.src = new URL(url, SITE).href;
+  });
+}
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function until(test, ms = 5000) {
+  for (let waited = 0; waited < ms; waited += 50) {
+    if (test()) return true;
+    await pause(50);
+  }
+  return false;
+}
+(async () => {
+  try {
+    let doc = await page('corpus/');
+    const filters = doc.querySelector('[data-dp-corpus-filter]');
+    check('Corpus filters are available', filters && !filters.hidden);
+    const rows = Array.from(doc.querySelectorAll('.dp-table tbody tr'));
+    const source = rows[0].querySelector('a').href;
+    const query = doc.querySelector('[data-dp-corpus-search]');
+    query.value = 'unmatched-query-473892';
+    query.dispatchEvent(new frame.contentWindow.Event('input', {bubbles: true}));
+    check('Corpus search filters the rendered rows', rows.length > 0 && rows.every(row => row.hidden));
+    doc.querySelector('[data-dp-corpus-clear]').click();
+    check('Clear restores the corpus rows', rows.every(row => !row.hidden));
+    const heads = Array.from(doc.querySelectorAll('.dp-table thead th')).map(th => th.textContent.trim());
+    const cells = rows.map(row => [row.cells[heads.indexOf('Instances')].textContent, row.cells[heads.indexOf('Sample sizes')].textContent]);
+    const picker = doc.querySelector('[data-dp-corpus-task]');
+    let narrowed = 0;
+    let exact = true;
+    for (const option of Array.from(picker.options).filter(option => option.value)) {
+      picker.value = option.value;
+      picker.dispatchEvent(new frame.contentWindow.Event('change', {bubbles: true}));
+      rows.forEach((row, index) => {
+        if (row.hidden) return;
+        const now = [row.cells[heads.indexOf('Instances')].textContent, row.cells[heads.indexOf('Sample sizes')].textContent];
+        exact = exact && now[0] === row.getAttribute('data-instances-' + option.value) && now[1] === row.getAttribute('data-samples-' + option.value);
+        if (now[0] !== cells[index][0]) narrowed += 1;
+      });
+    }
+    check('Task filter shows that task\'s own counts and sample ranges', exact && narrowed > 0);
+    doc.querySelector('[data-dp-corpus-clear]').click();
+    check('Clear restores source-wide counts', rows.every((row, index) => row.cells[heads.indexOf('Instances')].textContent === cells[index][0]));
+    const sourceUrl = new URL(source);
+    const raw = new DOMParser().parseFromString(await (await fetch(sourceUrl)).text(), 'text/html');
+    const shipped = raw.querySelector('[data-dp-citation]');
+    check('Citation text is visible without scripts or a clipboard', shipped && !shipped.hidden);
+    doc = await page(source);
+    const copy = doc.querySelector('[data-dp-copy]');
+    check('Source citation copy is available', copy && !copy.hidden);
+    doc = await page('linear_regression/algorithms/');
+    const group = doc.querySelector('[data-dp-class-filter]');
+    const chip = group.querySelector('[data-dp-class]:not([data-dp-class="All"])');
+    const table = group.parentNode.querySelector('.dp-table');
+    chip.click();
+    // The filter narrows every table in its section, so its effect is read
+    // across all of them rather than in whichever one comes first.
+    const taskRows = Array.from(group.parentNode.querySelectorAll('.dp-table tbody tr'));
+    check('Task interpretation filter responds', chip.checked && taskRows.some(row => row.hidden));
+    group.querySelector('[data-dp-class="All"]').click();
+    check('All restores the task rows', taskRows.every(row => !row.hidden));
+    const sort = table.querySelector('th button');
+    check('Task table sorting is attached', !!sort);
+    if (sort) {
+      const heading = sort.closest('th');
+      const before = heading.getAttribute('aria-sort');
+      sort.click();
+      check('Task table sorting responds', heading.getAttribute('aria-sort') !== before);
+    }
+    // E1: a Standing link opens the Leaderboard at its own metric and budget.
+    const landing = new URL('mean_estimation/roster/', SITE);
+    const listed = Array.from(new DOMParser().parseFromString(
+      await (await fetch(landing)).text(), 'text/html').querySelectorAll('a[href^="a3-"]'),
+      link => new URL(link.getAttribute('href'), landing));
+    let standing = [];
+    for (const url of listed) {
+      const links = Array.from(new DOMParser().parseFromString(await (await fetch(url)).text(), 'text/html')
+        .querySelectorAll('a[href*="leaderboard/?metric="]'), link => new URL(link.getAttribute('href'), url));
+      if (links.length > 1) { standing = links; break; }
+    }
+    check('a configured page links each Standing row with its budget',
+      standing.length > 1 && new Set(standing.map(link => link.searchParams.get('budget'))).size > 1);
+    for (const link of standing) {
+      doc = await page(link.href);
+      const want = Object.fromEntries(link.searchParams);
+      const current = () => doc.querySelector('.dp-metric:not([hidden])');
+      for (let wait = 0; wait < 100 && !(current() && current().dataset.metric === want.metric &&
+          current().querySelector('.dp-chart').dataset.budget === want.budget); wait++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      const choice = doc.querySelector('[data-budget-select] input:checked, select[data-budget-select]');
+      check(`the Leaderboard opens at ${want.metric}, ${want.budget}`,
+        current().dataset.metric === want.metric &&
+        current().querySelector('.dp-chart').dataset.budget === want.budget &&
+        choice.value === want.budget &&
+        current().querySelector('.dp-budget:not([hidden])').dataset.budget === want.budget);
+    }
+    doc = await page('');
+    const win = frame.contentWindow;
+    const panel = doc.getElementById('search-panel');
+    const trigger = doc.querySelector('[data-bs-target="#search-panel"]');
+    const key = name => doc.body.dispatchEvent(new win.KeyboardEvent('keydown', {key: name, bubbles: true}));
+    win.tabler.Offcanvas.getOrCreateInstance(panel).show();
+    const typing = () => doc.activeElement && doc.activeElement.matches('pagefind-input input');
+    await until(() => panel.classList.contains('show') && typing());
+    check('Opening search focuses its field', typing());
+    doc.activeElement.blur();
+    check('Focus is on BODY', doc.activeElement === doc.body);
+    key('Escape');
+    const closed = await until(() => !panel.classList.contains('show') && !panel.classList.contains('showing'));
+    await until(() => doc.activeElement === trigger, 1000);
+    check('Escape closes search with focus on BODY', closed);
+    check('Closing search returns focus to its trigger', doc.activeElement === trigger);
+    win.tabler.Offcanvas.getOrCreateInstance(panel).show();
+    await until(() => panel.classList.contains('show') && typing());
+    const field = doc.activeElement;
+    field.value = 'AdaSSP';
+    field.dispatchEvent(new win.Event('input', {bubbles: true}));
+    check('A query lists results, each labelled with its section', await until(() => doc.querySelector('pagefind-results .pf-result .dp-search-section')));
+
+    // The task sidebar at desktop width, where it collapses to a rail.
+    frame.style.width = '1200px';
+    doc = await page('linear_regression/');
+    const tasks = Array.from(doc.querySelectorAll('#task-switch-menu .dropdown-item'), link => link.href);
+    let names = true;
+    for (const href of tasks) {
+      const task = await page(href);
+      const toggle = task.querySelector('.dp-task-switch-toggle');
+      const chevron = frame.contentWindow.getComputedStyle(toggle, '::after');
+      // A name that cannot wrap pushes the chevron past the toggle's own edge.
+      names = names && chevron.content !== 'none' && toggle.scrollWidth <= toggle.clientWidth &&
+        toggle.getBoundingClientRect().right <= task.querySelector('.dp-sidebar-shell').getBoundingClientRect().right;
+    }
+    check('Every task name and its switch chevron fit inside the sidebar', tasks.length > 1 && names);
+    doc = await page('linear_regression/');
+    const shown = doc.defaultView.getComputedStyle.bind(doc.defaultView);
+    check('A sidebar group label carries no generated marker',
+      Array.from(doc.querySelectorAll('.dp-nav-group-label')).every(label =>
+        shown(label, '::before').content === 'none' && shown(label, '::after').content === 'none'));
+    const rail = doc.getElementById('sidebar-toggle');
+    const marks = () => [rail.querySelector('svg'), ...doc.querySelectorAll('#section-sidebar .nav-link-icon')]
+      .map(mark => { const box = mark.getBoundingClientRect(); return [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)]; });
+    const links = () => Array.from(doc.querySelectorAll('#section-sidebar .nav-link'));
+    const open = JSON.stringify(marks());
+    rail.click();
+    await pause(100);
+    check('Collapsing the sidebar moves neither its toggle nor any icon', JSON.stringify(marks()) === open);
+    check('A collapsed link keeps its name and shows it as a tooltip',
+      links().every(link => link.textContent.trim() && link.title === link.textContent.trim()));
+    rail.click();
+    await pause(100);
+    check('Expanding the sidebar restores every position and drops the tooltips',
+      JSON.stringify(marks()) === open && links().every(link => !link.title));
+    // The control rules, read from each page once its scripts have drawn it:
+    // the built-site check sees only what the build wrote.
+    const NAMED_COUNT = /\(\d[\d,]*\)\s*$/;
+    for (const url of ['linear_regression/roster/', 'linear_regression/leaderboard/',
+                       'linear_regression/public-results/', 'corpus/']) {
+      doc = await page(url);
+      await pause(2500);
+      const names = Array.from(doc.querySelectorAll(
+        '[role="radiogroup"] input[type=radio] + label, .dp-chip-group button[aria-pressed], .dp-check-list label'))
+        .map(node => node.textContent.trim());
+      check(`${url}: no option names its own count`, names.every(name => !NAMED_COUNT.test(name)));
+      // A label's help defines its term alone: never the selected value's
+      // description or Details link, which its setting box carries (W93).
+      const helps = Array.from(doc.querySelectorAll('.dp-setting .dp-help-label[popovertarget]'))
+        .map(label => [doc.getElementById(label.getAttribute('popovertarget')),
+          label.closest('.dp-setting').querySelector('.dp-setting-desc')]);
+      check(`${url}: a setting label's help defines the term alone`,
+        helps.every(([help, desc]) => help && !help.querySelector('a') &&
+          !(desc && desc.textContent.trim() && help.textContent.includes(desc.textContent.trim().split('. ')[0]))));
+      // W110: a long table opens on a short view naming its total, and one
+      // action shows every row, in order (W112).
+      for (const table of Array.from(doc.querySelectorAll('.dp-content table:not(.dp-leaderboard)'))
+        .filter(table => table.tBodies[0] && table.tBodies[0].rows.length > 50)) {
+        const rows = Array.from(table.tBodies[0].rows).filter(row => !row.hidden);
+        const shown = () => rows.filter(row => row.getClientRects().length > 0 || row.closest('details:not([open])'));
+        const more = (table.closest('.dp-table-scroll') || table).nextElementSibling;
+        const opened = rows.filter(row => !row.classList.contains('dp-row-folded'));
+        check(`${url}: a table of ${rows.length} rows opens short and names its total`,
+          opened.length <= 50 && more && more.classList.contains('dp-table-more') &&
+          more.textContent.includes(rows.length.toLocaleString()));
+        more.click();
+        check(`${url}: Show all reveals every row in order`,
+          rows.every(row => !row.classList.contains('dp-row-folded')) && more.hidden);
+      }
+      const selects = Array.from(doc.querySelectorAll('article select, .md-content select'));
+      check(`${url}: every select wears the shared treatment`,
+        selects.every(select => select.classList.contains('dp-select')));
+    }
+  } catch (error) {
+    check(error.message, false);
+  }
+  document.title = (outcomes.some(result => result.startsWith('FAIL')) ? 'FAIL' : 'PASS') + ' Site controls';
+})();
+</script>
+</body>
+</html>

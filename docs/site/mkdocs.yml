@@ -1,0 +1,213 @@
+site_name: DP Statistics Benchmark
+site_description: Differential-privacy benchmarks, task contracts, methods, and the supporting Python library.
+# A build for another host (a private preview) names its own address here.
+site_url: !ENV [DOCS_SITE_URL, "https://saminulh.github.io/dpstats/"]
+repo_url: !ENV [DOCS_REPO_URL, "https://github.com/saminulh/dpstats"]
+repo_name: saminulh/dpstats
+# Build output goes to the repo-root site/ (gitignored). CI overrides with --site-dir.
+site_dir: ../../site
+
+# MkDocs always excludes a docs-tree `templates/` directory, reserving the name
+# for Jinja partials. This build has none there and publishes the rendered page
+# templates at that route, so the exclusion is negated.
+exclude_docs: |
+  !/templates/
+
+theme:
+  name: material
+  # The Tabler shell uses Material's Python docstring templates, not its
+  # browser CSS/runtime. Pagefind (site_pagefind.py) owns the search index and UI.
+  custom_dir: overrides
+
+# Mirror the library's markdown extensions so its math (arithmatex/MathJax),
+# admonitions, tabs, and code blocks render identically here.
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
+  - md_in_html              # render Markdown inside raw dataset <details> blocks
+  - tables
+  - attr_list
+
+# Rebuild the local `mkdocs serve` when the build machinery or its release
+# input changes.
+watch:
+  - assemble.py
+  - notebook_headings.py
+  - site_integrity.py
+  - templates/
+  - task_reference.py
+  - api_reference.py
+  - nav_files.py
+  - benchmark_lock.py
+  - panel_data.py
+  - leaderboard.py
+  - playground.py
+  - tutorials.py
+  - profile_chart.py
+  - results_roots.py
+  - ../benchmark.lock
+  - ../content/site-copy.yml
+
+# Docstrings carry reST roles and double-backtick literals for a reader of the
+# source. Every page renders them as its own markup, whether this build's
+# renderers or the API reference produced it.
+hooks:
+  - task_reference.py
+  - docstring_text.py
+  # A notebook page's headings are rendered by the notebook plugin, which
+  # appends permalinks of its own that reach the search index.
+  - notebook_headings.py
+  # Declared after the plugins so the navigation files leave the build only
+  # once literate-nav has read them.
+  - nav_files.py
+  # A changed stylesheet or script gets a new URL, so no browser keeps a stale copy.
+  - asset_versions.py
+  # Links authored against the public address stay inside whichever host serves the build.
+  - site_links.py
+  # Every page carries the explanatory text its site-wide scripts show.
+  - site_copy.py
+  # Every table scrolls in its own named region, never the page.
+  - table_regions.py
+  # Pagefind indexes the finished pages, so the integrity sweep sees its bundle.
+  - site_pagefind.py
+  - site_integrity.py
+
+plugins:
+  # Explicit so MkDocs fires its page hooks: docstrings cross-reference guide
+  # headings as [text][heading-id], which mkdocstrings' private instance cannot see.
+  - autorefs
+  # Assemble library guides, the task journey, and supplied result directories.
+  - gen-files:
+      scripts:
+        - assemble.py
+  # A tutorial page is the executed notebook itself, cell by cell. Declared
+  # after gen-files so this plugin sees the notebooks the assembler wrote.
+  #   execute: the journeys harness is the one executor; a site build never
+  #     runs a notebook, and a missing or stale executed copy fails assembly.
+  #   include: the tutorial pages only. Every other notebook this build
+  #     ships — the source notebook beside each page, a results page's recreate
+  #     notebook — is a file a reader downloads, not a page.
+  #   ignore: `*.md`, because the plugin parses a Markdown file with jupytext
+  #     before it consults `include`, and this build writes hundreds of them
+  #     (ten times the build's wall clock).
+  #   include_source: off. It would copy the executed notebook over the source
+  #     notebook the assembler publishes at this plugin's own download URL.
+  #   cache: off so a build reads only what the assembler gave it.
+  - mkdocs-jupyter:
+      execute: false
+      include: ["library/tutorials/*.ipynb"]
+      ignore: ["*.md"]
+      include_source: false
+      cache: false
+      toc_depth: 3
+  - literate-nav:
+      nav_file: SUMMARY.md
+  # API reference renders against the INSTALLED dpstats package.
+  - mkdocstrings:
+      custom_templates: templates
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            # Advisory docstring-parser warnings (indentation nits etc.) are
+            # non-fatal to rendering but abort `--strict`; silence them so a stray
+            # docstring whitespace can't break the docs CI (output is identical).
+            docstring_options:
+              warnings: false
+              # A Google-style Returns section wraps its one description
+              # across several indented physical lines; without this, griffe
+              # treats each line as a separate unnamed return value, so
+              # mkdocstrings renders one truncated table row per line instead
+              # of the one joined description. No Returns section here names
+              # multiple returned values, so nothing relies on the default.
+              returns_multiple_items: false
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_object_full_path: false
+            show_root_members_full_path: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            # Hide underscore-prefixed members (dunders included: __eq__,
+            # __hash__, __post_init__, dataclass __init__, exception __str__,
+            # …) and the Pydantic model_config / model_copy override that
+            # users never need to read.
+            filters: ["!^_", "!^model_config$", "!^model_copy$"]
+            # Keep a documented __init__'s Args on the class page once the
+            # dunder itself is filtered out above.
+            merge_init_into_class: true
+            extensions:
+              - griffe_inherited_docstrings
+              # Reads pydantic Field(description=...) into the member docstring.
+              - griffe_pydantic:
+                  schema: false
+
+# The brand links home; learning and reference have separate entry points.
+nav:
+  - Home: index.md
+  - Tasks: tasks/
+  - Corpus: corpus/
+  - User guide:
+      - User guide: library/index.md
+      - Benchmarking an algorithm:
+          - Install and fetch the benchmark: library/tutorials/install_and_fetch.ipynb
+          - Run your own script: library/tutorials/run_your_own_script.ipynb
+          - Compare on the benchmark: library/tutorials/compare_on_the_benchmark.ipynb
+      - Using the library:
+          - Introduction: library/tutorials/tasks.ipynb
+          - Algorithms: library/tutorials/algorithms.ipynb
+          - Domains: library/tutorials/domains.ipynb
+          - Privacy budgets and accounting: library/tutorials/privacy_budgets_and_accounting.ipynb
+          - Metrics and baselines: library/tutorials/metrics_and_baselines.ipynb
+          - Transformations and composition: library/tutorials/extend_with_transformations.ipynb
+      - Analyses:
+          - How much does choosing a configuration help?: library/tutorials/tuning_headroom.ipynb
+          - Which instances are hard for SSP?: library/tutorials/ssp_hard_instances.ipynb
+  - API:
+      - API reference: library/reference/index.md
+      - Tasks: library/reference/tasks/
+      - Domains: library/reference/domains/
+      - Instances: library/reference/instance/
+      - Algorithms: library/reference/algorithm/
+      - Parameters: library/reference/parameters/
+      - Privacy budgets and accounting: library/reference/budgets/
+      - Private tuning: library/reference/dp_tuning/
+      - Workspaces and collections: library/reference/collections/
+      - Sweeps: library/reference/sweep/
+      - Metrics: library/reference/metric/
+      - Analysis: library/reference/analysis/
+      - Simulation: library/reference/simulations/
+      - Outcomes: library/reference/exceptions/
+      - CLI: library/reference/cli.md
+  - Methodology: methodology/index.md
+  - Submit:
+      - Submit: submit/index.md
+      - Submit a method: submit/submission.md
+  - Contact: contact/index.md
+
+extra:
+  short_name: DPStatsBench
+
+extra_css:
+  - stylesheets/vendor/tabler-1.5.1.min.css
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/vendor/tabler-1.5.1.min.js
+  - javascripts/site.js
+  - javascripts/table-sort.js
+  - javascripts/long-tables.js
+  - javascripts/algorithm-provenance.js
+  - javascripts/task-space.js
+  - javascripts/roster.js
+  - javascripts/corpus.js
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Explore loading regression</title>
+<h1>Explore loading regression</h1>
+<p>Reads the site built into the checkout's <code>site/</code>. Delays and failures are injected only at the fetch boundary.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:100%;height:900px"></iframe>
+<script>
+(async function () {
+  const SITE = new URL('../../../site/', location.href);  // the built site: mkdocs build
+  const frame = document.querySelector('iframe');
+  const report = document.querySelector('#results');
+  async function until(test) {
+    for (let i = 0; i < 200; i++) {
+      if (test()) return;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error('Timed out waiting for Explore');
+  }
+  function check(name, passed) {
+    if (!passed) throw new Error(name);
+    report.textContent += '\nPASS ' + name;
+  }
+  function controlledNetwork() {
+    const originalFetch = window.fetch;
+    const network = window.testNetwork = {failIndex: true, hold: false, failPanel: false, pending: []};
+    // Keep this test's non-opening budgets cold so their response order is
+    // controlled by the test, not by idle-time prefetch.
+    window.requestIdleCallback = () => 0;
+    window.fetch = function (url, options) {
+      const path = String(url);
+      if (network.failIndex && path.endsWith('/index.json')) {
+        network.failIndex = false;
+        return Promise.reject(new Error('test index failure'));
+      }
+      if (path.endsWith('.f64.gz')) {
+        if (network.failPanel) {
+          network.failPanel = false;
+          return Promise.reject(new Error('test selected-panel failure'));
+        }
+        if (network.hold) {
+          return new Promise(resolve => network.pending.push(() => resolve(originalFetch(url, options))));
+        }
+      }
+      return originalFetch(url, options);
+    };
+  }
+  try {
+    const url = new URL('mean_estimation/public-results/', SITE);
+    const html = await (await fetch(url)).text();
+    frame.srcdoc = html.replace('<head>', '<head><base href="' + url.href + '"><script>(' +
+      controlledNetwork.toString() + ')();<\/script>');
+    await until(() => frame.contentDocument.querySelector('[data-explore-retry]')?.hidden === false);
+    const doc = frame.contentDocument;
+    check('index failure is visible', !!doc.querySelector('[data-explore-loading] [data-copy-slot="explore.load_error"]'));
+    check('retired rankings stay hidden on failure', Array.from(doc.querySelectorAll('.dp-results-table')).every(table => table.hidden));
+    doc.querySelector('[data-explore-retry]').click();
+    await until(() => doc.querySelector('.dp-chart .main-svg'));
+    check('retry loads the real chart', doc.querySelector('[data-explore-loading]').hidden);
+    check('retired rankings stay hidden after recovery', Array.from(doc.querySelectorAll('.dp-results-table')).every(table => table.hidden));
+    const win = frame.contentWindow;
+    const active = () => doc.querySelector('.dp-metric:not([hidden])');
+    const budgets = Array.from(doc.querySelector('.dp-shared-controls [data-budget-select]').querySelectorAll('input'));
+    const choices = budgets.filter(input => !input.checked);
+    check('the real page supplies three other budgets', choices.length >= 3);
+    win.testNetwork.hold = true;
+    choices[0].labels[0].click();
+    await until(() => win.testNetwork.pending.length === 1);
+    choices[1].labels[0].click();
+    await until(() => win.testNetwork.pending.length === 2);
+    win.testNetwork.pending[1]();
+    await until(() => active().dataset.loading === 'false' && active().dpState.panel.budget === choices[1].value);
+    const chart = active().querySelector('.dp-chart');
+    const drawn = chart.data;
+    win.testNetwork.pending[0]();
+    // The delayed fetch also has a decompression/derivation step. Wait for
+    // that same public panel read to settle before checking the old response.
+    const state = active().dpState;
+    await win.dpPanel.panelOf(state.index, state.index.panels.find(panel =>
+      panel.metric === state.metric && panel.budget === choices[0].value));
+    await new Promise(resolve => win.requestAnimationFrame(() => win.requestAnimationFrame(resolve)));
+    check('a late response never replaces the newest selected panel or its plotted traces',
+      choices[1].checked && active().dpState.panel.budget === choices[1].value && chart.data === drawn);
+    win.testNetwork.hold = false;
+    win.testNetwork.failPanel = true;
+    choices[2].labels[0].click();
+    const retry = doc.querySelector('[data-copy-slot="explore.retry_results"]').closest('button');
+    await until(() => !retry.hidden);
+    check('a selected-panel failure leaves the selected budget and retry available',
+      choices[2].checked && !!doc.querySelector('[data-copy-slot="explore.results_load_error"]'));
+    retry.click();
+    await until(() => active().dataset.loading === 'false' && active().dpState.panel.budget === choices[2].value);
+    check('retry does not reuse a cached failure', retry.hidden && chart.querySelector('.main-svg'));
+    // A Metric whose panel is still downloading is shown loading at once,
+    // never behind the previous Metric's chart.
+    const metricSelect = doc.querySelector('[data-metric-select]');
+    const before = active().dataset.metric;
+    const other = Array.from(metricSelect.options).find(option => option.value !== before);
+    check('the real page supplies a second Metric', !!other);
+    win.testNetwork.pending = [];
+    win.testNetwork.hold = true;
+    metricSelect.value = other.value;
+    metricSelect.dispatchEvent(new win.Event('change', { bubbles: true }));
+    await until(() => win.testNetwork.pending.length === 1);
+    check('a Metric still downloading is on screen, loading, in place of the previous one',
+      active().dataset.metric === other.value && active().dataset.loading === 'true' &&
+      !!doc.querySelector('[data-copy-slot="explore.results_loading"]'));
+    win.testNetwork.hold = false;
+    win.testNetwork.pending[0]();
+    await until(() => active().dataset.loading === 'false' && active().dpState.metric === other.value);
+    check('the downloaded Metric then draws its own chart', !!active().querySelector('.dp-chart .main-svg'));
+    document.title = 'PASS Explore loading';
+  } catch (error) {
+    report.textContent += '\nFAIL ' + error.message;
+    document.title = 'FAIL Explore loading';
+  }
+})();
+</script>
+</html>

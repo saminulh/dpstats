@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Explore control regression</title>
+<body>
+<h1>Explore control regression</h1>
+<p>Reads the site built into the checkout's <code>site/</code>.
+It exercises the generated Linear Regression Explore page, which shows several metrics, not a replica of its markup.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:100%;height:800px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);  // the built site: mkdocs build
+const EXPLORE = 'linear_regression/public-results/';
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#results');
+const outcomes = [];
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  report.textContent = outcomes.join('\n');
+}
+async function until(predicate) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Explore did not reach the requested state');
+}
+frame.addEventListener('load', async () => {
+  try {
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    const active = () => doc.querySelector('.dp-metric:not([hidden])');
+    await until(() => active()?.dpState && active().dataset.loading === 'false');
+    const settings = doc.querySelector('[data-evaluation-settings]');
+    const metricControl = doc.querySelector('[data-metric-select]');
+    const trialControl = doc.querySelector('[data-trial-aggregation]');
+    check('one shared control bar is always visible',
+      doc.querySelectorAll('[data-evaluation-settings]').length === 1 && !settings.querySelector('summary') &&
+      trialControl.getClientRects().length > 0);
+    // Each range's histogram: ten bars, all kept while no range is narrowed;
+    // narrowing one empties its own bars past the handle and shrinks the others'.
+    const hists = [...doc.querySelectorAll('.dp-numeric-range')].map(range => ({
+      slider: range.querySelector('.dp-numeric-slider').noUiSlider,
+      bars: [...range.querySelectorAll('.dp-numeric-hist > span')],
+    }));
+    const heights = hist => hist.bars.map(bar => parseFloat(bar.style.height) || 0);
+    const kept = hist => hist.bars.map(bar => parseFloat(bar.firstChild.style.height) || 0);
+    check('every instance range has a ten-bar histogram',
+      hists.length > 1 && hists.every(hist => hist.bars.length === 10));
+    check('with no range narrowed every drawn bar is wholly kept',
+      hists.every(hist => heights(hist).some(Boolean) &&
+        heights(hist).every((height, bin) => !height || kept(hist)[bin] === 100)));
+    const [narrowed, other] = hists;
+    const otherOpen = heights(other).reduce((sum, height) => sum + height, 0);
+    const top = narrowed.slider.options.range.max;
+    narrowed.slider.set([0, Math.round(top * 0.3)]);
+    check('a narrowed range keeps none of its bars past the handle',
+      kept(narrowed).slice(4).every(share => share === 0) && kept(narrowed)[0] === 100);
+    check('narrowing one range shrinks the other ranges\' bars at once',
+      heights(other).reduce((sum, height) => sum + height, 0) < otherOpen);
+    narrowed.slider.set([0, top]);
+    await until(() => heights(other).reduce((sum, height) => sum + height, 0) === otherOpen);
+    trialControl.value = 'median';
+    trialControl.dispatchEvent(new win.Event('change', { bubbles: true }));
+    await until(() => active().dpState.aggregation === 'median');
+    for (const tab of doc.querySelectorAll('[role="tab"]')) {
+      tab.click();
+      await until(() => active().dpState.aggregation === 'median');
+      check(`${tab.getAttribute('aria-label')}: the same bar, selected aggregation and shared budget remain visible`,
+        metricControl === doc.querySelector('[data-metric-select]') &&
+        trialControl.getClientRects().length > 0 && trialControl.value === 'median' &&
+        [...doc.querySelectorAll('.dp-shared-controls [data-budget-select]')].some(group => group.getClientRects().length > 0));
+    }
+    doc.querySelector('[data-view="profiles"]').click();
+    trialControl.value = 'individual';
+    trialControl.dispatchEvent(new win.Event('change', { bubbles: true }));
+    await until(() => active().dpState.aggregation === 'individual');
+    const ids = Array.from(doc.querySelectorAll('[id]'), element => element.id);
+    check('generated IDs are unique', ids.length === new Set(ids).size);
+    const budgets = Array.from(doc.querySelectorAll('[data-budget-select]'));
+    check('each metric retains its checked budget', budgets.length > 1 &&
+      budgets.every(group => group.querySelector('input:checked')));
+    const metricSelect = doc.querySelector('[data-metric-select]');
+    const chooseMetric = index => {
+      metricSelect.value = metricSelect.options[index].value;
+      metricSelect.dispatchEvent(new win.Event('change', { bubbles: true }));
+    };
+    chooseMetric(1);
+    await until(() => active().dpState && active().dataset.loading === 'false');
+    const budget = budgets[1].querySelectorAll('input')[1];
+    budget.labels[0].click();
+    await until(() => active().dpState.budget === budget.value);
+    check('budget label switches the active metric only', budget.checked &&
+      budgets[0].querySelector('input:checked'));
+    chooseMetric(0);
+    await until(() => active().dpState && active().dataset.loading === 'false');
+
+    // "Algorithm…" is the Baseline select's last option; choosing it opens
+    // the search, and the select is what focus returns to.
+    const trigger = doc.querySelector('[data-shared-baseline]');
+    const openSearch = () => {
+      trigger.value = doc.querySelector('[data-baseline-algorithm-trigger]').value;
+      trigger.dispatchEvent(new win.Event('change', { bubbles: true }));
+    };
+    const search = doc.querySelector('#baseline-picker [role="combobox"]');
+    const picker = doc.querySelector('#baseline-picker');
+    const type = value => {
+      search.value = value;
+      search.dispatchEvent(new win.Event('input', { bubbles: true }));
+    };
+    const chosenBaseline = trigger.value;
+    openSearch();
+    await until(() => picker.matches(':popover-open') && doc.activeElement === search);
+    check('Algorithm… opens the search and keeps the current baseline chosen', trigger.value === chosenBaseline);
+    type(active().dpState.roster[0].algorithm);
+    type('');
+    check('clearing the query keeps focus in the open picker',
+      doc.activeElement === search && picker.matches(':popover-open'));
+    search.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    check('Escape closes the picker and returns focus',
+      !picker.matches(':popover-open') && doc.activeElement === trigger && trigger.getAttribute('aria-expanded') === 'false');
+    openSearch();
+    await until(() => picker.matches(':popover-open'));
+    type('DP');
+    search.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 160));
+    check('Escape cancels pending suggestions and never reopens the picker',
+      !picker.matches(':popover-open') && !search.hasAttribute('aria-activedescendant'));
+    // Inject one unavailable denominator at the data boundary. The real
+    // generated controls, selection controller, CSS and views stay in use.
+    const resolve = win.dpPanel.resolveBaseline;
+    win.dpPanel.resolveBaseline = function (panel, baseline, index) {
+      return win.dpPanel.baselineAlgorithm(baseline) ? [null] : resolve(panel, baseline, index);
+    };
+    openSearch();
+    await until(() => picker.matches(':popover-open') && doc.activeElement === search);
+    type(active().dpState.roster[0].algorithm);
+    search.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    const status = doc.querySelector('[data-baseline-status]');
+    for (const tab of doc.querySelectorAll('[role="tab"]')) {
+      tab.click();
+      const outputs = active().querySelectorAll('.dp-profile-view, .dp-comparison');
+      check(`${tab.getAttribute('aria-label')}: unavailable baseline hides previous results`,
+        !status.hidden && status.dataset.copySlot === 'explore.baseline_no_trials' &&
+        Array.from(outputs).every(element => win.getComputedStyle(element).display === 'none'));
+    }
+    win.dpPanel.resolveBaseline = resolve;
+    trigger.value = 'none';
+    trigger.dispatchEvent(new win.Event('change', { bubbles: true }));
+    doc.querySelector('[role="tab"]').click();
+    check('choosing a valid baseline restores results', status.hidden &&
+      win.getComputedStyle(active().querySelector('.dp-profile-view')).display !== 'none');
+
+    // E3: the aggregation names what the chart counts, in a question and a formula line,
+    // each a site-copy slot; their wording and term links are checked in leaderboard.test.html.
+    const trialAggregation = doc.querySelector('[data-trial-aggregation]');
+    const slotOf = selector => active().querySelector(selector + ' > [data-copy-slot]')?.dataset.copySlot;
+    const heading = () => slotOf('.dp-profile-heading');
+    const formula = () => slotOf('.dp-profile-formula');
+    const setAggregation = async (value, wanted) => {
+      trialAggregation.value = value;
+      trialAggregation.dispatchEvent(new win.Event('change', { bubbles: true }));
+      await until(() => heading() === wanted);
+    };
+    // The page blanks the drawn y title and the heading states it, so the payload carries the axis text.
+    const axis = aggregation => win.dpPanel.figure({ series: [], taus: [1], units: 'x', leading: 0, title: '', guide: 1, aggregation }).layout.yaxis.title.text;
+    await setAggregation('median', 'shared.profile_question_median');
+    check('Median aggregation reads the median question and formula',
+      JSON.stringify([heading(), formula(), axis('median')]) ===
+      JSON.stringify(['shared.profile_question_median', 'shared.profile_formula_median', win.dpSiteCopy('shared.term_success_rate')]));
+    await setAggregation('individual', 'shared.profile_question_individual');
+    check('Individual aggregation reads the per-trial question and formula',
+      JSON.stringify([heading(), formula(), axis('individual')]) ===
+      JSON.stringify(['shared.profile_question_individual', 'shared.profile_formula_individual', win.dpSiteCopy('shared.term_success_rate')]));
+    const opening = metricSelect.selectedIndex;
+    const openingSection = active();
+    const before = { heading: heading(), formula: formula() };
+    chooseMetric(opening === 0 ? 1 : 0);
+    await until(() => active() !== openingSection && active().dpState && active().dataset.loading === 'false' && formula());
+    check('a metric change keeps the question and formula slots',
+      heading() === before.heading && formula() === before.formula);
+    chooseMetric(opening);
+    await until(() => active() === openingSection && active().dpState && active().dataset.loading === 'false');
+
+    // E2 reads the median aggregation back from the address.
+    await setAggregation('median', 'shared.profile_question_median');
+
+    // E2: the reading survives a reload.
+    const historyBefore = win.history.length;
+    const range = doc.querySelector('.dp-filters input[type="range"]');
+    range.value = '80';
+    range.dispatchEvent(new win.Event('input', { bubbles: true }));
+    range.dispatchEvent(new win.Event('change', { bubbles: true }));
+    const radios = Array.from(doc.querySelectorAll('[data-budget-select] input'));
+    const otherBudget = radios.find(input => !input.checked);
+    otherBudget.labels[0].click();
+    await until(() => active().dpState.budget === otherBudget.value);
+    const toggles = () => Array.from(active().querySelectorAll('.dp-swatch-toggle'));
+    await until(() => toggles().length > 1);
+    toggles()[0].click();
+    const address = win.location.search;
+    const params = new URLSearchParams(address);
+    const plottedBefore = toggles().filter(t => t.getAttribute('aria-pressed') === 'true').length;
+    check('the reading is written to the address without a history entry',
+      params.get('aggregation') === 'median' && params.get('budget') === otherBudget.value &&
+      params.get('p') === '80' && doc.querySelector('.dp-filters output').textContent === '80%' &&
+      params.get('top') === 'custom' && params.has('plotted') && win.history.length === historyBefore);
+    await new Promise(resolve => {
+      frame.addEventListener('load', resolve, { once: true });
+      frame.src = new URL(EXPLORE + address, SITE).href;
+    });
+    const again = frame.contentDocument;
+    const reopened = () => again.querySelector('.dp-metric:not([hidden])');
+    await until(() => reopened()?.dpState && reopened().dataset.loading === 'false');
+    check('a reload restores aggregation, budget and quantile',
+      again.querySelector('[data-trial-aggregation]').value === 'median' &&
+      reopened().dpState.budget === otherBudget.value &&
+      reopened().dpState.quantile === 0.8 &&
+      again.querySelector('.dp-filters output').textContent === '80%');
+    const restored = Array.from(reopened().querySelectorAll('.dp-swatch-toggle'));
+    check('a reload restores the custom plotted set',
+      again.querySelector('[data-top-n]').value === 'custom' && restored.length > 1 &&
+      restored.filter(t => t.getAttribute('aria-pressed') === 'true').length === plottedBefore);
+
+    // E5: plotting nothing says so and keeps the control that plots again.
+    restored.filter(t => t.getAttribute('aria-pressed') === 'true').forEach(t => t.click());
+    const note = again.querySelector('.dp-empty-pool');
+    await until(() => !note.hidden);
+    check('an empty plotted set is named and stays recoverable',
+      note.querySelector('[data-copy-slot]').dataset.copySlot === 'shared.empty_no_curves' &&
+      !reopened().classList.contains('dp-empty-selection') &&
+      Array.from(reopened().querySelectorAll('.dp-swatch-toggle')).length === restored.length);
+    Array.from(reopened().querySelectorAll('.dp-swatch-toggle'))[0].click();
+    await until(() => note.hidden);
+    check('plotting one curve again clears the message', note.hidden);
+
+    // The comparison legend: hovering a row steps every other algorithm's
+    // traces back in place, and leaving it restores them all.
+    const view = frame.contentWindow;
+    again.querySelector('#playground-view-feature').click();
+    const shown = element => element.offsetParent !== null;
+    const addButton = Array.from(again.querySelectorAll('[data-comparison-add]')).find(shown);
+    addButton.click();
+    await until(() => Array.from(again.querySelectorAll('[data-comparison-selection] [data-algorithm-picker] [role="combobox"]')).some(shown));
+    const finder = Array.from(again.querySelectorAll('[data-comparison-selection] [data-algorithm-picker] [role="combobox"]')).find(shown);
+    const legend = () => Array.from(again.querySelectorAll('[data-comparison-selection] [data-uuid]')).filter(shown);
+    const traces = () => Array.from(again.querySelectorAll('.dp-comparison-view .scatterlayer .trace'))
+      .filter(group => shown(group.closest('.js-plotly-plot')) && group.__data__?.[0]?.trace);
+    for (let attempt = 0; attempt < 3 && legend().length < 2; attempt++) {
+      if (!finder.closest('[popover]').matches(':popover-open')) addButton.click();
+      finder.value = 'Ada';
+      finder.dispatchEvent(new view.Event('input', { bubbles: true }));
+      finder.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      finder.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+    await until(() => legend().length >= 2 && traces().length > 0);
+    const hovered = legend()[0];
+    const opacities = () => traces().map(group => [group.__data__[0].trace.legendgroup, group.style.opacity]);
+    hovered.dispatchEvent(new view.PointerEvent('pointerover', { bubbles: true }));
+    const during = opacities();
+    check('hovering a comparison row steps every other algorithm back',
+      during.some(([, opacity]) => opacity === '0.2') &&
+      during.every(([group, opacity]) => (Boolean(group) && group !== hovered.dataset.uuid) === (opacity === '0.2')));
+    hovered.dispatchEvent(new view.PointerEvent('pointerout', { bubbles: true }));
+    check('leaving the row restores every algorithm', opacities().every(([, opacity]) => opacity !== '0.2'));
+
+    const comparison = finder.closest('.dp-comparison');
+    const suggestions = comparison.querySelector('[data-comparison-selection] [role="listbox"]');
+    const picks = () => Array.from(comparison.querySelectorAll('.dp-plotted-row')).filter(row => row.querySelector('.dp-plotted-remove'));
+    const added = [];
+    while (picks().length < 5) {
+      addButton.click();
+      await until(() => finder.closest('[popover]').matches(':popover-open'));
+      finder.focus();
+      finder.value = 'a';
+      finder.dispatchEvent(new view.Event('input', { bubbles: true }));
+      await until(() => suggestions.querySelector('[role="option"]'));
+      check('a one-character query offers at most eight candidates',
+        suggestions.querySelectorAll('[role="option"]').length <= 8);
+      const next = suggestions.querySelector('[role="option"]').dataset.algorithm;
+      added.push(next);
+      finder.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await until(() => picks().some(row => row.dataset.uuid === next));
+    }
+    check('five comparison choices disable search without replacing a selection',
+      finder.disabled && addButton.disabled && picks().length === 5 &&
+      comparison.querySelector('[data-comparison-selection] .dp-picker-count').textContent
+        .includes(view.dpSiteCopy('explore.picker_count', { selected: 5, limit: 5 })) &&
+      comparison.querySelector('[data-comparison-selected-count]').textContent ===
+        view.dpSiteCopy('explore.selected_count', { selected: 5, cap: 5 }));
+    check('all five selected configurations have distinct colour and marker swatches',
+      new Set(picks().map(row => row.querySelector('.dp-series-swatch line').getAttribute('stroke'))).size === 5 &&
+      new Set(picks().map(row => row.querySelector('.dp-series-swatch path').getAttribute('d'))).size === 5);
+
+    const chosenIds = picks().map(row => row.dataset.uuid);
+    const reference = reopened().dpState.roster.find(entry => entry.interpretation === 'standard' && !chosenIds.includes(entry.uuid));
+    const againBaseline = again.querySelector('[data-shared-baseline]');
+    againBaseline.value = again.querySelector('[data-baseline-algorithm-trigger]').value;
+    againBaseline.dispatchEvent(new view.Event('change', { bubbles: true }));
+    const referencePicker = again.querySelector('#baseline-picker');
+    const referenceSearch = referencePicker.querySelector('[role="combobox"]');
+    await until(() => referencePicker.matches(':popover-open'));
+    referenceSearch.value = 'a';
+    referenceSearch.dispatchEvent(new view.Event('input', { bubbles: true }));
+    referenceSearch.value = reference.algorithm;
+    referenceSearch.dispatchEvent(new view.Event('input', { bubbles: true }));
+    referenceSearch.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await until(() => reopened().dpState.baseline === 'algorithm:' + reference.uuid);
+    check('a rapid baseline query commits the latest exact match even with five comparison picks',
+      picks().length === 5 && picks().every(row => chosenIds.includes(row.dataset.uuid)) &&
+      againBaseline.value === 'algorithm:' + reference.uuid &&
+      againBaseline.selectedOptions[0].textContent.includes(reference.algorithm));
+
+    const last = added.pop();
+    picks().find(row => row.dataset.uuid === last).querySelector('.dp-plotted-remove').click();
+    await until(() => !finder.disabled && picks().length === 4);
+    check('removing a choice re-enables the list search', !finder.disabled);
+    addButton.click();
+    await until(() => finder.closest('[popover]').matches(':popover-open'));
+    finder.focus();
+    finder.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    await until(() => picks().length === 3);
+    check('Backspace in an empty comparison search removes the last added choice',
+      !picks().some(row => row.dataset.uuid === added[added.length - 1]));
+
+    document.title = outcomes.some(result => result.startsWith('FAIL')) ? 'FAIL Explore controls' : 'PASS Explore controls';
+  } catch (error) {
+    check(error.message, false);
+    document.title = 'FAIL Explore controls';
+  }
+}, { once: true });
+frame.src = new URL(EXPLORE, SITE).href;
+</script>
+</body>
+</html>

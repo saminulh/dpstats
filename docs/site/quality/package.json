@@ -1,0 +1,28 @@
+{
+  "name": "dp-site-quality",
+  "private": true,
+  "description": "The site's quality checks: page-load and interaction budgets, stylesheet and prose lint, colour contrast, accessibility, and one report.",
+  "type": "module",
+  "scripts": {
+    "check": "node run.mjs",
+    "dashboard": "node dashboard.mjs",
+    "lint:css": "node stylesheet.mjs",
+    "lint:prose": "node prose.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@lhci/cli": "0.15.1",
+    "@lhci/server": "0.15.1",
+    "@playwright/test": "1.58.2",
+    "@vvago/vale": "3.24.0",
+    "postcss": "8.5.28",
+    "serve": "14.2.6",
+    "sqlite3": "6.0.1",
+    "stylelint": "17.16.0",
+    "stylelint-declaration-strict-value": "1.12.1",
+    "web-vitals": "6.2.2"
+  }
+}

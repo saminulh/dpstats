@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Explore comparison selection regression</title>
+<body>
+<h1>Explore comparison selection regression</h1>
+<p>Uses three standard configurations of one core from the built Linear Regression page, two of which each beat the other on some instance.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:1440px;height:900px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);
+const EXPLORE = new URL('linear_regression/public-results/', SITE).href;
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#results');
+const outcomes = [];
+// The paired outcome keys, as the page under test names them from its slots.
+const PAIRED = ['pair_both', 'pair_a_only', 'pair_b_only', 'pair_neither'];
+const pairName = key => frame.contentWindow.dpSiteCopy('explore.' + key);
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  report.textContent = outcomes.join('\n');
+}
+async function until(predicate, description) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Comparison did not reach ' + description);
+}
+function open(address) {
+  return new Promise(resolve => {
+    frame.addEventListener('load', resolve, {once: true});
+    frame.src = address;
+  });
+}
+async function run() {
+  await open(EXPLORE + '?view=outcomes');
+  let win = frame.contentWindow, doc = frame.contentDocument;
+  const active = () => doc.querySelector('.dp-metric:not([hidden])');
+  const panel = () => active().querySelector('.dp-comparison');
+  const plot = () => panel().querySelector('.dp-comparison-plot');
+  const rows = () => [...panel().querySelectorAll('[data-comparison-algorithms] > li')]
+    .filter(row => row.querySelector('.dp-plotted-remove'));
+  const row = id => rows().find(item => item.dataset.uuid === id);
+  const ink = id => row(id).querySelector('.dp-series-swatch line').getAttribute('stroke');
+  const shape = id => row(id).querySelector('.dp-series-swatch path').getAttribute('d');
+  const slot = role => panel().querySelector(`[data-outcome-slot="${role}"]`);
+  const trigger = role => slot(role).querySelector('[data-outcome-trigger]');
+  const names = role => [...trigger(role).childNodes].filter(node => node.nodeType === 3).map(node => node.textContent.trim());
+  const slotInk = role => trigger(role).querySelector('.dp-series-swatch line')?.getAttribute('stroke');
+  const bars = () => (plot().data || []).filter(trace => trace.type === 'bar').map(trace => trace.name);
+  const paired = () => bars().some(name => PAIRED.map(pairName).includes(name));
+  const unchosen = role => !!trigger(role).querySelector('[data-copy-slot="explore.outcome_none"]');
+  const featureTraces = () => JSON.stringify((plot().data || []).filter(trace => trace.legendgroup)
+    .map(trace => [trace.legendgroup, trace.marker?.color, trace.line?.color]));
+  const params = () => new URLSearchParams(win.location.search);
+  const choose = async (button, popup, entry) => {
+    button.click();
+    await until(() => popup.matches(':popover-open'), 'algorithm search');
+    const search = popup.querySelector('[role="combobox"]');
+    search.value = entry.algorithm;
+    search.dispatchEvent(new win.Event('input', {bubbles: true}));
+    search.dispatchEvent(new win.KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+  };
+  const openView = async name => {
+    doc.querySelector(`[data-view="${name}"]`).click();
+    await until(() => panel()?.open && plot()?.data && plot().querySelector('.main-svg') &&
+      (name === 'outcomes' ? bars().length : !bars().length), name + ' chart');
+  };
+
+  await until(() => active()?.dpState && active().dataset.loading === 'false', 'initial panel');
+  await until(() => bars().length, 'direct Outcomes entry');
+  frame.style.width = '390px';
+  await until(() => plot().querySelector('.main-svg').getBoundingClientRect().width <= plot().clientWidth + 1,
+    'Outcomes resize before visiting the scatter view');
+  check('direct Outcomes entry fits a narrow viewport', doc.documentElement.scrollWidth <= doc.documentElement.clientWidth);
+  frame.style.width = '1440px';
+  await until(() => plot().querySelector('.main-svg').getBoundingClientRect().width >= plot().clientWidth - 1,
+    'restored desktop width');
+  const state = active().dpState;
+  const first = state.roster.find(entry => state.rows.includes(state.roster.indexOf(entry)));
+  // Outcomes opens on one algorithm; the end of this page checks it is the
+  // one the Success rate view ranks first.
+  const leader = state.roster.find(entry => names('algorithm').includes(entry.algorithm));
+  check('Outcomes opens on one algorithm with no comparison, as single-algorithm bars',
+    !!leader && unchosen('compare') &&
+    slot('compare').querySelector('[data-outcome-clear]').hidden && !paired() && bars().includes('≤ τ'));
+  check('Outcomes shows its two slots, not the algorithm list',
+    !slot('algorithm').closest('[data-outcome-slots]').hidden &&
+    panel().querySelector('[data-comparison-selection]').hidden &&
+    slot('algorithm').getBoundingClientRect().top === slot('compare').getBoundingClientRect().top &&
+    !panel().querySelector('[data-comparison-role]'));
+  // Three standard configurations of one core: distinct colours and markers
+  // within a core are checked. The first and third become Outcomes' A and B,
+  // whose paired bars are checked by colour, so they are chosen from the
+  // data, not by Roster position: a pair where each beats the other on some
+  // instance at the opening τ, so both one-sided bars are drawn.
+  const eligible = entry => entry.interpretation === 'standard' &&
+    entry.uuid !== first.uuid && entry.uuid !== leader.uuid && state.rows.includes(state.roster.indexOf(entry));
+  const sameCore = core => state.roster.filter(entry => entry.core === core && eligible(entry));
+  const against = win.dpPanel.resolveBaseline(state.panel, state.baseline, state.index);
+  const beatsEachOther = (one, other) => {
+    const seen = {};
+    state.instances.forEach(column => win.dpPanel.distributePair(state.panel,
+      state.roster.indexOf(one), state.roster.indexOf(other), column, against,
+      state.aggregation, 1, state.threshold, (key, share) => { if (share > 0) seen[key] = true; }));
+    return !!(seen.a_only && seen.b_only);
+  };
+  const pick = core => {
+    const options = sameCore(core);
+    for (const one of options) for (const other of options) {
+      if (one === other || !beatsEachOther(one, other)) continue;
+      return [one, options.find(entry => entry !== one && entry !== other), other];
+    }
+    return null;
+  };
+  const trio = [...new Set(state.roster.map(entry => entry.core))]
+    .filter(name => sameCore(name).length >= 3).map(pick).find(Boolean);
+  if (!trio) throw new Error('built release needs three standard configurations of one core, two of which each beat the other somewhere');
+  const core = trio[0].core;
+  const [a, b, c] = trio.map(entry => entry.uuid);
+
+  // Error ratio: its own list of up to five.
+  await openView('feature');
+  check('Error ratio shows its list, not the Outcomes slots',
+    !panel().querySelector('[data-comparison-selection]').hidden && slot('algorithm').closest('[data-outcome-slots]').hidden);
+  check('Error ratio opens on the same first algorithm', rows().length === 1 && rows()[0].dataset.uuid === first.uuid);
+  const add = async entry => {
+    const popup = panel().querySelector('[data-comparison-selection] [data-algorithm-picker]');
+    await choose(panel().querySelector('[data-comparison-add]'), popup, entry);
+    await until(() => row(entry.uuid) && plot().data.some(trace => trace.legendgroup === entry.uuid), 'listed ' + entry.algorithm);
+    check('choosing an algorithm closes its popover and returns focus',
+      !popup.matches(':popover-open') && doc.activeElement === panel().querySelector('[data-comparison-add]'));
+  };
+  rows().forEach(item => item.querySelector('.dp-plotted-remove').click());
+  await until(() => rows().length === 0, 'empty list');
+  check('an empty list says so', !panel().querySelector('[data-comparison-empty]').hidden);
+  await add(trio[0]);
+  await add(trio[1]);
+  const original = new Map(trio.slice(0, 2).map(entry => [entry.uuid, {ink: ink(entry.uuid), shape: shape(entry.uuid)}]));
+  check('two configurations of one core have distinct colours and markers', ink(a) !== ink(b) && shape(a) !== shape(b));
+  check('feature points match their listed colours', trio.slice(0, 2).every(entry => plot().data
+    .filter(trace => trace.legendgroup === entry.uuid && trace.marker)
+    .every(trace => trace.marker.color === ink(entry.uuid))));
+  check('the editable list is above the chart without a duplicate side rail',
+    panel().querySelector('[data-comparison-selection]').getBoundingClientRect().bottom <=
+      plot().getBoundingClientRect().top && !panel().querySelector('.dp-chart-shell .dp-plotted'));
+  check('the list is written to the address without a history entry',
+    params().get('feature_plotted') === [a, b].join(',') && !params().has('outcomes'));
+  const listedTraces = featureTraces();
+
+  // Outcomes is untouched by the list, and owns its two slots.
+  const historyBefore = win.history.length;
+  await openView('outcomes');
+  check('choosing in Error ratio leaves Outcomes unchanged',
+    names('algorithm').includes(leader.algorithm) && unchosen('compare') && !paired());
+  await choose(trigger('compare'), slot('compare').querySelector('[data-algorithm-picker]'), trio[2]);
+  await until(() => paired() && names('compare').includes(trio[2].algorithm), 'paired outcomes');
+  check('Compare with draws the paired A/B breakdown in place of the single-algorithm bars',
+    !bars().includes('≤ τ') && !slot('compare').querySelector('[data-outcome-clear]').hidden);
+  await choose(trigger('algorithm'), slot('algorithm').querySelector('[data-algorithm-picker]'), trio[0]);
+  await until(() => names('algorithm').includes(trio[0].algorithm), 'changed algorithm');
+  check('the slot is the role: A and B bars take the two slot swatches',
+    plot().data.find(trace => trace.name === pairName('pair_a_only'))?.marker.color === slotInk('algorithm') &&
+    plot().data.find(trace => trace.name === pairName('pair_b_only'))?.marker.color === slotInk('compare') &&
+    slotInk('algorithm') !== slotInk('compare'));
+  check('the outcome key uses A/B without repeating either full name or hatching B-only',
+    plot().data.every(trace => !trio.some(entry => trace.name.includes(entry.algorithm))) &&
+    plot().data.filter(trace => trace.name === pairName('pair_b_only')).every(trace => !trace.marker.pattern));
+  check('algorithm names are not repeated in the outcome status',
+    trio.every(entry => !panel().querySelector('[data-comparison-status]').textContent.includes(entry.algorithm)));
+  check('outcome data table uses the same compact category keys',
+    [...panel().querySelectorAll('[data-comparison-histogram-data-head] th')].slice(1)
+      .every(cell => plot().data.some(trace => trace.name === cell.textContent)));
+  const comparePopup = slot('compare').querySelector('[data-algorithm-picker]');
+  trigger('compare').click();
+  await until(() => comparePopup.matches(':popover-open'), 'compare search');
+  const compareSearch = comparePopup.querySelector('[role="combobox"]');
+  compareSearch.value = trio[0].algorithm;
+  compareSearch.dispatchEvent(new win.Event('input', {bubbles: true}));
+  await until(() => comparePopup.querySelector('.dp-picker-none, [role="option"]'), 'compare suggestions');
+  check('Compare with never offers the chosen algorithm',
+    ![...comparePopup.querySelectorAll('[role="option"]')].some(option => option.dataset.algorithm === a));
+  compareSearch.dispatchEvent(new win.KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+  check('the Outcomes choices are written to the address without a history entry',
+    params().get('outcomes') === a && params().get('outcomes_compare') === c &&
+    params().get('feature_plotted') === [a, b].join(',') && win.history.length === historyBefore);
+  const openingInk = slotInk('algorithm');
+  doc.querySelector('#theme-toggle').click();
+  await until(() => slotInk('algorithm') !== openingInk, 'other theme');
+  check('Outcomes swatches and bars change theme together',
+    plot().data.find(trace => trace.name === pairName('pair_a_only')).marker.color === slotInk('algorithm') &&
+    plot().data.find(trace => trace.name === pairName('pair_b_only')).marker.color === slotInk('compare'));
+  doc.querySelector('#theme-toggle').click();
+  await until(() => slotInk('algorithm') === openingInk, 'original theme');
+
+  await openView('feature');
+  check('choosing in Outcomes leaves Error ratio unchanged',
+    rows().map(item => item.dataset.uuid).join() === [a, b].join() && featureTraces() === listedTraces);
+
+  // The address restores both selections.
+  const address = win.location.search;
+  await open(EXPLORE + address);
+  win = frame.contentWindow;
+  doc = frame.contentDocument;
+  await until(() => active()?.dpState && active().dataset.loading === 'false' && plot()?.data, 'reopened page');
+  check('a reload restores the Error ratio list in order',
+    rows().map(item => item.dataset.uuid).join() === [a, b].join());
+  await openView('outcomes');
+  await until(() => paired(), 'restored pair');
+  check('a reload restores Algorithm and Compare with',
+    names('algorithm').includes(trio[0].algorithm) && names('compare').includes(trio[2].algorithm));
+
+  slot('compare').querySelector('[data-outcome-clear]').click();
+  await until(() => !paired() && bars().includes('≤ τ'), 'single-algorithm outcomes');
+  check('clearing Compare with returns to single-algorithm bars and keeps the algorithm',
+    names('algorithm').includes(trio[0].algorithm) && unchosen('compare') &&
+    !trigger('algorithm').querySelector('.dp-series-swatch') && !params().has('outcomes_compare') &&
+    doc.activeElement === trigger('compare'));
+
+  await openView('feature');
+  const budgets = [...doc.querySelectorAll('[data-budget-select] input')]
+    .filter(input => input.labels[0]?.getBoundingClientRect().height);
+  if (budgets.length < 2) throw new Error('built release needs another budget for the retention case');
+  const prior = budgets.find(input => input.checked);
+  const other = budgets.find(input => !input.checked);
+  other.labels[0].click();
+  await until(() => active().dataset.loading === 'false' && active().dpState.budget === other.value, 'other budget');
+  prior.labels[0].click();
+  await until(() => active().dataset.loading === 'false' && active().dpState.budget === prior.value && rows().length === 2, 'original budget');
+  check('a budget round trip preserves configuration colours', ink(a) === original.get(a).ink && ink(b) === original.get(b).ink);
+  row(a).querySelector('.dp-plotted-remove').click();
+  await until(() => rows().length === 1, 'removed first choice');
+  check('removing an earlier choice does not recolour the survivor', ink(b) === original.get(b).ink && shape(b) === original.get(b).shape);
+  await add(trio[0]);
+  check('a new choice reuses the free slot without recolouring the survivor',
+    ink(a) === original.get(a).ink && ink(b) === original.get(b).ink && rows()[0].dataset.uuid === b);
+
+  doc.querySelector('[data-view="profiles"]').click();
+  await until(() => !active().querySelector('.dp-profile-view').hidden, 'profile view');
+  check('profiles keep their core-colour rule and show neither comparison selection',
+    win.dpSeriesInk(core, 'standard').colour !== original.get(a).ink &&
+    [...doc.querySelectorAll('[data-comparison-selection], [data-outcome-slots]')].every(list => !list.getBoundingClientRect().height));
+  const ranksFirst = () => [...active().querySelectorAll('.dp-profile-view li.dp-plotted-row[data-uuid]')]
+    .find(item => item.querySelector('.dp-legend-rank')?.textContent.trim() === '1');
+  await until(() => ranksFirst(), 'Success rate standings');
+  check('Outcomes opened on the algorithm Success rate ranks first', ranksFirst().dataset.uuid === leader.uuid);
+
+  // A removed view in an old address opens the default view.
+  await open(EXPLORE + '?view=comparison');
+  win = frame.contentWindow;
+  doc = frame.contentDocument;
+  await until(() => active()?.dpState && active().dataset.loading === 'false', 'stale view address');
+  check('an address naming the removed Log-log view opens Success rate',
+    doc.querySelector('[data-view="profiles"]').getAttribute('aria-selected') === 'true' &&
+    !active().querySelector('.dp-profile-view').hidden && !doc.querySelector('[data-view="comparison"]') &&
+    !params().has('view'));
+}
+run().then(() => {
+  document.title = outcomes.some(result => result.startsWith('FAIL')) ? 'FAIL comparison selection' : 'PASS comparison selection';
+}).catch(error => {
+  check(error.message, false);
+  document.title = 'FAIL comparison selection';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+{
+  "build": {
+    "cold": { "elapsed_s": 175, "peak_memory_gb": 5.3 },
+    "warm": { "elapsed_s": 30, "peak_memory_gb": 0.5 }
+  },
+  "load": {
+    "home": {
+      "largest-contentful-paint": 400,
+      "total-blocking-time": 1450,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 1925120
+    },
+    "leaderboard": {
+      "largest-contentful-paint": 450,
+      "total-blocking-time": 1300,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 1423360
+    },
+    "explore": {
+      "largest-contentful-paint": 450,
+      "total-blocking-time": 1100,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 9728000
+    },
+    "algorithm": {
+      "largest-contentful-paint": 450,
+      "total-blocking-time": 250,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 798720
+    },
+    "configured_algorithm": {
+      "largest-contentful-paint": 450,
+      "total-blocking-time": 250,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 870400
+    },
+    "tutorial": {
+      "largest-contentful-paint": 400,
+      "total-blocking-time": 200,
+      "cumulative-layout-shift": 0.1,
+      "total-byte-weight": 737280
+    }
+  },
+  "explore": {
+    "load.chart_ready_ms": {
+      "max": 2450
+    },
+    "load.blocked_ms": {
+      "max": 1100
+    },
+    "load.layout_shift": {
+      "max": 0.1
+    },
+    "load.heap_mb": {
+      "max": 14
+    },
+    "switch_budget_new.blocked_ms": {
+      "max": 400
+    },
+    "switch_budget_new.settled_ms": {
+      "max": 500
+    },
+    "switch_budget_new.fetched_kb": {
+      "max": 100
+    },
+    "switch_budget_seen.blocked_ms": {
+      "max": 400
+    },
+    "switch_budget_seen.settled_ms": {
+      "max": 500
+    },
+    "show_all_curves.blocked_ms": {
+      "max": 450
+    },
+    "pan_all_curves.fps": {
+      "min": 45
+    },
+    "pan_all_curves.slow_frames": {
+      "max": 35
+    },
+    "pan_all_curves.blocked_ms": {
+      "max": 1500
+    },
+    "hover_all_curves.fps": {
+      "min": 80
+    },
+    "hover_all_curves.slow_frames": {
+      "max": 5
+    },
+    "hover_all_curves.blocked_ms": {
+      "max": 60
+    },
+    "hover_all_curves.restyles": {
+      "max": 0
+    },
+    "hover_all_curves.browser_mb": {
+      "max": 900
+    },
+    "switch_budget_all_curves.blocked_ms": {
+      "max": 500
+    },
+    "back_to_10_curves.blocked_ms": {
+      "max": 400
+    },
+    "tau_drag.fps": {
+      "min": 50
+    },
+    "tau_drag.slow_frames": {
+      "max": 30
+    },
+    "tau_drag.release_blocked_ms": {
+      "max": 600
+    },
+    "tau_drag.start_ms": {
+      "max": 60
+    },
+    "tau_drag.live_updates": {
+      "min": 10
+    },
+    "switch_metric.blocked_ms": {
+      "max": 450
+    },
+    "hover.fps": {
+      "min": 80
+    },
+    "hover.blocked_ms": {
+      "max": 300
+    },
+    "hover.restyles": {
+      "max": 0
+    },
+    "comparison_hover.fps": {
+      "min": 50
+    },
+    "comparison_hover.blocked_ms": {
+      "max": 200
+    },
+    "comparison_hover.redraws": {
+      "max": 0
+    },
+    "interaction.inp_ms": {
+      "max": 200
+    },
+    "memory.growth_after_40_switches_mb": {
+      "max": 5
+    }
+  },
+  "load_memory": {
+    "home": {
+      "peak_heap_mb": 39,
+      "dom_nodes": 12400
+    },
+    "leaderboard": {
+      "peak_heap_mb": 25,
+      "dom_nodes": 7200
+    },
+    "explore": {
+      "peak_heap_mb": 25,
+      "dom_nodes": 15200
+    },
+    "algorithm": {
+      "peak_heap_mb": 10,
+      "dom_nodes": 2000
+    },
+    "configured_algorithm": {
+      "peak_heap_mb": 10,
+      "dom_nodes": 2000
+    },
+    "tutorial": {
+      "peak_heap_mb": 8,
+      "dom_nodes": 700
+    }
+  },
+  "idle": {
+    "home": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    },
+    "leaderboard": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    },
+    "explore": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    },
+    "algorithm": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    },
+    "configured_algorithm": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    },
+    "tutorial": {
+      "frames": 0,
+      "timers": 0,
+      "fetches": 0,
+      "redraws": 0,
+      "animations": 0,
+      "blocked_ms": 0,
+      "heap_growth_mb": 1
+    }
+  },
+  "site": {
+    "largest_page_kb": 1100,
+    "largest_file_kb": 3400,
+    "total_mb": 120
+  }
+}

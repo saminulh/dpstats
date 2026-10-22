@@ -1,0 +1,28 @@
+{#-
+  The theme's sitemap, with the page-template previews left out.
+
+  A build that sets DOCS_SERVE_TEMPLATES publishes the rendered page templates
+  under /templates/ for design review. They are invented objects, not
+  documentation, so they are never offered to a crawler even when they are
+  served. A published build writes no such page and that filter matches
+  nothing.
+
+  A SUMMARY file is the navigation source for a section, not a page a reader
+  arrives at, so it is left out as well.
+
+  Search-excluded symbol details are reached through their API section; the
+  sitemap uses the same curated page set instead of indexing those separately.
+-#}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- for file in pages -%}
+    {% if not file.page.is_link and (file.page.abs_url or file.page.canonical_url) and not file.src_uri.startswith('templates/')
+         and not file.src_uri.endswith('SUMMARY.md')
+         and not file.page.meta.get('search', {}).get('exclude', false) %}
+    <url>
+         <loc>{% if file.page.canonical_url %}{{ file.page.canonical_url|e }}{% else %}{{ file.page.abs_url|e }}{% endif %}</loc>
+         {% if file.page.update_date %}<lastmod>{{file.page.update_date}}</lastmod>{% endif %}
+    </url>
+    {%- endif -%}
+{% endfor %}
+</urlset>

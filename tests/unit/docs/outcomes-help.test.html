@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Outcomes help regression</title>
+<body>
+<h1>Outcomes help regression</h1>
+<p>The built Explore page, with four weighted Instances and two algorithms supplied at the transport boundary.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:1440px;height:900px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#results');
+const outcomes = [];
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  report.textContent = outcomes.join('\n');
+}
+async function until(predicate, description) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Outcomes help did not reach ' + description);
+}
+function fixtureData() {
+  const originalFetch = window.fetch;
+  window.fixtureReads = [];
+  window.fixtureErrors = [];
+  window.addEventListener('error', event => window.fixtureErrors.push(event.message));
+  window.addEventListener('unhandledrejection', event => window.fixtureErrors.push(String(event.reason)));
+  window.fetch = async function (url, options) {
+    if (String(url).includes('outcomes-help-fixture-')) {
+      window.fixtureReads.push(String(url));
+      // n=10 has weight 0.2. A succeeds on one seed of each of its two
+      // Instances: 0.05 of all Instances, hence 25% within that bin.
+      // B succeeds on all four seeds of its first Instance: 0.1, hence 50%.
+      const a = [.5, 3, -1, -2, 3, 3, 3, .5, .5, .5, .5, .5, 3, 3, 3, 3];
+      if (String(url).includes('high')) a.fill(3, 0, 8);
+      const b = [.5, .5, .5, .5, 3, 3, 3, 3, .5, .5, .5, .5, 3, 3, 3, 3];
+      const bytes = new Blob([new Float64Array([...a, ...b]).buffer]).stream();
+      return new Response(bytes.pipeThrough(new CompressionStream('gzip')));
+    }
+    const response = await originalFetch.call(this, url, options);
+    if (!String(url).endsWith('/index.json')) return response;
+    window.fixtureReads.push(String(url));
+    const index = await response.json();
+    index.algorithms = index.algorithms.filter(row => row.class === 'standard').slice(0, 2);
+    index.algorithms.forEach((row, position) => { row.label = position ? 'Fixture B' : 'Fixture A'; });
+    index.instances = [10, 10, 100, 1000].map((n, position) => ({
+      ...index.instances[0], uuid: 'fixture-' + position, label: 'Fixture ' + position,
+      n, d: position + 1, n_over_d: n / (position + 1),
+    }));
+    index.weights = [.1, .1, .2, .6];
+    index.taus = [1, 2, 4];
+    index.opening_tau = 1;
+    index.visible_classes = ['standard'];
+    index.features = {n: {symbol: 'n'}, d: {symbol: 'd'}};
+    index.coverage = {};
+    index.headline = {};
+    for (const metric of Object.keys(index.baselines)) {
+      index.baselines[metric] = {default: 'none', options: [{key: 'none', label: 'None (raw cost)'}]};
+    }
+    const firstBudget = index.panels[0].budget;
+    index.panels.forEach((panel, position) => {
+      panel.runs = `outcomes-help-fixture-${panel.budget === firstBudget ? 'low' : 'high'}-${position}.gz`;
+      panel.seeds = 4;
+      panel.seed_ids = [0, 1, 2, 3];
+      panel.baselines = {};
+      panel.epsilon = [1, 1, 1, 1];
+    });
+    return Response.json(index);
+  };
+}
+async function runCases() {
+  try {
+    const win = frame.contentWindow, doc = frame.contentDocument;
+    const active = () => doc.querySelector('.dp-metric:not([hidden])');
+    await until(() => active()?.dpState && active().dataset.loading === 'false', 'initial panel');
+    doc.querySelector('[data-view="outcomes"]').click();
+    const root = active().querySelector('.dp-comparison');
+    const plot = root.querySelector('.dp-comparison-plot');
+    const guide = root.querySelector('[data-comparison-histogram-guide]');
+    const explain = root.querySelector('[data-comparison-histogram-explain]');
+    const bin = root.querySelector('[data-histogram-bin]');
+    const size = root.querySelector('[data-histogram-size]');
+    const rows = () => [...root.querySelectorAll('[data-histogram-breakdown] tr')];
+    const row = label => rows().find(each => each.querySelector('th').textContent === label);
+    // An outcome's row, by the slot the page names it from.
+    const named = key => win.dpSiteCopy('explore.' + key);
+    // The bin's own outcome mix, and the same mix over every Instance shown.
+    const inBin = label => row(label)?.cells[1].textContent;
+    const overall = () => rows().map(each => each.cells[2].textContent).join('|');
+    const table = () => root.querySelector('[data-histogram-breakdown]').textContent;
+    const chooseBin = value => {
+      bin.value = String(value);
+      bin.dispatchEvent(new win.Event('change', {bubbles: true}));
+    };
+    const chooseTau = value => {
+      const slider = root.querySelector('.dp-hist-tau input');
+      slider.value = String(value);
+      slider.dispatchEvent(new win.Event('input', {bubbles: true}));
+      slider.dispatchEvent(new win.Event('change', {bubbles: true}));
+    };
+    await until(() => plot.data?.some(trace => trace.type === 'bar') && !explain.hidden, 'outcome bars');
+    // The chart opens on the Success rate leader; these checks read Fixture A.
+    const pick = async (role, name) => {
+      const box = root.querySelector(`[data-outcome-slot="${role}"]`);
+      box.querySelector('[data-outcome-trigger]').click();
+      const field = box.querySelector('[role="combobox"]');
+      await until(() => field.closest('[popover]').matches(':popover-open'), role + ' search');
+      field.value = name;
+      field.dispatchEvent(new win.Event('input', {bubbles: true}));
+      field.dispatchEvent(new win.KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+    };
+    await pick('algorithm', 'Fixture A');
+    await until(() => root.querySelector('[data-outcome-slot="algorithm"] [data-outcome-trigger]').textContent.includes('Fixture A'), 'Fixture A');
+    const guideHelp = doc.getElementById(guide.getAttribute('popovertarget'));
+    check('the bar panel sits beside the chart, the reading guide is closed help',
+      explain.closest('.dp-chart-shell') === plot.closest('.dp-chart-shell') &&
+      !guideHelp.matches(':popover-open') && guide.classList.contains('dp-help-label'));
+    check('the feature controls are labelled by their help labels, not separate buttons',
+      !root.querySelector('button[aria-label$=" help"]') &&
+      root.querySelector('[data-comparison-feature]').getAttribute('aria-labelledby'));
+    const state = active().dpState;
+    const source = state.index.panels.find(panel => panel.metric === state.metric && panel.budget === state.budget).runs;
+    const reads = () => win.fixtureReads.filter(url => url.endsWith(source)).length;
+    const initialReads = reads();
+    guide.click();
+    check('the reading guide is the glossary slot alone',
+      guideHelp.matches(':popover-open') &&
+      !!guideHelp.querySelector('[data-copy-slot="explore.outcomes_glossary"]') &&
+      !guideHelp.querySelector('figure'));
+    guideHelp.hidePopover();
+    bin.focus();
+    chooseBin(0);
+    check('the bin column is the outcome mix within the selected bin',
+      inBin('≤ τ') === '25.0%' && inBin(named('outcome_no_release')) === '12.5%' && inBin(named('outcome_invalid_regime')) === '12.5%' &&
+      !!size.querySelector('[data-copy-slot="explore.bin_share"]'));
+    const overallMix = overall();
+    const overallSum = overallMix.split('|').reduce((sum, cell) => sum + parseFloat(cell), 0);
+    check('the All Instances column sums to the whole', Math.abs(overallSum - 100) < 0.5);
+    await until(() => plot.layout.shapes?.length === 1, 'bin highlight');
+    check('selecting a bin keeps keyboard focus and highlights the correct feature interval',
+      doc.activeElement === bin && plot.layout.shapes[0].x0 === 10);
+    chooseBin(1);
+    check('an empty bin has no invented mix', inBin('≤ τ') === '—' && !!size.querySelector('[data-copy-slot="explore.bin_empty"]'));
+    check('the All Instances column does not depend on the chosen bin', overall() === overallMix);
+    // Exercise the Plotly event boundary; the focused browser check also
+    // uses an actual pointer on the rendered bar.
+    plot.emit('plotly_click', {points: [{pointNumber: 0}]});
+    check('a bar click shows that bar in the panel without the scatter-point panel',
+      bin.value === '0' && root.querySelector('[data-comparison-point-explain]').hidden);
+    // Other panels may prefetch on idle; help must reuse this panel's data.
+    check('help reuses the selected panel without refetching it', reads() === initialReads);
+
+    const compare = root.querySelector('[data-outcome-slot="compare"]');
+    await pick('compare', 'Fixture B');
+    await until(() => !!row(named('pair_both')), 'paired breakdown');
+    chooseBin(0);
+    check('the paired bin mix matches the four-seed fixture',
+      inBin(named('pair_both')) === '12.5%' && inBin(named('pair_a_only')) === '12.5%' &&
+      inBin(named('pair_b_only')) === '37.5%' && inBin(named('pair_neither')) === '37.5%');
+    const pairedAtZero = table();
+    chooseTau(2);
+    await until(() => table() !== pairedAtZero, 'threshold update');
+    check('threshold updates the existing explanation and retains its bin', bin.value === '0');
+    chooseTau(0);
+    await until(() => table() === pairedAtZero, 'threshold restored');
+    const aggregation = doc.querySelector('[data-trial-aggregation]');
+    aggregation.value = 'median';
+    aggregation.dispatchEvent(new win.Event('change', {bubbles: true}));
+    await until(() => active().dpState.aggregation === 'median', 'median reading');
+    chooseBin(0);
+    await until(() => inBin(named('pair_both')) === '0.0%', 'median explanation');
+    check('median mode replaces the per-trial mix', !row(named('pair_a_only')) && inBin(named('pair_b_only')) === '50.0%');
+    compare.querySelector('[data-outcome-clear]').click();
+    await until(() => !!row('≤ τ'), 'single reading restored');
+    chooseBin(0);
+    check('clearing B removes its rows', !row(named('pair_both')) && !row(named('pair_b_only')));
+    aggregation.value = 'individual';
+    aggregation.dispatchEvent(new win.Event('change', {bubbles: true}));
+    await until(() => active().dpState.aggregation === 'individual', 'individual trials restored');
+    const budgets = doc.querySelectorAll('.dp-privacy-filters:not([hidden]) [data-budget-select] input');
+    budgets[1].click();
+    await until(() => active().dpState.budget === budgets[1].value && active().dataset.loading === 'false', 'changed budget');
+    chooseBin(0);
+    await until(() => inBin('> τ') === '100.0%', 'new budget explanation');
+    check('the breakdown follows a changed panel instead of retaining the old mix', inBin('≤ τ') === '0.0%');
+    budgets[0].click();
+    await until(() => active().dpState.budget === budgets[0].value && active().dataset.loading === 'false', 'original budget');
+    chooseBin(0);
+    await until(() => inBin('≤ τ') === '25.0%', 'original budget explanation');
+    const feature = root.querySelector('[data-comparison-feature]');
+    feature.value = 'd';
+    feature.dispatchEvent(new win.Event('change', {bubbles: true}));
+    await until(() => Number(bin.options[0]?.text.split('–')[0]) === 1, 'changed feature');
+    check('feature changes replace the bin labels and highlight coordinates',
+      root.querySelector('[data-histogram-bin-label]').textContent === win.dpSiteCopy('explore.bin_label', {feature: 'd'}));
+    doc.querySelector('[data-view="feature"]').click();
+    await until(() => explain.hidden, 'scatter view');
+    check('outcome help stays out of the scatter view', guide.hidden && explain.hidden);
+    doc.querySelector('[data-view="outcomes"]').click();
+    await until(() => !explain.hidden && plot.data?.some(trace => trace.type === 'bar'), 'Outcomes restored');
+    frame.style.width = '390px';
+    await until(() => plot.querySelector('.main-svg').getBoundingClientRect().width <= plot.clientWidth + 1, 'narrow layout');
+    check('expanded help fits a narrow page', doc.documentElement.scrollWidth <= doc.documentElement.clientWidth);
+    frame.style.width = '1440px';
+    doc.querySelector('[data-view="feature"]').click();
+    await until(() => explain.hidden && root.querySelectorAll('.dp-plotted-remove').length, 'scatter view again');
+    root.querySelectorAll('.dp-plotted-remove').forEach(button => button.click());
+    await until(() => !root.querySelector('[data-comparison-empty]').hidden, 'empty Error ratio list');
+    doc.querySelector('[data-view="outcomes"]').click();
+    await until(() => !explain.hidden && plot.data?.some(trace => trace.type === 'bar'), 'Outcomes after emptying the list');
+    check('emptying the Error ratio list leaves the Outcomes reading in place',
+      !guide.hidden && !explain.hidden && root.querySelector('[data-comparison-histogram-empty]').hidden);
+    check('no browser errors or rejected promises: ' + JSON.stringify(win.fixtureErrors), win.fixtureErrors.length === 0);
+    document.title = outcomes.some(line => line.startsWith('FAIL')) ? 'FAIL Outcomes help' : 'PASS Outcomes help';
+  } catch (error) {
+    check(error.message, false);
+    document.title = 'FAIL Outcomes help';
+  }
+}
+(async () => {
+  const url = new URL('linear_regression/public-results/', SITE);
+  const html = await (await fetch(url)).text();
+  frame.addEventListener('load', runCases, {once: true});
+  frame.srcdoc = html.replace('<head>', '<head><base href="' + url.href + '"><script>(' + fixtureData.toString() + ')();<\/script>');
+})().catch(error => { check(error.message, false); document.title = 'FAIL Outcomes help'; });
+</script>
+</body>

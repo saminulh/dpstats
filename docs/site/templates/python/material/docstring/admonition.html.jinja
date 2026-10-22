@@ -1,0 +1,16 @@
+{#- Docstring admonitions, as the stock template draws them, except that an
+    `Example:` paragraph written as a doctest (the house docstring form, see
+    CODE_STANDARDS) is code: fenced as a Python session instead of read as
+    Markdown, where its `>>>` prompts nest into blockquotes. -#}
+{%- set body = namespace(parts=[]) -%}
+{%- for paragraph in section.value.contents.split("\n\n") -%}
+  {%- if section.value.kind == "example" and paragraph.lstrip().startswith(">>>") -%}
+    {%- set body.parts = body.parts + ["```pycon\n" ~ paragraph.strip("\n") ~ "\n```"] -%}
+  {%- else -%}
+    {%- set body.parts = body.parts + [paragraph] -%}
+  {%- endif -%}
+{%- endfor -%}
+<details class="{{ section.value.kind }}" open>
+  <summary>{{ section.title|convert_markdown(heading_level, html_id, strip_paragraph=True, autoref_hook=autoref_hook) }}</summary>
+  {{ body.parts|join("\n\n")|convert_markdown(heading_level, html_id, autoref_hook=autoref_hook) }}
+</details>

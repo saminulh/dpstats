@@ -1,0 +1,17 @@
+<li class="nav-item dropdown{% if space.task %} active{% endif %}">
+  <button type="button" class="nav-link dropdown-toggle" id="task-picker" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="task-menu">{{ site_copy_span('tasks_menu') }}</button>
+  <div class="dropdown-menu dp-task-menu" id="task-menu" aria-labelledby="task-picker">
+    {% for benchmarked, label in [(true, site_copy_span('benchmarked_tasks')), (false, site_copy_span('other_tasks'))] %}
+      {% set group = namespace(tasks=[]) %}
+      {% for task in space.tasks %}
+        {% set task_slug = task.children[0].url.split('/')[0] %}
+        {% if (task_slug in config.extra.benchmarked_tasks) == benchmarked %}{% set group.tasks = group.tasks + [task] %}{% endif %}
+      {% endfor %}
+      {% if group.tasks %}
+        {% if not benchmarked and config.extra.benchmarked_tasks %}<div class="dropdown-divider"></div>{% endif %}
+        <h2 class="dropdown-header">{{ label }}</h2>
+        {% for task in group.tasks %}<a class="dropdown-item text-wrap{% if task == space.task %} active{% endif %}" href="{{ first_url(task) }}" data-task-id="{{ task.children[0].url.split('/')[0] }}"{% if task == space.task %} aria-current="true"{% endif %}>{{ task.title }}</a>{% endfor %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</li>

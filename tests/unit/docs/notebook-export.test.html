@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Explore notebook export regression</title>
+<body>
+<h1>Explore notebook export regression</h1>
+<p>Reads the site built into the checkout's <code>site/</code>.
+It exercises the generated Mean Estimation Explore page with two fixture core labels
+and one transformation label injected at the index transport boundary. Results stay unchanged.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:100%;height:800px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);  // the built site: mkdocs build
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#results');
+const outcomes = [];
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  report.textContent = outcomes.join('\n');
+}
+async function until(predicate) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Explore did not reach the requested state');
+}
+async function runCases() {
+  try {
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    const active = () => doc.querySelector('.dp-metric:not([hidden])');
+    await until(() => active()?.dpState && active().dataset.loading === 'false');
+    const download = async () => {
+      let blob;
+      const create = win.URL.createObjectURL;
+      const click = win.HTMLAnchorElement.prototype.click;
+      win.URL.createObjectURL = value => { blob = value; return create.call(win.URL, value); };
+      win.HTMLAnchorElement.prototype.click = () => {};
+      try {
+        doc.querySelector('[data-notebook-download]').click();
+        await until(() => blob);
+        const cells = JSON.parse(await blob.text()).cells.filter(cell => cell.metadata.dp_parameters);
+        return Object.assign({}, ...cells.map(cell => cell.metadata.dp_parameters));
+      } finally {
+        win.URL.createObjectURL = create;
+        win.HTMLAnchorElement.prototype.click = click;
+      }
+    };
+    const plotted = () => Array.from(active().querySelectorAll('.dp-swatch-toggle[aria-pressed="true"]'),
+      button => button.closest('[data-uuid]').dataset.uuid).sort();
+    await until(() => plotted().length > 0);
+    const topExport = await download();
+    const ranges = doc.querySelectorAll('.dp-numeric-range').length;
+    check('the notebook takes every filter range, open',
+      Object.keys(topExport.INSTANCE_FILTERS).length === ranges && ranges > 0 &&
+      Object.values(topExport.INSTANCE_FILTERS).every(bounds => bounds[0] === null && bounds[1] === null));
+    check('the notebook exports the top curves separately from the comparison pool',
+      JSON.stringify(topExport.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify(plotted()) &&
+      topExport.PLOTTED_ALGORITHMS.length === Math.min(10, topExport.ALGORITHMS.length));
+    active().querySelector('.dp-swatch-toggle[aria-pressed="true"]').click();
+    const customExport = await download();
+    check('a custom plotted selection reaches the notebook without changing the pool',
+      JSON.stringify(customExport.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify(plotted()) &&
+      JSON.stringify(customExport.ALGORITHMS) === JSON.stringify(topExport.ALGORITHMS));
+    const standings = () => Array.from(active().querySelectorAll('.dp-leaderboard tbody tr'),
+      row => [row.dataset.uuid, row.lastElementChild.title]).sort();
+    const originalStandings = JSON.stringify(standings());
+    const roster = active().dpState.roster;
+    const custom = new Set(customExport.PLOTTED_ALGORITHMS);
+    const toggleFilter = name => Array.from(active().dpAlgorithmFilters.querySelectorAll('label'))
+      .find(label => label.textContent === name).querySelector('input').click();
+    const samePool = exported => JSON.stringify(exported.ALGORITHMS) === JSON.stringify(topExport.ALGORITHMS) &&
+      exported.BASELINE === topExport.BASELINE && JSON.stringify(standings()) === originalStandings;
+    const hiddenCore = roster.find(row => custom.has(row.uuid)).core;
+    const coreExpected = roster.filter(row => custom.has(row.uuid) && row.core !== hiddenCore)
+      .map(row => row.uuid).sort();
+    check('the custom selection spans both fixture cores', coreExpected.length > 0 && coreExpected.length < custom.size);
+    toggleFilter(hiddenCore);
+    await until(() => JSON.stringify(plotted()) === JSON.stringify(coreExpected));
+    const coreExport = await download();
+    check('a core filter excludes retained selections from the export',
+      JSON.stringify(coreExport.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify(coreExpected) && samePool(coreExport));
+    toggleFilter(hiddenCore);
+    await until(() => plotted().length === custom.size);
+    const restoredCore = await download();
+    check('restoring the core restores the custom exported curves',
+      JSON.stringify(restoredCore.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify([...custom].sort()) && samePool(restoredCore));
+    const transformationExpected = roster.filter(row => custom.has(row.uuid) && !row.transformations.includes('Export transformation'))
+      .map(row => row.uuid).sort();
+    check('unchecking the transformation keeps a strict subset of the custom selection', transformationExpected.length > 0 && transformationExpected.length < custom.size);
+    toggleFilter('Export transformation');
+    await until(() => JSON.stringify(plotted()) === JSON.stringify(transformationExpected));
+    const transformationExport = await download();
+    check('a transformation filter excludes retained selections from the export',
+      JSON.stringify(transformationExport.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify(transformationExpected) && samePool(transformationExport));
+    toggleFilter('Export transformation');
+    await until(() => plotted().length === custom.size);
+    const restoredTransformation = await download();
+    check('restoring the transformation restores the custom exported curves',
+      JSON.stringify(restoredTransformation.PLOTTED_ALGORITHMS.slice().sort()) === JSON.stringify([...custom].sort()) && samePool(restoredTransformation));
+    const top = doc.querySelector('[data-top-n]');
+    top.value = 'all';
+    top.dispatchEvent(new win.Event('change', { bubbles: true }));
+    const allExport = await download();
+    check('showing all curves exports the whole comparison pool',
+      JSON.stringify(allExport.PLOTTED_ALGORITHMS.slice().sort()) ===
+      JSON.stringify(allExport.ALGORITHMS.slice().sort()));
+    for (const button of active().querySelectorAll('.dp-swatch-toggle[aria-pressed="true"]')) button.click();
+    const emptyExport = await download();
+    check('hiding every curve exports an empty plot and retains the comparison pool',
+      emptyExport.PLOTTED_ALGORITHMS.length === 0 &&
+      JSON.stringify(emptyExport.ALGORITHMS) === JSON.stringify(topExport.ALGORITHMS));
+    document.title = outcomes.some(result => result.startsWith('FAIL')) ? 'FAIL notebook export' : 'PASS notebook export';
+  } catch (error) {
+    check(error.message, false);
+    document.title = 'FAIL notebook export';
+  }
+}
+// The scale fixture has one core and no transformations. Give its existing rows
+// filter labels so the real controls exercise both narrowing paths.
+function labelFixtureRows() {
+  const originalFetch = window.fetch;
+  window.fetch = async function (url, options) {
+    const response = await originalFetch.call(this, url, options);
+    if (!String(url).endsWith('/index.json')) return response;
+    const index = await response.json();
+    index.algorithms.forEach((row, position) => {
+      row.core = 'Export core ' + position % 2;
+      row.transformations = position % 3 === 0 ? ['Export transformation'] : [];
+    });
+    return new Response(JSON.stringify(index), { headers: { 'Content-Type': 'application/json' } });
+  };
+}
+(async () => {
+  const url = new URL('mean_estimation/public-results/', SITE);
+  const html = await (await fetch(url)).text();
+  frame.addEventListener('load', runCases, { once: true });
+  frame.srcdoc = html.replace('<head>', '<head><base href="' + url.href + '"><script>(' +
+    labelFixtureRows.toString() + ')();<\/script>');
+})().catch(error => {
+  check(error.message, false);
+  document.title = 'FAIL notebook export';
+});
+</script>
+</body>

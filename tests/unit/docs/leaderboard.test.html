@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Leaderboard interaction regression</title>
+<link rel="stylesheet" href="../../../docs/site/docs/stylesheets/vendor/tabler-1.5.1.min.css">
+<link rel="stylesheet" href="../../../docs/site/docs/stylesheets/extra.css">
+<body data-bs-theme="light">
+<!-- A known class reading: the badge and the details read their explanation from it. -->
+<div hidden data-privacy-interpretations='{"diagnostic":"Reading of the diagnostic class."}'></div>
+<div hidden data-site-copy='{"shared":{"profile_question_individual":"How often does each algorithm succeed?","profile_formula_individual":"{success_rate}: share of {trials} with {metric} ≤ {tau}{baseline}","profile_question_median":"How often does each algorithm\u2019s typical {trial} succeed?","profile_formula_median":"{success_rate} over {instances} of {metric}","term_success_rate":"Success rate","term_trial":"trial","term_trials":"trials","term_instances":"problem instances","interpretation_line":"Interpretation: {class}","interpretation_aria_reading":"Interpretation: {class}. {reading}","privacy_interpretation":"Privacy interpretation:","select_all":"Select all","deselect_all":"Deselect all"},"leaderboard":{"column_headline":"τ at {percent}%","unreached":"∞ (reaches {percent}%)"},"component":{"full_details":"PLACEHOLDER","semantics_link":"What this means"},"fixture":{"fields":"{name} holds {{all}} [the bins](#b) at {share}.","unwritten":"PLACEHOLDER","tokens":"How often does each {trial} beat {{x}}?"}}'></div>
+<h1>Leaderboard interaction regression</h1>
+<script type="application/json" data-series-style>{"colours":{"default":{"AMP":"#6929c4","SSP":"#0085da","GaussianMechanism":"#005d5d","CoinPress":"#9f1853","DPSGD":"#ed404c","PLANBinarySearchGaussian":"#570408","AdaSSP":"#198038","AdaOPS":"#002d9c","DPGD":"#8a3800","OnePassDPGD":"#012749","BoostedAdaSSP":"#e14781","DPRSS":"#9a63f3","EfficientPTR":"#423b11","ExponentialMechanism":"#e118b6","IterativeHessianMixing":"#7b0977","OPSPTR":"#521942","TailRobustDPGD":"#71855f","TailRobustSparseHuberIHT":"#738800","TukeyEM":"#b16559","ZeroCoefficient":"#a06cc4","LocalOutputPerturbation":"#db551d","ObjectivePerturbationKifer":"#505392","ObjectivePerturbationRedberg":"#673d3d"},"slate":{"AMP":"#8a3ffc","SSP":"#33b1ff","GaussianMechanism":"#007d79","CoinPress":"#ff7eb6","DPSGD":"#fa4d56","PLANBinarySearchGaussian":"#fff1f1","AdaSSP":"#6fdc8c","AdaOPS":"#4589ff","DPGD":"#ba4e00","OnePassDPGD":"#bae6ff","BoostedAdaSSP":"#d12771","DPRSS":"#d4bbff","EfficientPTR":"#94695a","ExponentialMechanism":"#d6f55b","IterativeHessianMixing":"#507b07","OPSPTR":"#c039b9","TailRobustDPGD":"#fee296","TailRobustSparseHuberIHT":"#677398","TukeyEM":"#95a982","ZeroCoefficient":"#8b7122","LocalOutputPerturbation":"#ff936d","ObjectivePerturbationKifer":"#c99cb0","ObjectivePerturbationRedberg":"#b84c51"}},"surface":{"default":"#e6e9ee","slate":"#17232e"},"dash":{"standard":"solid","qualified":"10 4","theoretical":"10 4","informal":"3 3","diagnostic":"3 3","nonprivate":"9 3 2 3"},"referenceClass":"nonprivate","markers":["circle","square","triangle-up","diamond","cross"],"markerSize":8,"markersShown":6,"range":[0,5],"guideWidth":2,"pad":1.05,"emphasis":{"curves":10,"regularWidth":2.5,"mutedWidth":1.5,"regularOpacity":1.0,"mutedOpacity":0.6}}</script>
+<pre id="results" role="status">Running…</pre>
+<main class="dp-results" data-leaderboard data-index="fixture/index.json" data-algorithm-provenance="fixture/first-provenance.json" data-task="alpha_task">
+  <div class="dp-filters dp-comparison-controls" data-reader-terms='{"baseline":{"text":"Fixture baseline."}}'>
+    <label class="dp-metric-control"><span class="dp-chip-label">Metric</span><select data-metric-select aria-label="Metric"><option>first</option><option>second</option></select></label>
+    <div class="dp-baseline-control"><fieldset data-official-baseline disabled><legend class="dp-chip-label">Baseline</legend>
+      <span class="dp-segmented-option"><input type="radio" name="baseline" id="baseline-protocol" value="protocol" checked disabled><label for="baseline-protocol" data-official-baseline-label>None</label></span>
+    </fieldset></div>
+    <label>Show top <select data-top-n><option>5</option><option selected>10</option><option>all</option><option>custom</option></select></label>
+    <div class="dp-threshold-control"><input type="range" aria-label="Quantile" min="1" max="99" step="1" value="90"><output></output></div>
+  </div>
+</main>
+<aside data-playground data-algorithm-provenance="fixture/other-provenance.json" data-task="other_task">
+  <table class="dp-leaderboard"><tbody><tr data-uuid="d"><td class="dp-alg">Other task</td></tr></tbody></table>
+</aside>
+<script>
+// Synthetic transport only; calculations, controls, DOM and Plotly are real.
+const page = document.querySelector('main');
+for (const metric of ['first', 'second']) {
+  const section = document.createElement('section');
+  section.className = 'dp-metric';
+  section.dataset.metric = metric;
+  section.dataset.baselineLabel = metric === 'first' ? 'None' : 'reference SE';
+  section.hidden = metric !== 'first';
+  section.innerHTML = `<div class="dp-filters"><fieldset class="dp-segmented" data-budget-select>
+    <legend class="dp-chip-label">Privacy budget</legend>
+    <span class="dp-segmented-option"><input type="radio" name="budget-${metric}" id="budget-${metric}-low" value="low" checked><label for="budget-${metric}-low">low</label></span>
+    <span class="dp-segmented-option"><input type="radio" name="budget-${metric}" id="budget-${metric}-high" value="high"><label for="budget-${metric}-high">high</label></span>
+    </fieldset></div>
+    <section class="dp-results-profile" data-reader-terms='{"trial":{"text":"A trial is one execution."}}'>
+      <h3 class="dp-profile-heading"></h3><p class="dp-profile-formula"></p>
+      <div class="dp-chart" id="chart-${metric}" data-budget="low"></div></section>
+    <aside class="dp-plotted" data-plotted-strip hidden><div class="dp-plotted-head">
+      <h4 class="dp-plotted-heading" id="chart-${metric}-plotted">Plotted</h4></div>
+      <details class="dp-plotted-box" open><summary></summary>
+      <ul class="dp-plotted-rows" aria-labelledby="chart-${metric}-plotted"></ul>
+      <button type="button" class="dp-plotted-more" hidden></button></details></aside>
+    <script type="application/json" data-results-section>{"chart":"chart-${metric}"}<\/script>`;
+  for (const budget of ['low', 'high']) {
+    section.insertAdjacentHTML('beforeend', `<div class="dp-budget" data-budget="${budget}" ${budget === 'high' ? 'hidden' : ''}>
+      <table class="dp-leaderboard" data-columns="rank,algorithm,headline"><thead><tr><th>Rank</th><th>Algorithm</th><th>τ at 90%</th></tr></thead><tbody></tbody></table></div>`);
+  }
+  page.append(section);
+}
+const matrices = {
+  'first-low': [0.5, 2, 2, 4, 0, 0],
+  'first-high': [2, 4, 0.5, 1, 0, 0],
+  'second-low': [1, 1, 4, 4, 0, 0],
+  'second-high': [1, 1, 4, 4, 0, 0], // Equal answers are legitimate.
+};
+const index = {
+  algorithms: [
+    // Alpha and Beta are two configurations of one core: same colour, different marker.
+    {uuid: 'a', label: 'Alpha', family: 'A', slot: 1, diagnostic: false, class: 'standard', core: 'AdaSSP', marker: 'circle', transformations: []},
+    {uuid: 'b', label: 'Beta', family: 'A', slot: 1, diagnostic: false, class: 'standard', core: 'AdaSSP', marker: 'square', transformations: []},
+    {uuid: 'c', label: 'Diagnostic', family: 'C', slot: 3, diagnostic: true, class: 'diagnostic', core: 'SSP', marker: 'circle', transformations: []},
+  ],
+  instances: [{}, {}], taus: [1, 2, 4], headline_quantile: 0.9, leading: 2,
+  headline_metric: 'first', visible_classes: ['standard'], weights: [0.5, 0.5],
+  baselines: {
+    first: {default: 'none', options: [{key: 'none', label: 'None (raw cost) (protocol)'}]},
+    second: {default: 'published_se', options: [{key: 'published_se', label: 'published_se (protocol)'}]},
+  },
+  metric_labels: {first: 'first', second: 'second / reference SE'}, panels: [], coverage: {},
+};
+// Enough algorithms to test top-10 selection rather than roster order. Each takes
+// its own core; the strongest opening curve is last in the roster.
+const fillerCores = ['BoostedAdaSSP', 'TukeyEM', 'AdaOPS', 'OPSPTR', 'DPSGD',
+  'OnePassDPGD', 'IterativeHessianMixing', 'DPGD',
+  'TailRobustDPGD', 'TailRobustSparseHuberIHT'];
+for (let i = 0; i < 10; i++) {
+  index.algorithms.push({uuid: 'f' + i, label: i === 9 ? 'Zulu' : 'Filler ' + i,
+    family: 'Other', slot: 0, diagnostic: false, class: 'standard',
+    core: fillerCores[i], marker: 'circle', transformations: []});
+  for (const matrix of Object.values(matrices)) {
+    const cost = i === 9 ? 0.1 : i === 8 ? 3 : i === 7 ? 4 : 9;
+    matrix.push(cost, cost);
+  }
+}
+// Three algorithms that always rank last, so the plotted set overruns the
+// strip's cap of twelve without changing which ten open drawn.
+for (let i = 0; i < 3; i++) {
+  index.algorithms.push({uuid: 'z' + i, label: 'Zeta ' + i, family: 'Other', slot: 0,
+    diagnostic: false, class: 'standard', core: 'SSP', marker: 'circle', transformations: []});
+  for (const matrix of Object.values(matrices)) matrix.push(20, 20);
+}
+// The readings the build ships, by hand: every algorithm has one trial on each
+// of two equally weighted instances, so its error ratio at 0.9 is the larger of
+// its two ratios, where it reaches its whole share of 1. The second metric
+// reads against a published SE of 2 on both instances; the first, raw cost.
+index.headline = {all: {}};
+for (const metric of ['first', 'second']) for (const budget of ['low', 'high']) {
+  const costs = matrices[`${metric}-${budget}`];
+  const against = metric === 'second' ? 2 : 1;
+  index.headline.all[`${metric}/${budget}`] = Object.fromEntries(index.algorithms.map((entry, row) => {
+    const worst = Math.max(costs[2 * row], costs[2 * row + 1]) / against;
+    return [entry.uuid, [worst, 1, worst]];
+  }));
+}
+for (const metric of ['first', 'second']) for (const budget of ['low', 'high']) {
+  index.panels.push({metric, budget, runs: `${metric}-${budget}`, seeds: 1, seed_ids: [0], baselines: {published_se: [2, 2]}});
+  index.coverage[`${metric}/${budget}`] = {a: [2, 2], b: [2, 2], c: [2, 2]};
+  for (let i = 0; i < 10; i++) index.coverage[`${metric}/${budget}`]['f' + i] = [2, 2];
+}
+const realFetch = window.fetch;
+const reads = [];
+const provenanceReads = [];
+window.fetch = async function (url, options) {
+  const name = String(url).split('/').pop();
+  if (name.endsWith('-provenance.json')) {
+    provenanceReads.push(name);
+    const other = name === 'other-provenance.json';
+    return Response.json({[other ? 'd' : 'a']: {
+      configuration: {},
+      declaration: other ? null : {description: 'Estimate alpha privately.'},
+      component: {
+        kind: 'Algorithm', name: other ? 'Other task implementation' : 'Alpha implementation',
+        summary: other ? '' : 'Estimate `alpha` privately.',
+        docs: 'library/', hyperparameters: [], children: [],
+      },
+    }});
+  }
+  if (name === 'index.json') return Response.json(index);
+  if (!matrices[name]) return realFetch(url, options);
+  reads.push(name);
+  const bytes = new Blob([new Float64Array(matrices[name]).buffer]).stream();
+  return new Response(bytes.pipeThrough(new CompressionStream('gzip')));
+};
+</script>
+<script defer src="../../../docs/site/docs/javascripts/vendor/plotly-basic-3.7.0.min.js"></script>
+<script defer src="../../../docs/site/docs/javascripts/site.js"></script>
+<script defer src="../../../docs/site/docs/javascripts/panel-data.js"></script>
+<script defer src="../../../docs/site/docs/javascripts/profile-charts.js"></script>
+<script defer src="../../../docs/site/docs/javascripts/leaderboard.js"></script>
+<script defer src="../../../docs/site/docs/javascripts/algorithm-provenance.js"></script>
+<script>
+window.addEventListener('load', async () => {
+  const report = document.querySelector('#results');
+  const outcomes = [];
+  function check(name, actual, expected) {
+    const pass = JSON.stringify(actual) === JSON.stringify(expected);
+    outcomes.push(`${pass ? 'PASS' : 'FAIL'} ${name}: ${JSON.stringify(actual)}${pass ? '' : ' expected ' + JSON.stringify(expected)}`);
+  }
+  const active = () => page.querySelector('.dp-metric:not([hidden])');
+  const rows = () => active().querySelectorAll('.dp-budget:not([hidden]) tbody tr');
+  const values = () => Array.from(rows()).filter(row => ['a', 'b'].includes(row.dataset.uuid)).map(row => [row.dataset.uuid, row.cells[2].textContent]);
+  const plotted = () => active().querySelector('.dp-chart').data.filter(trace => trace.visible !== false && trace.visible !== 'legendonly');
+  const paths = () => Array.from(active().querySelectorAll('.js-line'), line => line.getAttribute('d'));
+  /* Column integrity, asserted after every action over every panel on the
+     page rather than over the one panel a static read can see: a table
+     declares the columns its client-side re-render builds each row from, so
+     the declaration, the header and every row have to stay the same width. */
+  let auditing = true;
+  let audits = 0;
+  let settles = 0;
+  let panels = 0;
+  const mismatches = [];
+  function auditColumns(label) {
+    if (!auditing) return;
+    settles += 1;
+    let seen = 0;
+    for (const table of page.querySelectorAll('.dp-leaderboard')) {
+      if (!table.tHead) continue;
+      audits += 1;
+      seen += 1;
+      const declared = (table.getAttribute('data-columns') || '').split(',').filter(Boolean).length;
+      const heads = table.tHead.rows[0].cells.length;
+      const widths = Array.from(new Set(Array.from(table.tBodies[0].rows, row => row.cells.length)));
+      if (!declared || declared !== heads || widths.some(width => width !== heads)) {
+        mismatches.push({label, declared, heads, widths});
+      }
+    }
+    panels = panels || seen;
+    if (seen !== panels) mismatches.push({label, panelsSeen: seen, expected: panels});
+  }
+  async function settle(label) {
+    // Allow event handlers and Plotly's asynchronous rendering to finish.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const limit = Date.now() + 5000;
+    while (active().dataset.loading !== 'false' || !active().querySelector('.js-line')) {
+      if (Date.now() > limit) throw new Error('Panel did not finish loading');
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    await new Promise(resolve => setTimeout(resolve, 50));
+    auditColumns(label || 'action');
+  }
+  async function select(label, value) {
+    const scope = label === 'Metric' ? page : page.querySelector('.dp-privacy-filters:not([hidden])');
+    let control = scope.querySelector(`[aria-label="${label}"]`);
+    if (!control) {
+      control = [...scope.querySelectorAll('fieldset, select')].find(el => {
+        const legend = el.tagName === 'FIELDSET' ? el.querySelector('legend') : el.previousElementSibling;
+        return legend && legend.textContent.trim() === label;
+      });
+    }
+    control.value = value;
+    control.dispatchEvent(new Event('change', {bubbles: true}));
+    await settle();
+  }
+  const slider = page.querySelector('[type="range"]');
+  const top = page.querySelector('[data-top-n]');
+  // The "other task" aside is a bare stand-in for a second results section
+  // on the same physical page (Home carries several); it never runs the full
+  // playground controller, so it wires the same dpOpenDetails a booted
+  // section would, by hand, to exercise the shared dialog and the
+  // provenance cache against a second task without a full chart fixture.
+  const otherSection = document.querySelector('aside[data-playground]');
+  otherSection.dpOpenDetails = function (uuid, opener) {
+    const cell = otherSection.querySelector('tr[data-uuid="' + uuid + '"] .dp-alg');
+    const clone = cell ? cell.cloneNode(true) : null;
+    if (clone) clone.querySelectorAll('.dp-provenance-trigger').forEach(node => node.remove());
+    window.dpAlgorithmDialog({
+      host: otherSection,
+      uuid,
+      title: clone ? clone.textContent.trim() : uuid,
+      opener,
+    });
+  };
+  try {
+    check('chart dependencies loaded before startup', [
+      typeof window.Plotly?.react,
+      typeof window.dpPanel?.loadIndex,
+      typeof window.dpResultsControls,
+      typeof window.dpContextualHelp,
+    ], ['function', 'function', 'function', 'function']);
+    const fields = {name: '<b>[A](https://z/)</b>', share: '40%'};
+    check('a slot fills its fields as text and keeps doubled braces literal',
+      window.dpSiteCopy('fixture.fields', fields), '<b>[A](https://z/)</b> holds {all} the bins at 40%.');
+    const filled = document.createElement('p');
+    window.dpSiteCopyFill(filled, 'fixture.fields', fields);
+    check('a filled slot escapes field values and links only the slot\'s own link', filled.innerHTML,
+      '&lt;b&gt;[A](https://z/)&lt;/b&gt; holds {all} <a href="#b">the bins</a> at 40%.');
+    const unwritten = document.createElement('p');
+    window.dpSiteCopyFill(unwritten, 'fixture.unwritten', fields);
+    check('an unwritten slot shows its marker whatever its fields',
+      [window.dpSiteCopy('fixture.unwritten', fields), unwritten.textContent, unwritten.classList.contains('dp-copy-slot')],
+      ['\u27e8fixture.unwritten\u27e9', '\u27e8fixture.unwritten\u27e9', true]);
+    let missing = '';
+    try { window.dpSiteCopy('fixture.fields', {name: 'A'}); } catch (error) { missing = error.message; }
+    check('a field the caller does not pass refuses rather than show {share}', missing,
+      'site copy fixture.fields: no value for field {share}');
+    const term = {term: 'trial', word: 'trial'};
+    check('a slot splits into text runs and the caller\'s token for each field',
+      window.dpSiteCopyTokens('fixture.tokens', {trial: term}), ['How often does each ', term, ' beat ', '{', 'x', '}', '?']);
+    check('an unwritten slot is its marker alone as tokens',
+      window.dpSiteCopyTokens('fixture.unwritten', {}), ['\u27e8fixture.unwritten\u27e9']);
+    const diagnosticBadge = window.dpInterpretationBadge('diagnostic');
+    check('diagnostic class is visible and explained accessibly from its reading',
+      [diagnosticBadge.textContent, diagnosticBadge.title, diagnosticBadge.getAttribute('aria-label')],
+      ['diagnostic', 'Reading of the diagnostic class.', 'Interpretation: diagnostic. Reading of the diagnostic class.']);
+    const unknownBadge = window.dpInterpretationBadge(undefined);
+    check('a missing class carries no hover text',
+      [unknownBadge.textContent, unknownBadge.hasAttribute('title'), unknownBadge.getAttribute('aria-label')],
+      ['unknown', false, 'Interpretation: unknown']);
+    const diagnosticRow = window.dpPlottedRow({uuid: 'diagnostic-test', label: 'DataBounds + GaussianMechanism', interpretation: 'diagnostic'});
+    check('selected rows retain their interpretation',
+      diagnosticRow.querySelector('[data-privacy-interpretation]').textContent, 'diagnostic');
+    const classHost = document.createElement('div');
+    classHost.dataset.interpretationHref = 'classes/';
+    window.dpAlgorithmDialog({title: 'Diagnostic comparison', uuid: 'diagnostic-test',
+      interpretation: 'diagnostic', host: classHost});
+    const diagnosticDialog = document.querySelector('dialog.dp-algorithm-dialog:not(.dp-filter-dialog)');
+    const classLine = diagnosticDialog.querySelector('.dp-interpretation');
+    check('details state the class in one line that links its meaning',
+      [classLine?.textContent, classLine?.querySelector('a')?.getAttribute('href'),
+        classLine?.querySelector('[data-privacy-interpretation]')?.title],
+      ['Privacy interpretation: diagnostic · What this means', 'classes/', 'Reading of the diagnostic class.']);
+    diagnosticDialog.close();
+    // Synthetic matrix: row 0 over 2 Instances x 4 seeds covers every status
+    // code, a not_run (-6) slot and a NaN (no Attempt) slot in one panel.
+    const outcomePanel = {
+      values: new Float64Array([2, -1, -2, -3, -4, -5, -6, NaN]),
+      instances: 2, seeds: 4,
+    };
+    check('outcomes reads every status, not_run and NaN slots',
+      window.dpPanel.outcomes(outcomePanel, 0, [0, 1]),
+      {
+        counts: {
+          success: 1, no_release: 1, invalid_regime: 1,
+          algorithm_error: 1, timeout: 1, memory_limit_exceeded: 1,
+        },
+        recorded: 6, declared: 7,
+      });
+    await settle();
+    check('opening values and standard-only roster', values(), [['a', '2'], ['b', '4']]);
+    const profileOf = metric => page.querySelector(`.dp-metric[data-metric="${metric}"] .dp-results-profile`);
+    const firstProfile = profileOf('first');
+    check('the question and formula read their slots, filling each field',
+      [firstProfile.querySelector('.dp-profile-heading').textContent,
+        /^Success rate: share of trials with .+ ≤ τ$/.test(firstProfile.querySelector('.dp-profile-formula').textContent)],
+      ['How often does each algorithm succeed?', true]);
+    check('a field naming a defined term becomes its trigger; an undefined one stays a word',
+      Array.from(firstProfile.querySelectorAll('.dp-profile-formula .dp-term'), el => el.textContent), ['trials']);
+    const baselineTerm = page.querySelector('.dp-baseline-control .dp-help-label');
+    check('the Baseline label is the trigger for its definition',
+      [baselineTerm.tagName, baselineTerm.textContent,
+        document.getElementById(baselineTerm.getAttribute('popovertarget')).textContent],
+      ['BUTTON', 'Baseline', 'Fixture baseline.']);
+    check('opening baseline is explicitly unnormalized', page.querySelector('[data-official-baseline-label]').textContent, 'None');
+    const opening = paths();
+    check('top 10 follows standings, not roster order', plotted().map(trace => trace.legendgroup), ['f9', 'a', 'f8', 'b', 'f7', 'f0', 'f1', 'f2', 'f3', 'f4']);
+    check('official table still includes every eligible algorithm', rows().length, 15);
+    const drawn = uuid => plotted().find(trace => trace.legendgroup === uuid);
+    check('two configurations of one core take that core\'s colour',
+      drawn('a').line.color, drawn('b').line.color);
+    check('and are separated by their markers, not by colour',
+      drawn('a').marker.symbol !== drawn('b').marker.symbol, true);
+    check('a core the table names takes its own colour, not the unmapped ink',
+      drawn('a').line.color, '#198038');
+    // Colour is a function of the core alone: a reading that reorders the
+    // curves must not re-deal it.
+    const inkBefore = Object.fromEntries(plotted().map(t => [t.legendgroup, t.line.color]));
+    slider.value = '50';
+    slider.dispatchEvent(new Event('input'));
+    await settle();
+    check('moving the quantile never moves a colour',
+      plotted().filter(t => t.legendgroup in inkBefore)
+        .every(t => t.line.color === inkBefore[t.legendgroup]), true);
+    check('the current top 10 are never muted', plotted().slice(0, 10)
+      .every(trace => trace.opacity === 1 && trace.line.width === 2.5), true);
+    const drawnLevels = () => {
+      const chart = active().querySelector('.dp-chart');
+      return Array.from(chart.querySelectorAll('.scatterlayer > .trace'))
+        .map(group => chart.dpTreatments[group.__data__[0].trace.legendgroup].emphasised ? 1 : 0);
+    };
+    slider.value = '90';
+    slider.dispatchEvent(new Event('input'));
+    await settle();
+    check('only plotted rows carry a swatch', Array.from(rows()).every(row =>
+      !!row.querySelector('.dp-series-marker') === !!drawn(row.dataset.uuid)), true);
+    check('the ranked legend retains the complete eligible roster',
+      active().querySelectorAll('[data-plotted-strip] .dp-plotted-row').length, 15);
+    check('every ranked entry carries rank, score and a details button',
+      Array.from(active().querySelectorAll('.dp-ranked-row')).every(row =>
+        row.querySelector('.dp-legend-rank') && row.querySelector('.dp-legend-score') &&
+        row.querySelector('.dp-plotted-open')), true);
+    check('a leaderboard row names no standard class: every ranked row is one',
+      Array.from(active().querySelectorAll('.dp-ranked-row [data-privacy-interpretation]'))
+        .filter(badge => badge.textContent === 'standard').length, 0);
+    const alphaLegend = () => active().querySelector('.dp-ranked-row[data-uuid="a"]');
+    const alphaRank = alphaLegend().querySelector('.dp-legend-rank').textContent;
+    const alphaScore = alphaLegend().querySelector('.dp-legend-score').textContent;
+    alphaLegend().querySelector('.dp-plotted-remove').click();
+    await settle();
+    check('hiding a curve retains its standing in the ranked legend',
+      [alphaLegend().querySelector('.dp-legend-rank').textContent,
+       alphaLegend().querySelector('.dp-legend-score').textContent], [alphaRank, alphaScore]);
+    check('hiding a curve changes its plot state', !!drawn('a'), false);
+    alphaLegend().querySelector('.dp-plotted-remove').click();
+    await settle();
+    check('an unplotted entry can be restored from the same ranked legend', !!drawn('a'), true);
+    // The filter narrows the ranked legend to the rows it keeps; each keeps
+    // its rank in the full pool.
+    const legendRanks = () => Array.from(
+      active().querySelectorAll('.dp-ranked-row'),
+      row => [row.dataset.uuid, row.querySelector('.dp-legend-rank').textContent]).sort();
+    const fullRanks = legendRanks();
+    const coresPanel = document.querySelector('.dp-filter-dialog .dp-checklist');
+    const coreButton = label => Array.from(coresPanel.querySelectorAll('button'))
+      .find(button => button.textContent === label);
+    coreButton('Deselect all').click();
+    // Nothing is drawn now, so wait out the handlers rather than a curve.
+    await new Promise(resolve => setTimeout(resolve, 100));
+    Array.from(coresPanel.querySelectorAll('.dp-checklist-row'))
+      .find(row => row.textContent.includes('AdaSSP')).querySelector('input').click();
+    await settle();
+    check('a filter leaves only the rows it keeps in the ranked legend',
+      legendRanks().map(([uuid]) => uuid), ['a', 'b']);
+    check('and each kept row keeps its rank in the full pool',
+      legendRanks(), fullRanks.filter(([uuid]) => uuid === 'a' || uuid === 'b'));
+    coreButton('Select all').click();
+    await settle();
+    check('clearing the filter brings the whole ranked legend back',
+      legendRanks(), fullRanks);
+    top.value = 'all';
+    top.dispatchEvent(new Event('change'));
+    await settle();
+    check('every eligible curve is drawn', plotted().length, 15);
+    check('all curves shown draws both emphasised and muted curves',
+      [drawnLevels().includes(0), drawnLevels().includes(1)], [true, true]);
+    check('emphasised curves draw above the muted ones at the threshold now read',
+      drawnLevels().every((level, at, all) => at === 0 || all[at - 1] <= level), true);
+    top.value = '10';
+    top.dispatchEvent(new Event('change'));
+    await settle();
+    // Every check through "round trip restores values" is stated at the
+    // opening quantile, so restore it explicitly rather than leaving budget and
+    // metric selection entangled with a quantile this block never varies.
+    slider.value = '90';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+    await settle();
+    await select('Privacy budget', 'high');
+    check('budget selects its own values', values(), [['b', '1'], ['a', '4']]);
+    check('known distinct budget changes rendered curves', JSON.stringify(paths()) !== JSON.stringify(opening), true);
+    await select('Metric', 'second');
+    check('metric change preserves selected budget', active().querySelector('.dp-chart').dataset.budget, 'high');
+    check('budget control agrees after metric change', page.querySelector('.dp-privacy-filters:not([hidden]) [data-budget-select]').value, 'high');
+    check('metric switch updates baseline label', page.querySelector('[data-official-baseline-label]').textContent, 'reference SE');
+    check('metric selects its own values', values(), [['a', '0.5'], ['b', '2']]);
+    check('equal-valued panel still loads separately', reads.includes('second-high'), true);
+    check('equal-valued panel is not a false failure', values(), [['a', '0.5'], ['b', '2']]);
+    await select('Privacy budget', 'low');
+    check('budget change preserves selected metric', active().dataset.metric, 'second');
+    check('other budget is loaded explicitly', reads.includes('second-low'), true);
+    await select('Metric', 'first');
+    check('metric return keeps the latest budget choice', active().querySelector('.dp-chart').dataset.budget, 'low');
+    check('round trip restores values', values(), [['a', '2'], ['b', '4']]);
+    check('round trip restores rendered curves', paths(), opening);
+    // At p = 50% the reading is the grid's: the first threshold (1, 2, 4)
+    // at which a curve reaches half its trials, by hand from the matrices.
+    slider.value = '50';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+    await settle();
+    check('the quantile changes standings', values(), [['a', '1'], ['b', '2']]);
+    check('the standings score heading names the quantile',
+      active().querySelector('.dp-score-heading').textContent, 'τ at 50%');
+    top.value = '5';
+    top.dispatchEvent(new Event('change', {bubbles: true}));
+    await settle();
+    // At p = 50%, by hand: Zulu (f9) and Alpha both first reach half at τ = 1
+    // and their whole share, so the τ at which they reach it breaks the tie
+    // (0.1 before 2); Beta reaches half at 2; f8 and f7 at 4, tied until their
+    // whole shares (3 before 4).
+    const order = () => Array.from(rows(), row => row.dataset.uuid).slice(0, 5);
+    check('top 5 is selectable', plotted().map(trace => trace.legendgroup).sort(), ['a', 'b', 'f7', 'f8', 'f9'].sort());
+    check('the standings at 50% follow the one ranking rule', order(), ['f9', 'a', 'b', 'f8', 'f7']);
+    slider.value = '90';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+    await settle();
+    // At 90%, the shipped readings: Beta's 4 now ranks after f8's 3.
+    check('a quantile move reorders the standings', order(), ['f9', 'a', 'f8', 'b', 'f7']);
+    top.value = 'all';
+    top.dispatchEvent(new Event('change', {bubbles: true}));
+    await settle();
+    check('all plots the full eligible pool', plotted().length, 15);
+    top.value = '10';
+    top.dispatchEvent(new Event('change', {bubbles: true}));
+    slider.value = '90';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+    await settle();
+    const alpha = active().querySelector('.dp-budget:not([hidden]) tr[data-uuid="a"]');
+    alpha.focus();
+    // A programmatic .focus() does not reliably dispatch a trusted 'focusin'
+    // in every host (some headless/background CDP sessions move
+    // document.activeElement without firing it); the row-focus delegation
+    // this exercises listens for 'focusin' specifically (profile-charts.js),
+    // so fire it explicitly the way every other native-event check in this
+    // file already does for 'change'/'input'.
+    alpha.dispatchEvent(new FocusEvent('focusin', {bubbles: true}));
+    await settle();
+    check('row focus highlights row', alpha.classList.contains('dp-row-highlight'), true);
+    // The raised width is regularWidth (2.5, from this fixture's own
+    // data-series-style) + 1.5 = 4 exactly (profile-charts.js's raised());
+    // a strict "> 4" never matches that computed value.
+    check('row focus emphasizes a curve', Array.from(active().querySelectorAll('.js-line')).some(line => parseFloat(getComputedStyle(line).strokeWidth) >= 4), true);
+    alpha.blur();
+    alpha.dispatchEvent(new FocusEvent('focusout', {bubbles: true}));
+    // Exercise the Plotly event boundary; independent browser QA checks actual pointer use.
+    active().querySelector('.dp-chart').emit('plotly_hover', {points: [{data: {legendgroup: 'b'}}]});
+    check('chart hover highlights matching table row', active().querySelector('.dp-budget:not([hidden]) tr[data-uuid="b"]').classList.contains('dp-row-highlight'), true);
+    active().querySelector('.dp-chart').emit('plotly_unhover');
+    check('four panels fetched exactly once', reads.slice().sort(), Object.keys(matrices).sort());
+    async function details(button) {
+      button.click();
+      const dialog = document.querySelector('.dp-algorithm-dialog:not(.dp-filter-dialog)');
+      const limit = Date.now() + 1000;
+      while (!dialog.querySelector('.dp-pipeline')) {
+        if (Date.now() > limit) throw new Error('Details did not open');
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      const title = dialog.querySelector('.dp-algorithm-dialog-title')?.textContent;
+      const description = dialog.querySelector('.dp-algorithm-dialog-body > p')?.textContent ?? null;
+      const chain = dialog.querySelector('.dp-pipeline .dp-step-name')?.textContent;
+      const fullDetails = dialog.querySelector('.dp-algorithm-dialog-body > a')?.textContent;
+      if (title === 'Alpha') check('selected method details retain the roster interpretation',
+        dialog.querySelector('[data-privacy-interpretation]')?.textContent, 'standard');
+      dialog.querySelector('.dp-provenance-close').click();
+      return [title, description, chain, fullDetails];
+    }
+    const alphaDetails = active().querySelector('.dp-budget:not([hidden]) tr[data-uuid="a"] .dp-provenance-trigger');
+    const alphaCard = ['Alpha', 'Estimate alpha privately.', 'Alpha implementation', '\u27e8component.full_details\u27e9'];
+    check('first task Details', await details(alphaDetails), alphaCard);
+    check('other task Details, no description', await details(document.querySelector('aside .dp-provenance-trigger')), ['Other task', null, 'Other task implementation', '\u27e8component.full_details\u27e9']);
+    check('first task Details after return', await details(alphaDetails), alphaCard);
+    check('one provenance fetch per task', provenanceReads, ['first-provenance.json', 'other-provenance.json']);
+
+    check('every panel kept its declared column count through every re-render', mismatches, []);
+    check('column integrity was asserted on every panel after every action', audits, settles * panels);
+
+    /* One source of columns. A row is built from the set its table declares,
+       so a surface that renders three columns still has three after the
+       quantile moves or the pager changes the rows. */
+    function shapes() {
+      return Array.from(active().querySelectorAll('.dp-budget:not([hidden]) .dp-leaderboard')).map(table => {
+        const heads = table.tHead.rows[0].cells.length;
+        const rows = Array.from(table.tBodies[0].rows);
+        return {
+          heads,
+          rows: rows.length,
+          widths: Array.from(new Set(rows.map(row => row.cells.length))),
+          beyondHeader: rows.some(row => row.cells.length > heads),
+        };
+      });
+    }
+    async function move(quantile, top_n) {
+      slider.value = quantile;
+      slider.dispatchEvent(new Event('input', {bubbles: true}));
+      top.value = top_n;
+      top.dispatchEvent(new Event('change', {bubbles: true}));
+      await settle();
+    }
+    await move('50', '10');
+    let shape = shapes()[0];
+    check('leaderboard rows are as wide as its header', [shape.widths, shape.beyondHeader], [[3], false]);
+    check('leaderboard header is the three ruled columns', shape.heads, 3);
+    await move('90', '5');
+    check('paging keeps the three columns', shapes()[0].widths, [3]);
+  } catch (error) {
+    outcomes.push('FAIL execution: ' + error.message);
+  }
+  report.textContent = outcomes.join('\n');
+  document.title = (outcomes.some(line => line.startsWith('FAIL')) ? 'FAIL' : 'PASS') + ' — Leaderboard interaction regression';
+});
+</script>
+</body>
+</html>

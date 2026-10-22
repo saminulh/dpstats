@@ -1,0 +1,924 @@
+# Explanatory text the generated site pages show. Each entry is one slot.
+# PLACEHOLDER shows a dashed marker naming the slot (⟨group.key⟩), so you can find it on the page.
+# Blank ("") or omitted shows nothing there. Any other text shows as written: it is escaped,
+# not interpreted as HTML, and YAML block text (|) keeps its line breaks.
+# [text](url) is a link. Link to site pages by their public address
+# (https://saminulh.github.io/dpstats/...); every build points it at itself.
+# Tooltips show only the link text.
+
+home:
+  # Home, a task's panel when the release declares the task but publishes no standings.
+  task_no_standings: "This task is missing its standings"
+  # Home, in place of every task's standings when the build reads no benchmark release.
+  no_release: "No standings available in this build"
+  # Home, screen-reader name of the row of task tabs.
+  tabs_label: "Benchmarked tasks"
+  # Home, a task's panel, the link to the task's overview beside its Leaderboard and Explore links.
+  task_link: "Task"
+  # Home, a task's panel, the fold holding the methodology link.
+  source_summary: "Source and interpretation"
+  # Home, a task's panel, the link to its full Leaderboard above the plotted list.
+  board_link: "Leaderboard"
+  # Home, hover text on that Leaderboard link.
+  board_link_title: "Open the Leaderboard"
+  # Home, a task's panel, the link to its Explore page above the plotted list.
+  explore_link: "Explore"
+
+leaderboard:
+  # Leaderboard, the first paragraph above the standings. [roster] links to the task's Roster, [Methodology] to the Methodology page, [Submit] to the Submit page.
+  intro: "Official rankings and performance curves for every algorithm in the [roster]. For more details on the metrics and our broader methodology, visit the [Methodology] page. To submit your own algorithm to the roster, visit the [Submit] page."
+  # Leaderboard, the second paragraph above the standings. [public corpus] links to the task's Corpus page, [Explore] to the task's Explore page (plain text where the task has none).
+  intro_corpus: "We compute these rankings on a withheld corpus, so to limit leakage about this corpus, we only report each algorithm’s aggregate performance curve below. To conduct more fine-grained analyses on the [public corpus], visit the [Explore] page."
+  # Leaderboard and Home rankings table, the row shown when a panel ranks no algorithm.
+  empty_panel: "No algorithms in the roster."
+  # Leaderboard and Home, above a chart whose results could not load. Fields: {error}, the browser's reason the load failed.
+  results_load_error: "Could not load results: {error}"
+  # Leaderboard, the Eligibility line of the absences note, when ranked algorithms carry no privacy interpretation. Fields: {names}, the algorithms' labels, comma-separated.
+  missing_interpretation: "No privacy interpretation: {names}"
+  # Leaderboard and Home rankings table, the Rank column heading; also the Rank column heading of the standings list beside the chart (Leaderboard, Home, Explore) and hover text on each rank there.
+  column_rank: "Rank"
+  # Leaderboard, Explore and Roster rankings, the heading of the headline column: each algorithm's error ratio at the protocol's quantile, which it ranks by. Fields: {percent}, that quantile in percent (50 for the median).
+  column_headline: "τ@{percent}"
+  # Leaderboard, Explore, Home, the standings beside the chart, the Roster pages and the algorithm dialog: the headline cell of an algorithm that never reaches the protocol's quantile. Fields: {percent}, the share of weighted trials it does reach, in whole percent.
+  unreached: "∞ (reaches {percent}%)"
+  # Leaderboard, the label of the slice selector: which official slice of the task's problem instances the standings rank.
+  slice_label: "Regime"
+  # Leaderboard, the slice holding every problem instance of the task.
+  slice_all: "All"
+  # Leaderboard, a slice of the problem instances whose property is at most a bound. Fields: {feature}, the property's symbol (d or n/d); {value}, the bound.
+  slice_at_most: "{feature} ≤ {value}"
+  # Leaderboard, a slice of the problem instances whose property is above a bound. Fields: {feature}, the property's symbol (d or n/d); {value}, the bound.
+  slice_above: "{feature} > {value}"
+  # Leaderboard, after the slice selector's options: the selected slice's size, which follows the selection. Fields: {instances}, its problem instances; {studies}, the studies they come from.
+  slice_size: "{instances} problem instances from {studies} studies"
+  # Leaderboard, the same when the slice's several problem instances come from one study. Fields: {instances}, its problem instances; {studies}, which is 1.
+  slice_size_one: "{instances} problem instances from {studies} study"
+  # Leaderboard, the same when the slice holds one problem instance, which comes from one study. Fields: {instances}, which is 1; {studies}, which is 1.
+  slice_size_one_instance: "{instances} problem instance from {studies} study"
+
+explore:
+  # Explore and Leaderboard, the Trial aggregation box's label, beside the Individual / Median per instance choice (the Leaderboard's fixed value).
+  trials_label: "Trial aggregation"
+  # Explore, control bar, the button that opens the instance filter.
+  filter_instances: "Filter instances"
+  # Explore, control bar, inside the Filter instances button: how many instances the filter keeps. Fields: {selected}, the instances kept; {total}, all instances.
+  instance_count: "{selected} of {total}"
+  # Explore, control bar, the button that downloads the open view as a notebook.
+  download_notebook: "Download notebook"
+  # Explore, the paragraph above the controls. Bare links: [public corpus], the task's Corpus page; [Leaderboard], the task's Leaderboard.
+  introduction: "Explore the results on the [public corpus]. For official rankings, visit the [Leaderboard] page. This page allows more fine-grained analyses than the Leaderboard, and you can download the plots as notebooks to carry out further analyses."
+  # Explore, Error ratio by instance property, above the chart.
+  feature_intro: "This graph plots the algorithm's error on an instance, normalized by the baseline, against the selected instance property. Rings at the top may appear signifying trials with infinite error, the size of the ring grows with the number of trials there. The graph additionally plots a sliding-window median and interquartile range to give a sense of how the error depends on this property."
+  # Explore, Trial outcomes by instance property, above the chart.
+  outcomes_intro: "This histogram shows how the success rate of an algorithm breaks down over the problem instances by the selected instance property. Each bin corresponds to a subset of the instances and the bars correspond to individual outcomes within that bin (i.e., output error within threshold, output error above threshold, or some algorithm error occurred). Click on a bar to get more details. If you select a comparison algorithm, the histogram instead shows the proportion of instances where both algorithms succeed, only one succeeds, or both fail."
+  # Explore, Trial outcomes by instance property, the "How to read this chart" help.
+  outcomes_glossary: "Each bar is one bin of problem instances. Its segments show the weighted share of trials within the threshold, above it, or ended by an algorithm error."
+  # Outcomes, Explain this bar, above the numerical breakdown.
+  outcomes_bar_help: "Click a bar or pick a range to see its outcomes and instances."
+  # Explore, help on the Instance property control.
+  feature_help: "The property of the problem instance used to group the histogram bins."
+  # Explore, help on the Scale control.
+  feature_scale_help: "How the property is spaced for binning: logarithmic, linear, or quantile."
+  # Explore, Trial outcomes by instance property, when no algorithm is selected.
+  outcomes_empty: "Please choose an algorithm."
+  # Explore, Error ratio by instance property, "This point" panel beside the chart, before a marker is selected.
+  point_details_prompt: "Click a point to see details about the problem instance."
+  # Explore, chart area when the instance filters leave no instance.
+  empty_no_instances: "No problem instances match the chosen filters. Please choose different filter settings."
+  # Explore, chart area when no selected algorithm has a trial left.
+  empty_no_algorithms: "No algorithms match the chosen filters. Please choose different filter settings."
+  # Explore, Error ratio by instance property chart area when no selected algorithm has a value on the feature.
+  empty_no_feature_values: "No selected algorithm has a value on this instance property."
+  # Explore, Baseline control status when the chosen baseline algorithm has no trials at this budget.
+  baseline_no_trials: "No trials at this budget."
+  # Explore, Instance property menu, hover text on ε when the budget has no finite ε for every instance.
+  feature_unavailable_epsilon: "ε is unavailable: this budget does not give a finite ε for every problem instance."
+  # Explore, Instance property menu, hover text on the condition number when an instance has no finite one.
+  feature_unavailable_condition_number: "The condition number is unavailable: not every problem instance has a finite one."
+  # Explore, Instance property menu, hover text on a feature every instance in the panel shares.
+  feature_unavailable_constant: "Unavailable: every problem instance in this panel has the same value."
+  # Explore, comparison algorithm picker status when five algorithms are already chosen.
+  picker_full: "Compare up to five at a time; remove one from Plotted to add another."
+  # Explore, comparison algorithm picker, the greyed text in its box when five are chosen.
+  picker_full_placeholder: "Remove one to add another"
+  # Explore, Trial outcomes by instance property note, after the excluded share of instances.
+  histogram_excluded_reason: "No value for this property, or one of the algorithms never ran on the instance."
+  # Explore, Trial outcomes by instance property note, when bin edges snap to ties.
+  histogram_snapped_note: "Bin edges moved to avoid splitting tied values, so bins are not exactly equal-weight."
+  # Explore, Trial outcomes by instance property note, when "Compare with" pairs two algorithms.
+  histogram_paired_note: "With a second algorithm, it plots the probability of both being within the threshold, only one within the threshold, and neither. If one of the algorithms never ran on an instance, that instance is omitted."
+  # Explore, Error ratio by instance property, last line of a marker's hover text.
+  scatter_click_hint: "Click for details."
+  # Explore, Filter instances, hover text on the n, d and n/d range boxes.
+  range_hint_whole: "Type a whole number or use the slider; snaps to available integer limits."
+  # Explore, Filter instances, hover text on the condition-number range boxes.
+  range_hint_positive: "Type a positive number or use the slider; snaps to available limits."
+  # Explore, the status line while the page loads its index.
+  loading: "Loading Explore…"
+  # Explore, the status line when the page's index could not load, beside the Retry button.
+  load_error: "Explore could not load. Please retry."
+  # Explore, the status line while the selected metric and budget's results load.
+  results_loading: "Loading selected results…"
+  # Explore, the status line when the selected results could not load. Fields: {error}, the browser's reason the load failed.
+  results_load_error: "Could not load selected results: {error}"
+  # Explore, the comparison chart's screen-reader label before it is drawn.
+  plot_label: "Error ratio or trial outcomes by instance property"
+  # Explore, comparison algorithm picker status, after the suggestion count while suggestions show.
+  picker_enter_hint: "Enter chooses the first suggestion"
+  # Explore, comparison algorithm picker, the list when no algorithm matches the typed text.
+  picker_no_match: "No algorithm matches that text."
+  # Explore, comparison algorithm picker, after picker_no_match when the task has transformations. Fields: {transformations}, the task's transformation names, comma-separated.
+  picker_transformations: "Transformations on this task: {transformations}."
+  # Explore, comparison algorithm picker, the last list row when more algorithms match than it shows. Fields: {count}, how many matches are not shown.
+  picker_more: "{count} more, keep typing"
+  # Explore, Filter instances, the browser's complaint when an n, d or n/d box holds no whole number.
+  range_invalid_whole: "Enter a whole number."
+  # Explore, Filter instances, the browser's complaint when a condition-number box holds no positive number.
+  range_invalid_positive: "Enter a positive number, or ∞."
+  # Explore, Filter instances, hover text on a range box, before range_hint_whole or range_hint_positive. Fields: {value}, the endpoint the box holds.
+  range_endpoint: "Inclusive endpoint: {value}."
+  # Explore, the comparison chart's status line while its results load.
+  comparison_loading: "Loading selected comparison…"
+  # Explore, the comparison chart's status line when the chart could not be drawn. Fields: {error}, the reason drawing failed.
+  comparison_draw_error: "Could not draw comparison: {error}"
+  # Explore, Trial outcomes by instance property, the chart's screen-reader label when a threshold splits the outcomes. Fields: {categories}, how many outcome categories are stacked; {feature}, the instance property; {tau}, the threshold; {bins}, how many bins.
+  histogram_label: "Stacked histogram: {categories} outcome categories over {feature}, split at τ = {tau}, {bins} bins, proportion of problem instances on the y-axis."
+  # Explore, Trial outcomes by instance property, the chart's screen-reader label when no finite threshold is set. Fields: {categories}, {feature} and {bins}, as in histogram_label.
+  histogram_label_no_threshold: "Stacked histogram: {categories} outcome categories over {feature}, {bins} bins, proportion of problem instances on the y-axis."
+  # Explore, Trial outcomes by instance property note, when some instances are excluded; histogram_excluded_reason follows it. Fields: {share}, the excluded weighted share, as a percentage.
+  histogram_excluded_share: "{share} of the weighted problem instances are excluded."
+  # Explore, This bar panel, under the breakdown table, when the chosen bin holds instances. Fields: {share}, the bin's weighted share of instances, as a percentage.
+  bin_share: "This bin holds {share} of the weighted problem instances."
+  # Explore, This bar panel, under the breakdown table, when the chosen bin holds no instances.
+  bin_empty: "This bin holds no problem instances."
+  # Explore, This bar panel, the heading over the bin's instance list. Fields: {count}, how many instances the bin holds.
+  bin_instances_heading: "Instances in this bin ({count})"
+  # Explore, This bar panel, the button under a shortened instance list. Fields: {count}, how many instances the bin holds.
+  bin_show_all: "Show all {count}"
+  # Explore, Error ratio by instance property, the heading of the panel beside the chart.
+  point_details_heading: "This point"
+  # Explore, This point panel, the first line once a marker is chosen. Fields: {property}, the instance property's name; {x}, its value; {y}, the error ratio.
+  point_reading: "{property}: {x} · error ratio: {y}"
+  # Explore, This point panel and a marker's hover text, the count of trials at the point when more than one. Fields: {count}, the number of trials.
+  trial_count: "{count} trials"
+  # Explore, This point panel and a marker's hover text, the count of trials at the point when there is one. Fields: {count}, which is 1.
+  trial_count_one: "{count} trial"
+  # Explore, a marker's hover text under median aggregation, the count of median points when more than one. Fields: {count}, the number of median points.
+  median_point_count: "{count} median points"
+  # Explore, a marker's hover text under median aggregation, the count of median points when there is one. Fields: {count}, which is 1.
+  median_point_count_one: "{count} median point"
+  # Explore, This point panel, after an algorithm's name under median aggregation.
+  point_median: "median over trials"
+  # Explore, This point panel, after an algorithm's count when its trials span several instances. Fields: {count}, the number of instances.
+  point_on_instances: "on {count} instances"
+  # Explore, This point panel, under the instance cards when the point has more instances than it shows. Fields: {count}, how many instances are not shown.
+  point_more_instances: "+{count} more instances"
+  # Explore, the notebook download status when the current view has no notebook.
+  notebook_no_view: "This view has no notebook."
+  # Explore, the notebook download status when the selection is empty.
+  notebook_nothing_selected: "Nothing selected."
+  # Explore, the notebook download status when the notebook could not be built. Fields: {error}, the reason it failed.
+  notebook_build_error: "Could not build the notebook: {error}"
+  # Explore, every algorithm search box (Add algorithm, Algorithm, Compare with, Baseline Algorithm…), the greyed text in the box.
+  picker_placeholder: "Search…"
+  # Explore, an algorithm search's screen-reader status, first: how many are chosen of the most allowed. Fields: {selected}, how many are chosen; {limit}, the most allowed.
+  picker_count: "{selected} of {limit} selected"
+  # Explore, an algorithm search's screen-reader status, how many suggestions show when several do. Fields: {count}, how many.
+  picker_suggestions: "{count} suggestions"
+  # Explore, the same when one suggestion shows. Fields: {count}, which is 1.
+  picker_suggestions_one: "{count} suggestion"
+  # Explore, an algorithm search, the link after picker_no_match to the task's Transformations page.
+  picker_browse_transformations: "Browse the Transformations page"
+  # Explore, Error ratio by instance property, the button above the plotted list that opens the algorithm search; also that search's screen-reader name.
+  add_algorithm: "Add algorithm"
+  # Explore, Error ratio by instance property, beside the Algorithms heading: how many algorithms are plotted. Fields: {selected}, how many are chosen; {cap}, the most that can be.
+  selected_count: "{selected} of {cap}"
+  # Explore, Trial outcomes by instance property, the label over the algorithm whose outcomes are stacked.
+  outcome_algorithm_label: "Algorithm"
+  # Explore, Trial outcomes by instance property, the label over the algorithm it is compared with.
+  outcome_compare_label: "Compare with"
+  # Explore, Trial outcomes by instance property, screen-reader name of the algorithm's search box.
+  outcome_algorithm_search: "Choose the algorithm"
+  # Explore, Trial outcomes by instance property, screen-reader name of the compared algorithm's search box.
+  outcome_compare_search: "Choose an algorithm to compare with"
+  # Explore, Trial outcomes by instance property, the button beside the compared algorithm that removes it.
+  outcome_clear: "Clear"
+  # Explore, Trial outcomes by instance property, screen-reader name of that button. Fields: {label}, outcome_compare_label as written.
+  outcome_clear_aria: "Clear {label}"
+  # Explore, Trial outcomes by instance property, on the algorithm and compared-algorithm buttons when none is chosen.
+  outcome_none: "None"
+  # Explore, screen-reader name of the row of view tabs.
+  view_tabs_label: "Results view"
+  # Explore, the success-rate view's tab, and its screen-reader name.
+  view_profiles: "Success rate curves"
+  # Explore, the success-rate view's tab on narrow screens.
+  view_profiles_short: "Success rate"
+  # Explore, the Error ratio view's tab, and its screen-reader name; also the hidden heading of the panel both property views share.
+  view_feature: "Error ratio by instance property"
+  # Explore, the Error ratio view's tab on narrow screens.
+  view_feature_short: "Error ratio"
+  # Explore, the Trial outcomes view's tab, and its screen-reader name.
+  view_outcomes: "Trial outcomes by instance property"
+  # Explore, the Trial outcomes view's tab on narrow screens.
+  view_outcomes_short: "Trial outcomes"
+  # Explore, the rankings table's privacy-interpretation column heading (shown without scripting), and the label of the privacy-interpretation filter in the algorithm filter.
+  interpretation: "Interpretation"
+  # Explore, the rankings table's mechanism-family column heading, shown without scripting.
+  column_family: "Family"
+  # Explore, without scripting, the fold under the rankings table holding the comparison algorithms.
+  comparison_algorithms: "Comparison algorithms"
+  # Explore, Error ratio and Trial outcomes, the Instance property control's label, which opens feature_help.
+  feature_label: "Instance property"
+  # Explore, Error ratio and Trial outcomes, the Scale control's label, which opens feature_scale_help.
+  scale_label: "Scale"
+  # Explore, the Scale control's logarithmic option.
+  scale_log: "Logarithmic"
+  # Explore, the Scale control's linear option.
+  scale_linear: "Linear"
+  # Explore, Error ratio by instance property, the label of the error-ratio axis's scale control.
+  y_scale_label: "Error ratio scale"
+  # Explore, the Scale control's quantile option.
+  scale_quantile: "Quantile"
+  # Explore, Trial outcomes by instance property, the button that opens outcomes_glossary.
+  outcomes_guide: "How to read this chart"
+  # Explore, Trial outcomes by instance property, the heading of the panel beside the chart.
+  bar_heading: "This bar"
+  # Explore, This bar panel, the bin menu's label before an instance property is read; also the first column heading of the chart's Data table.
+  bin: "Bin"
+  # Explore, This bar panel, the bin menu's label. Fields: {feature}, the instance property's name.
+  bin_label: "{feature} range"
+  # Explore, This bar panel, the breakdown table's caption.
+  breakdown_caption: "Outcomes in this bin and across all problem instances"
+  # Explore, This bar panel, the breakdown table's outcome column heading.
+  column_outcome: "Outcome"
+  # Explore, This bar panel, the breakdown table's column heading for the chosen bin.
+  column_this_bin: "This bin"
+  # Explore, This bar panel, the breakdown table's column heading for every shown instance.
+  column_all_instances: "All instances"
+  # Explore, Trial outcomes by instance property, the fold under the chart holding its numbers as a table.
+  histogram_data: "Data"
+  # Explore, the button beside load_error, and the one under a chart that could not be drawn.
+  retry_loading: "Retry loading"
+  # Explore, the button beside results_load_error.
+  retry_results: "Retry loading results"
+  # Explore, the link beside load_error.
+  reload_page: "Reload page"
+  # Explore, Baseline control, screen-reader name of the × beside a chosen baseline algorithm, which forgets it.
+  baseline_forget_aria: "Forget this algorithm as the baseline"
+  # Explore, Baseline control, the button that opens the algorithm search to read errors against an algorithm.
+  baseline_algorithm_trigger: "Algorithm…"
+  # Explore, Baseline control, screen-reader name of that algorithm search.
+  baseline_picker_label: "Choose baseline algorithm"
+  # Explore, Baseline control, the option naming the chosen baseline algorithm, and its hover text. Fields: {algorithm}, the algorithm's label and class.
+  baseline_algorithm_option: "Algorithm: {algorithm}"
+  # Explore, control bar, Trials menu, the option counting each trial.
+  each_trial: "Individual"
+  # Explore, control bar, Trials menu, the option counting one median per instance.
+  median_per_instance: "Median per instance"
+  # Explore and Leaderboard, the Trial aggregation box's description while Individual is chosen (always on the Leaderboard).
+  each_trial_description: "Every trial on every problem instance counts toward the success rate individually."
+  # Explore, the Trial aggregation box's description while Median per instance is chosen.
+  median_per_instance_description: "Each problem instance counts once toward the success rate, at the median error over its trials."
+  # Explore, Filter instances, the samples-per-dimension range's label.
+  range_samples_per_dimension: "Samples / dimension"
+  # Explore, Filter instances, the button on each range that restores its full span.
+  range_reset: "Reset"
+  # Explore, Filter instances, screen-reader name of that button. Fields: {axis}, the range's label.
+  range_reset_aria: "Reset {axis} range"
+  # Explore, Filter instances, screen-reader name of a range's lower slider handle. Fields: {axis}, the range's label.
+  range_from_aria: "From {axis}"
+  # Explore, Filter instances, screen-reader name of a range's upper slider handle. Fields: {axis}, the range's label.
+  range_to_aria: "To {axis}"
+  # Explore, Filter instances, screen-reader name of a range's lower typed endpoint. Fields: {axis}, the range's label.
+  range_from_value_aria: "From {axis} value"
+  # Explore, Filter instances, screen-reader name of a range's upper typed endpoint. Fields: {axis}, the range's label.
+  range_to_value_aria: "To {axis} value"
+  # Explore, Error ratio by instance property, the plotted list's row naming the baseline algorithm, which has no remove control. Fields: {algorithm}, the algorithm's label and class.
+  plotted_baseline: "{algorithm} (baseline)"
+  # Explore, an algorithm's Details panel, Outcomes line: trials that returned an estimate.
+  outcome_released: "Released"
+  # Explore, Trial outcomes chart key and the Details panel's Outcomes line: trials that returned no estimate.
+  outcome_no_release: "No release"
+  # Explore, Trial outcomes chart key and the Details panel's Outcomes line: trials outside the algorithm's valid regime.
+  outcome_invalid_regime: "Invalid regime"
+  # Explore, Trial outcomes chart key and the Details panel's Outcomes line: trials that ran out of time.
+  outcome_timeout: "Timeout"
+  # Explore, Trial outcomes chart key and the Details panel's Outcomes line: trials that ran out of memory.
+  outcome_memory_limit: "Memory limit"
+  # Explore, Trial outcomes chart key and the Details panel's Outcomes line: trials the algorithm raised an error on.
+  outcome_algorithm_error: "Algorithm error"
+  # Explore, Trial outcomes chart key: declared trials nothing answered.
+  outcome_not_run: "Not run"
+  # Explore, Trial outcomes chart key with a compared algorithm: both algorithms within the threshold.
+  pair_both: "Both ≤ τ"
+  # Explore, Trial outcomes chart key with a compared algorithm: only the first algorithm within the threshold.
+  pair_a_only: "A only ≤ τ"
+  # Explore, Trial outcomes chart key with a compared algorithm: only the compared algorithm within the threshold.
+  pair_b_only: "B only ≤ τ"
+  # Explore, Trial outcomes chart key with a compared algorithm: neither algorithm within the threshold.
+  pair_neither: "Neither ≤ τ"
+  # Explore, Trial outcomes, a bar's hover text with one algorithm, after its outcome's share. Fields: {share}, the algorithm's success rate in that bin, as a percentage.
+  bar_hover_success: "success rate in this bin: {share}"
+  # Explore, Trial outcomes, a bar's hover text, its last line. Fields: {share}, that segment's share of the shown instances, as a percentage.
+  bar_hover_stack: "this stack: {share} of problem instances"
+  # Explore, Trial outcomes, the x-axis title under the quantile scale. Fields: {feature}, the instance property's name.
+  histogram_x_quantile: "{feature} (quantile)"
+  # Explore, Trial outcomes, the y-axis title.
+  histogram_y_axis: "Proportion of problem instances (%)"
+  # Explore, Error ratio, the x-axis title under the quantile scale. Fields: {feature}, the instance property's name.
+  scatter_x_quantile: "{feature} (weighted quantile)"
+  # Explore, Error ratio, the y-axis title when errors are read against a baseline, before (0 ↓ · ↑ ∞). Fields: {baseline}, the baseline's name.
+  scatter_y_axis: "Error / {baseline}"
+  # Explore, Error ratio, hover text on an algorithm's running-median line. Fields: {algorithm}, the algorithm's label and class.
+  running_median: "{algorithm} — running median"
+  # Explore, Error ratio, a marker's hover text, its first line. Fields: {property}, the instance property's name; {x}, its value; {y}, the error ratio.
+  point_hover: "{property} {x} · error ratio {y}"
+  # Explore, Error ratio, a marker's hover text, a line under the first when the marker stands for values beyond the current view.
+  point_beyond_view: "Beyond the current view"
+  # Explore, Error ratio, the status line above the chart, after the trial count, when several algorithms are selected. Fields: {count}, how many.
+  status_selected_algorithms: "{count} selected algorithms"
+  # Explore, Error ratio, the same when one algorithm is selected. Fields: {count}, which is 1.
+  status_selected_algorithms_one: "{count} selected algorithm"
+  # Explore, Trial outcomes, the status line above the chart when several instances are shown. Fields: {count}, how many.
+  status_instances: "{count} problem instances"
+  # Explore, Trial outcomes, the same when one instance is shown. Fields: {count}, which is 1.
+  status_instances_one: "{count} problem instance"
+  # Explore, an algorithm's Details panel, the label before its outcome shares.
+  outcomes_lead: "Outcomes:"
+  # Explore, an algorithm's Details panel, hover text on one outcome share. Fields: {count}, the trials with that outcome; {recorded}, the recorded trials.
+  outcome_count_title: "{count} of {recorded} recorded trials"
+  # Explore, an algorithm's Details panel, after the outcome shares when some declared trials went unrecorded. Fields: {recorded}, the recorded trials; {declared}, the declared trials.
+  trials_recorded: "{recorded} of {declared} declared trials recorded"
+  # Explore, Instance property menu and axis titles, the sample size.
+  feature_sample_size: "Sample size n"
+  # Explore, Instance property menu and axis titles, samples per dimension.
+  feature_samples_per_dimension: "Samples per dimension n/d"
+  # Explore, Instance property menu, Filter instances range and axis titles: the variance inflation factor at the coefficient of interest (single-coefficient estimation).
+  feature_vif: "Variance inflation factor (VIF)"
+
+corpus:
+  # Corpus landing, under the summary, the link to the Corpus area's data and licensing page; its bracketed name links there.
+  data_page_link: "[About the corpus]"
+  # Source page, where a release carries no formatted citation for a Source.
+  missing_citation: "This release includes no formatted citation for this study."
+  # Corpus table, shown when the search and filters match no source.
+  empty_selection: "No studies match the chosen filters. Please choose different filter settings."
+  # Corpus and Methodology, the banner when the build reads no Distribution Release.
+  no_release: "No studies available in this build."
+  # Corpus, the summary when the build reads no Distribution Release.
+  no_sources: "No studies available in this build."
+  # Corpus, the search box's label.
+  search_label: "Search"
+  # Corpus, the task menu's label.
+  task_filter: "Task"
+  # Corpus, the task menu's option for every task.
+  all_tasks: "All tasks"
+  # Corpus, the field menu's option for every field.
+  all_fields: "All fields"
+  # Corpus, the button clearing the search and menus.
+  clear_filters: "Clear filters"
+  # Corpus, the first sentence of the summary. Fields: {sources}, source_count_one or source_count_many; {instances}, instance_count_one or instance_count_many.
+  summary_counts: "{sources} and {instances}."
+  # Corpus summary, the source count when there is one. Fields: {count}, which is 1.
+  source_count_one: "{count} study"
+  # Corpus summary, the source count when there are several. Fields: {count}, how many.
+  source_count_many: "{count} studies"
+  # Corpus summary, the problem-instance count when there is one. Fields: {count}, which is 1.
+  instance_count_one: "{count} problem instance"
+  # Corpus summary, the problem-instance count when there are several. Fields: {count}, how many.
+  instance_count_many: "{count} problem instances"
+  # Corpus summary, one sentence per task. Fields: {task}, the task's name; {instances}, task_instance_count_one or task_instance_count_many.
+  summary_task: "{task}: {instances}."
+  # Corpus summary, a task's instance count when there is one. Fields: {count}, which is 1.
+  task_instance_count_one: "{count} instance"
+  # Corpus summary, a task's instance count when there are several. Fields: {count}, how many.
+  task_instance_count_many: "{count} instances"
+  # Source page, the button copying the citation beside it.
+  copy_citation: "Copy citation"
+  # Instance page, facts, the study it comes from.
+  fact_study: "Study"
+  # Source and Instance pages, facts, the data licence.
+  fact_data_licence: "Data licence"
+  # Source and Instance pages, facts, the sample unit.
+  fact_sample_unit: "Sample unit"
+  # Instance page, facts, the sample size.
+  fact_samples: "Samples (n)"
+  # Instance page, facts, the dimension.
+  fact_dimension: "Dimension"
+  # Instance page, facts, samples per dimension.
+  fact_samples_per_dimension: "Samples per dimension"
+  # Instance page, facts, the coefficient the task estimates.
+  fact_coefficient: "Coefficient of interest"
+  # Instance page, facts, the coefficient of interest's value. Fields: {column}, its one-based column.
+  coefficient_column: "Column {column}"
+  # Instance page, the heading of the section quoting the source paper.
+  source_heading: "Additional information from study"
+  # Instance page, source section, the label beside the paper's Stata variable names.
+  source_variables: "Variable names"
+  # Instance page, source section, the label beside the paper's name for the coefficient of interest.
+  source_coefficient: "Coefficient variable"
+  # Instance page, source section, the heading over the one claim quoted from the paper.
+  source_claim: "Quote from the study"
+  # Instance page, source section, under a quoted claim, its page. Fields: {page}, the page as the paper numbers it.
+  source_page: "Page {page}"
+  # Instance page, source section, in place of a claim's quote where the paper states it in no prose. Fields: {table}, the table that prints it.
+  source_no_quote: "N/A — printed in {table}, not discussed in the text"
+  # Instance page, facts, the instance's weight.
+  fact_weight: "Weight in the success rate"
+  # Instance page, bounds, the design domain's name.
+  domain_covariates: "Covariates (X)"
+  # Instance page, bounds, the response domain's name.
+  domain_response: "Response (y)"
+  # Instance page, bounds, a task's one data domain's name.
+  domain_data: "Data"
+  # Instance page, bounds, the fold holding a domain's column table.
+  columns_summary: "Columns"
+  # Instance page, a domain's column table, an intercept column's kind.
+  column_intercept: "Intercept"
+  # Instance page, a domain's column table, a bounded column's kind.
+  column_range: "Range"
+  # Instance page, a domain's column table, an indicator group's kind.
+  column_indicator_group: "Indicator group"
+  # Instance page, a domain's column table, the values of a single indicator that may be off.
+  indicator_zero_or_one: "0 or 1"
+  # Instance page, a domain's column table, the values of an indicator group that may be all off.
+  indicator_at_most_one: "at most one is 1"
+  # Instance page, a domain's column table, the values of an indicator group with exactly one on.
+  indicator_exactly_one: "exactly one is 1"
+  # Instance page, a domain's column table, the kind of the column holding the coefficient of interest. Fields: {kind}, the column's kind.
+  coefficient_mark: "{kind} · coefficient of interest"
+  # Instance page, bounds, a domain's summary, when it has an intercept.
+  summary_intercept: "intercept"
+  # Instance page, bounds, a domain's summary, its indicator groups when there is one. Fields: {count}, which is 1.
+  summary_groups_one: "{count} indicator group"
+  # Instance page, bounds, a domain's summary, its indicator groups when there are several. Fields: {count}, how many.
+  summary_groups_many: "{count} indicator groups"
+  # Instance page, bounds, a domain's summary, in brackets after the groups, their columns when there is one. Fields: {count}, which is 1.
+  summary_columns_one: "{count} column"
+  # Instance page, bounds, a domain's summary, in brackets after the groups, their columns when there are several. Fields: {count}, how many.
+  summary_columns_many: "{count} columns"
+  # Instance page, bounds, a domain's summary, its bounded columns when there is one. Fields: {count}, which is 1.
+  summary_ranges_one: "{count} range column"
+  # Instance page, bounds, a domain's summary, its bounded columns when there are several. Fields: {count}, how many.
+  summary_ranges_many: "{count} range columns"
+
+task:
+  # Task Metrics page, under the "Metric arguments" heading.
+  metric_arguments_intro: "Additional arguments supplied by a problem instance to compute specific metrics."
+  # Task overview, Metrics at a glance table, the Metric column heading.
+  metric_column: "Metric"
+  # Task Native algorithms and Transformations pages, the privacy-interpretation chip showing every row.
+  class_filter_all: "All"
+  # Task Transformations page, the task-conversion table's column naming the task each transformation hands off to.
+  hands_off_column: "Hands off to"
+  # Task Metrics page, a Metric's section, before the arguments it requires.
+  required_arguments: "Required metric arguments:"
+  # Task Metrics page, a Metric's section, before the baselines it is offered.
+  baselines_label: "Baselines:"
+  # Task Metrics page, the heading over the metric arguments table.
+  metric_arguments_heading: "Metric arguments"
+  # Task Metrics page, metric arguments table, the first column's heading.
+  metric_argument_column: "Metric argument"
+  # Task Metrics page, metric arguments table, the column naming the Metrics that use each argument.
+  used_by_column: "Used by"
+  # Task Native algorithms and Transformations pages, the link closing the Privacy interpretation label's help; also, on the Leaderboard and Explore, the link closing a defined term's help in the success-rate question and formula.
+  term_more: "More"
+
+component:
+  # Algorithm Details panel (Leaderboard, Explore), under a step with no documentation page.
+  no_implementation_docs: "This step has no documentation page."
+  # Algorithm Details panel, when the results carry no configuration for the algorithm.
+  no_structured_configuration: "The results carry no configuration for this algorithm."
+  # Algorithm Details panel, when the page ships no provenance at all.
+  no_provenance: "This page carries no algorithm details."
+  # Algorithm Details panel, while its provenance loads.
+  provenance_loading: "Loading details…"
+  # Algorithm Details panel, when its provenance could not load. Fields: {error}, the reason the load failed.
+  provenance_load_error: "The details could not be loaded: {error}"
+  # Leaderboard and Explore rankings tables, the button after an algorithm's name that opens its Details panel, after ⓘ.
+  details_button: "Details"
+  # Leaderboard and Explore rankings tables, screen-reader name of that button; also of an algorithm's Details panel. Fields: {algorithm}, the algorithm's label.
+  details_aria: "Details for {algorithm}"
+  # Algorithm Details panel, hover text on a hyperparameter left at its default.
+  default_value_title: "The default"
+  # Algorithm Details panel, after a hyperparameter changed from its default. Fields: {default}, the default value.
+  changed_default: "default {default}"
+  # Algorithm Details panel, the closing link to the configured algorithm's Roster page.
+  full_details: "Full details"
+  # Algorithm and Transformation pages, the fold holding the implementation notes.
+  implementation_notes: "Implementation notes"
+  # Algorithm and Transformation pages, screen-reader name of the facts block under the summary.
+  glance_label: "At a glance"
+  # Algorithm page, facts block, the task the algorithm solves.
+  glance_native_task: "Native task"
+  # Transformation page, facts block, the task the transformation takes.
+  glance_task: "Task"
+  # Algorithm and Transformation pages, facts block, the privacy interpretation.
+  glance_interpretation: "Privacy interpretation"
+  # Algorithm and Transformation pages, facts block, what the component requires.
+  glance_requires: "Requires"
+  # Algorithm and Transformation pages, facts block, the work it follows.
+  glance_source: "Source"
+  # Algorithm and Transformation pages, Parameters, after a parameter's type when it has a default. Fields: {default}, the default value.
+  parameter_default: "default {default}"
+  # Algorithm and Transformation pages, Parameters, after a parameter's type when it has no default.
+  parameter_required: "required"
+  # Algorithm page, the link to the Roster when one configured algorithm uses it, before →. Fields: {count}, which is 1; {task}, the task; {name}, the algorithm's class.
+  roster_algorithm_one: "{count} {task} configured algorithm uses {name}"
+  # Algorithm page, the link to the Roster when several configured algorithms use it, before →. Fields: {count}, how many; {task}, the task; {name}, the algorithm's class.
+  roster_algorithm_many: "{count} {task} configured algorithms use {name}"
+  # Transformation page, the link to the Roster when one configured algorithm includes it, before →. Fields: {count}, which is 1; {task}, the task; {name}, the transformation's class.
+  roster_transformation_one: "{count} {task} configured algorithm includes this {name} in its chain"
+  # Transformation page, the link to the Roster when several configured algorithms include it, before →. Fields: {count}, how many; {task}, the task; {name}, the transformation's class.
+  roster_transformation_many: "{count} {task} configured algorithms include this {name} in their chain"
+  # Algorithm and Transformation pages, after the Roster link, before the other tasks' Rosters.
+  roster_also_in: "also in"
+  # Algorithm and Transformation pages, API, a method's parameter table, the Parameter column heading.
+  api_parameter_column: "Parameter"
+  # Algorithm and Transformation pages, API, a method's parameter table, the Type column heading.
+  api_type_column: "Type"
+  # Algorithm and Transformation pages, facts block, the link after the privacy interpretation to the classes' definitions; also after the class badge in an algorithm's Details panel (Leaderboard, Explore).
+  semantics_link: "What this means"
+
+roster:
+  # Roster page of a tuned configured algorithm, in place of its tuning record; [Methodology] links to the Methodology page's Tuning section.
+  tuned_source: "This configuration was tuned on the public corpus at the stated privacy level. See [Methodology] for more details."
+  # Roster landing page, the note under the table: what Rank and the headline column read. Fields: {metric}, the headline metric's name; {budget}, the privacy budget; {percent}, the protocol's quantile in percent (50 for the median).
+  ranking_note: 'Rank and τ@{percent} use this task''s headline metric, {metric}, at {budget}: τ@{percent} is the error ratio that {percent}% of trials stay within. A configured algorithm outside the ranked classes shows "not ranked". The last step in each chain is its core algorithm.'
+  # Roster landing page, the table row when the filters match no configured algorithm.
+  empty_filter: "No configured algorithms match the chosen filters. Please choose different filter settings."
+  # Roster landing, Configured algorithm page and Details tables, a ranked configured algorithm's standing. Fields: {rank}, its rank.
+  rank: "Rank {rank}"
+  # Roster landing and Configured algorithm page, the standing of a configured algorithm no panel ranks.
+  not_ranked: "not ranked"
+  # Roster landing, the Rank and Success column headings and the matching Sort options. Fields: {column}, the column's name; {budget}, the headline privacy budget.
+  column_at_budget: "{column} at {budget}"
+  # Roster landing, the search box's label.
+  search_label: "Search"
+  # Roster landing, the sort menu's label.
+  sort_label: "Sort"
+  # Roster landing, the fold holding the filters.
+  filters_summary: "Filters"
+  # Roster landing, the core algorithm menu's label.
+  core_label: "Core algorithm"
+  # Roster landing, the core algorithm menu's option for every core.
+  core_any: "Any"
+  # Roster landing, the transformation filter's heading.
+  transformation_label: "Transformation"
+  # Roster landing, after the transformation filter's heading.
+  transformation_hint: "(has any selected)"
+  # Roster landing, a transformation chip or active filter naming a same-named class another task declares. Fields: {name}, the class name; {task}, the declaring task.
+  other_task_class: "{name} ({task} class)"
+  # Roster landing, the label before the active filters (also their screen-reader name).
+  active_filters: "Active filters"
+  # Roster landing, an active privacy-interpretation filter. Fields: {value}, the chosen class.
+  active_class: "Class: {value}"
+  # Roster landing, an active core algorithm filter. Fields: {value}, the chosen core algorithm.
+  active_core: "Core: {value}"
+  # Roster landing, an active transformation filter. Fields: {value}, the chosen transformation.
+  active_transformation: "Transformation: {value}"
+  # Roster landing, the active search. Fields: {value}, the searched text.
+  active_search: "Search: {value}"
+  # Roster landing, screen-reader name of an active filter, which removes it. Fields: {filter}, the filter's own text.
+  remove_filter: "Remove filter {filter}"
+  # Roster landing, the button removing every active filter.
+  clear_all: "Clear all"
+  # Roster landing, the count under the filters when the Roster lists several configured algorithms. Fields: {shown}, the rows shown; {total}, the rows listed.
+  showing: "Showing {shown} of {total} configured algorithms"
+  # Roster landing, the count under the filters when the Roster lists one configured algorithm. Fields: {shown}, the rows shown; {total}, which is 1.
+  showing_one: "Showing {shown} of {total} configured algorithm"
+  # Roster landing, the last cell of each row, linking its page.
+  details_link: "Details"
+  # Roster landing, screen-reader name of that link. Fields: {algorithm}, the configured algorithm's label.
+  details_aria: "Details: {algorithm}"
+  # Configured algorithm page, Recipe, the fold holding the configuration as JSON.
+  exact_configuration: "Exact configuration"
+
+tutorials:
+  # Library > User guide page, the paragraph above the notebook list.
+  index_intro: "Choose [Benchmarking an algorithm](#benchmarking-an-algorithm) for the complete path from installation through an official comparison. Choose [Using the library](#using-the-library) for the task, algorithm, domain, privacy-budget, metric, and transformation concepts used along that path."
+  # Tutorial notebook page, the opening note when this build could not run the notebook. Fields: {precondition}, the first line of the precondition it stopped at.
+  notebook_unrun: "This notebook couldn't run when the site was built, so the cells below have no output. It stopped at: {precondition}. Download it above and run it yourself."
+
+protocol:
+  # Methodology, the sentence under the methodology link: how the standings rank. [{headline}][headline] links the headline metric's definition, [{baseline}][baseline] the baseline's. Fields: {headline}, the headline metric; {baseline}, the baseline; {percent}, the protocol's quantile in percent (50 for the median).
+  ranking_rule: "The standings rank [{headline}][headline] against [{baseline}][baseline] by τ@{percent}, the error ratio that {percent}% of trials stay within; lower ranks first."
+  # Methodology, Baselines table, the definition of a best-of-class baseline. Fields: {aggregation}, the trial aggregation (e.g. median); {pool}, the privacy interpretation pooled.
+  baseline_best_median: "The best {aggregation} error among the {pool}-class algorithms, for each problem instance and budget."
+  # Methodology, Baselines table, the definition of a best-of-named-algorithms baseline. Fields: {aggregation}, the trial aggregation; {algorithms}, the algorithms pooled.
+  baseline_best_of: "The best {aggregation} error among {algorithms}, for each problem instance and budget."
+  # Methodology, Baselines table, the definition of a one-algorithm baseline. Fields: {aggregation}, the trial aggregation; {uuid}, the algorithm's identifier.
+  baseline_algorithm: "The {aggregation} error of {uuid} on each problem instance."
+  # Task Methodology, Baselines table, the Declared by badge of a baseline the library declares.
+  declared_library: "Library"
+  # Task Methodology, Baselines table, the Declared by badge of a baseline the benchmark protocol declares.
+  declared_protocol: "Benchmark protocol"
+  # Task Methodology, Baselines table, the Role of the baseline the standings divide by.
+  role_headline: "Headline baseline"
+  # Task Methodology, Baselines table, the Role of every other baseline.
+  role_offered: "Offered on Explore"
+  # Task Methodology, Standings table, the weighting rule's name.
+  rule_weighting: "Weighting"
+  # Task Methodology, Standings table, the eligibility rule's name; also the Leaderboard absences note's line listing algorithms with no privacy interpretation.
+  rule_eligibility: "Eligibility"
+
+site:
+  # Every page, under a table of more than 50 rows opened on its first 25, the button showing the rest. Fields: {count}, how many rows the table holds.
+  table_show_all: "Show all {count}"
+  # Every page's footer, the link to the Corpus area's data and licensing page.
+  footer_data_link: "About the corpus"
+  # Every page, a code block's copy button status when the browser refused to copy and selected the text instead.
+  copy_selected_hint: "Selected; press Ctrl+C"
+  # Every page, under the search box when search could not load.
+  search_load_error: "Search could not load. Please reload the page to try again."
+  # Every page, the skip link at the top of the page, shown on keyboard focus.
+  skip_to_content: "Skip to content"
+  # Every page, screen-reader name of the menu button on narrow screens.
+  open_navigation: "Open site navigation"
+  # Every page, the header's search button (its text and screen-reader name) and the search panel's heading.
+  search: "Search"
+  # Every page, hover text on the header's search button.
+  search_shortcut: "Search (/)"
+  # Every page, the greyed text in the search panel's box.
+  search_placeholder: "Search documentation"
+  # Every page, screen-reader name of the search panel's close button.
+  close_search: "Close search"
+  # Every page, the theme button's hover text and screen-reader name while the dark theme shows.
+  theme_light: "Switch to light mode"
+  # Every page, the theme button's hover text and screen-reader name while the light theme shows.
+  theme_dark: "Switch to dark mode"
+  # Pages with a sidebar, hover text and screen-reader name of the sidebar button while the sidebar is open, and of the sidebar's close button on narrow screens.
+  sidebar_collapse: "Collapse sidebar"
+  # Pages with a sidebar, hover text and screen-reader name of the sidebar button while the sidebar is closed.
+  sidebar_expand: "Expand sidebar"
+  # Pages with a sidebar, screen-reader name of the sidebar's list of pages.
+  section_navigation: "Section navigation"
+  # Pages with a sidebar, the sidebar entry for the section's own landing page.
+  nav_overview: "Overview"
+  # Every page below an area, screen-reader name of the breadcrumb trail.
+  breadcrumb: "Breadcrumb"
+  # Long pages, the contents menu button and the heading of the contents rail.
+  on_this_page: "On this page"
+  # Tutorial notebook pages, the button that downloads the notebook.
+  download_notebook: "Download this notebook"
+  # The missing-page page, its heading.
+  page_not_found: "Page not found"
+  # The missing-page page, the link back to Home.
+  not_found_home: "Home"
+  # Every page, the header's Tasks menu button.
+  tasks_menu: "Tasks"
+  # Task pages, hover text on the task name above the sidebar.
+  switch_task: "Switch task"
+  # Tasks menu and task switcher, the heading over the tasks the release benchmarks.
+  benchmarked_tasks: "Benchmarked tasks"
+  # Tasks menu and task switcher, the heading over every other task.
+  other_tasks: "Other tasks"
+  # Every page, screen-reader name of a code block's copy button.
+  copy_code: "Copy code"
+  # Every page, a code block's copy button status once the code is copied.
+  copied: "Copied"
+  # Every page, screen-reader name of a table's scrolling region. Fields: {heading}, the heading above the table, or the page title.
+  table_region: "{heading} table"
+  # Every page, the stand-in for a page's title where it has none, as in a table's region name.
+  untitled_page: "Page"
+  # An instance's preview card (instance links on Explore and Source pages) and an Instance page's facts, the field of study.
+  fact_field: "Field"
+  # An instance's preview card, the sample size; also Explore's Filter instances, the sample-size range's label.
+  card_samples: "Samples n"
+  # An instance's preview card, the dimension; also Explore's Filter instances range, Instance property menu and axis titles.
+  card_dimension: "Dimension d"
+  # An instance's preview card and an Instance page's facts, the design condition number; also Explore's Filter instances range, Instance property menu and axis titles.
+  fact_condition_number: "Design condition number κ(X)"
+
+shared:
+  # Leaderboard and Explore, rankings panel, the button beside the Algorithms heading that opens the algorithm filter.
+  filter_algorithms: "Filter algorithms"
+  # Leaderboard and Explore, help on the Privacy budget control for approximate-DP panels.
+  privacy_budget_help: "The approximate-DP budget (ε, δ) given to the algorithm, with δ = 10⁻⁶ for every problem instance; see [Methodology](https://saminulh.github.io/dpstats/methodology/#3-privacy-budget)."
+  # Leaderboard and Explore, the note under the Baseline control when an algorithm is the baseline.
+  algorithm_baseline: "Errors are divided by this algorithm's median error on the same problem instance."
+  # Leaderboard and Explore, shown instead of the chart when scripting is off.
+  chart_noscript: "This chart needs JavaScript."
+  # A Leaderboard or Explore page whose results cannot be shown, its first sentence. Fields: {task}, {identity} (the release).
+  results_unavailable_lead: "Results for {task} cannot be displayed from {identity}."
+  # A Leaderboard or Explore page whose results cannot be shown, after the sentence naming the task.
+  results_unavailable_note: "Some inputs are missing, or the selected results can't be ranked against each other."
+  # Leaderboard and Explore, the success-rate chart's question when each trial counts. Fields: {success_rate}, {trial}, {trials}, {instances} (each a defined term), {metric} (the metric's name), {tau} (τ, defined), {baseline} (" × " and the baseline's name, or nothing).
+  profile_question_individual: "How often does each algorithm succeed?"
+  # Leaderboard and Explore, the success-rate formula under that question. Fields: {success_rate}, {trial}, {trials}, {instances} (each a defined term), {metric} (the metric's name), {tau} (τ, defined), {baseline} (" × " and the baseline's name, or nothing).
+  profile_formula_individual: "{success_rate}: share of {trials} with {metric} ≤ {tau}{baseline}"
+  # Explore, the success-rate chart's question under the median-over-trials aggregation. Fields: {success_rate}, {trial}, {trials}, {instances} (each a defined term), {metric} (the metric's name), {tau} (τ, defined), {baseline} (" × " and the baseline's name, or nothing).
+  profile_question_median: "How often does each algorithm's median {trial} succeed?"
+  # Explore, the success-rate formula under that question. Fields: {success_rate}, {trial}, {trials}, {instances} (each a defined term), {metric} (the metric's name), {tau} (τ, defined), {baseline} (" × " and the baseline's name, or nothing).
+  profile_formula_median: "{success_rate}: share of {instances} whose median {metric} over {trials} is ≤ {tau}{baseline}"
+  # Leaderboard and Explore, help on the Threshold for success control and the Success rate heading.
+  threshold_help: "τ@p is the smallest error ratio τ that a share p of an algorithm's trials stay within, so lower is better. The curve plots the share of trials with error ratio at most τ, also known as a performance profile ([Dolan and Moré, 2002](https://doi.org/10.1007/s101070100263)); τ@p is where it crosses p."
+  # Leaderboard and Explore, hover text on the chart's quantile handle (the guide across the plot at p).
+  quantile_handle_hint: "Drag to change p"
+  # Leaderboard and Explore, hover text on the quantile handle when p is outside the visible share axis.
+  quantile_handle_offscreen_hint: "p is off the chart; use the slider to change it"
+  # Leaderboard and Explore, chart notice when every curve is hidden.
+  empty_no_curves: "No curves plotted."
+  # Leaderboard and Explore, chart notice when no core algorithm is checked.
+  empty_no_cores: "No core algorithms are checked, so no curve is plotted."
+  # Leaderboard and Explore, chart notice when no configuration carries every checked transformation.
+  empty_no_transformation_match: "No configuration uses every checked transformation, so no curve is plotted."
+  # Leaderboard and Methodology, the last line naming the results the page was built from. Fields: {identity}, the release or snapshot.
+  built_from: "Built from {identity}."
+  # Leaderboard and Explore, the first note when the page reads a local snapshot.
+  preview_notice: "Development preview from a local snapshot, not a benchmark release."
+  # Leaderboard and Explore, after preview_notice when the snapshot lacks declared trials. Fields: {missing}, the number of missing trials; {expected}, the number declared.
+  preview_missing_trials: "{missing} of {expected} trials are missing; configured algorithms without them are left out."
+  # Leaderboard and Explore, Core algorithms checklist, when the typed text matches none.
+  checklist_no_core_match: "No core algorithm matches that text."
+  # Leaderboard and Explore, Transformations checklist, when the typed text matches none.
+  checklist_no_transformation_match: "No transformation matches that text."
+  # Leaderboard and Explore, the Baseline control's label.
+  baseline_label: "Baseline"
+  # Leaderboard, the badge on standings the release has not published.
+  preview_badge: "Preview"
+  # Leaderboard and Explore, the success-rate question and formula, the word filling {success_rate}; it opens the term's definition.
+  term_success_rate: "Success rate"
+  # Leaderboard and Explore, the success-rate question and formula, the word filling {trial}; it opens the term's definition.
+  term_trial: "trial"
+  # Leaderboard and Explore, the success-rate question and formula, the word filling {trials}; it opens the trial's definition.
+  term_trials: "trials"
+  # Leaderboard and Explore, the success-rate question and formula, the words filling {instances}; they open the instance's definition.
+  term_instances: "problem instances"
+  # Leaderboard, shown without scripting, the line naming the baseline the standings read against. Fields: {baseline}, the baseline's name.
+  baseline_noscript: "Baseline: {baseline}"
+  # Leaderboard and Explore, the heading over the rankings table shown without scripting.
+  rankings_heading: "Rankings"
+  # Explore, the heading of the algorithm list beside the success-rate chart and of the Error ratio chart's plotted list.
+  plotted_heading: "Plotted"
+  # Leaderboard and Home, the heading of the standings list beside the chart.
+  standings_heading: "Leaderboard"
+  # Leaderboard and Explore, the label of the menu choosing how many leading curves are plotted.
+  show_top: "Show top"
+  # Leaderboard and Explore, that menu's option plotting every curve.
+  top_all: "all"
+  # Leaderboard and Explore, that menu's option once the reader picks curves by hand.
+  top_custom: "custom"
+  # Leaderboard and Explore, the threshold slider's label, which opens threshold_help; also the chart τ handle's screen-reader name, Trial outcomes' own threshold slider, Home's chart x-axis title, and every success-rate chart's x-axis title.
+  threshold_label: "Threshold for success, τ"
+  # Leaderboard and Explore, the quantile slider's label: the share p of weighted trials each algorithm's error ratio is read at.
+  quantile_label: "Share of trials, p"
+  # Leaderboard and Explore, screen-reader name of the quantile slider.
+  quantile_aria: "Share of trials the standings are read at"
+  # Leaderboard and Explore, the Error metric box's label, beside the control, which opens the metric's definition.
+  metric_label: "Error metric"
+  # Leaderboard and Explore, the Privacy budget control's label.
+  privacy_budget_label: "Privacy budget"
+  # Leaderboard and Explore, after the Error metric and Baseline boxes' descriptions and inside their help, the link to the selected one's definition, before ↗.
+  full_definition: "Details"
+  # Leaderboard and Explore, the note listing the metrics this page cannot report, before the list.
+  not_reported: "Not reported here:"
+  # A Leaderboard or Explore page whose results cannot be shown, the link to the complete reasons, after results_unavailable_note.
+  unavailability_link: "View complete unavailability reasons"
+  # Leaderboard and Explore, a privacy-interpretation badge's screen-reader name when the class has no reading, and the class line in a curve's hover text. Fields: {class}, the class.
+  interpretation_line: "Interpretation: {class}"
+  # Leaderboard and Explore, a privacy-interpretation badge's screen-reader name. Fields: {class}, the class; {reading}, what the class means.
+  interpretation_aria_reading: "Interpretation: {class}. {reading}"
+  # Explore, screen-reader name of the × removing an algorithm from a plotted list. Fields: {algorithm}, the algorithm's label.
+  remove_aria: "Remove {algorithm}"
+  # Leaderboard and Explore, an algorithm's Details panel, screen-reader name of its close button.
+  close_details: "Close details"
+  # Leaderboard and Explore, an algorithm's Details panel, before its standing. Fields: {budget}, the privacy budget.
+  dialog_budget_lead: "At {budget}:"
+  # Leaderboard and Explore, an algorithm's Details panel, its rank. Fields: {rank}, its rank (emphasised); {count}, the rows ranked.
+  dialog_rank: "rank {rank} of {count}"
+  # Leaderboard and Explore, an algorithm's Details panel, its headline value. Fields: {value}, its error ratio at the quantile, or the unreached text (emphasised); {percent}, the quantile in percent.
+  dialog_headline: "τ@{percent} {value}"
+  # Leaderboard and Explore, an algorithm's Details panel, before its privacy-interpretation badge.
+  privacy_interpretation: "Privacy interpretation:"
+  # Leaderboard and Explore, the Filter algorithms dialog, its heading.
+  filter_heading: "Algorithms"
+  # Leaderboard and Explore, the Filter algorithms dialog, its screen-reader name.
+  filter_dialog_aria: "Choose algorithms"
+  # Leaderboard and Explore, the Filter algorithms dialog, screen-reader name of its close button.
+  close: "Close"
+  # Leaderboard, Home and Explore, the algorithm column heading of the standings list beside the chart; also Explore's rankings table, shown without scripting.
+  column_algorithm: "Algorithm"
+  # Leaderboard and Explore, the standings list's summary when it lists several algorithms. Fields: {ranked}, how many; {plotted}, how many are plotted.
+  strip_summary: "{ranked} algorithms · {plotted} plotted"
+  # Leaderboard and Explore, the same when it lists one algorithm. Fields: {ranked}, which is 1; {plotted}, how many are plotted.
+  strip_summary_one: "{ranked} algorithm · {plotted} plotted"
+  # Leaderboard and Explore, the standings list's summary when the filter leaves out some of several algorithms. Fields: {shown}, the algorithms listed; {ranked}, how many there are; {plotted}, how many are plotted.
+  strip_summary_filtered: "{shown} of {ranked} algorithms · {plotted} plotted"
+  # Leaderboard and Explore, the same when there is one algorithm. Fields: {shown}, {ranked} (which is 1) and {plotted}, as in strip_summary_filtered.
+  strip_summary_filtered_one: "{shown} of {ranked} algorithm · {plotted} plotted"
+  # Leaderboard and Explore, the standings list, hover text on the rank of an algorithm the standings do not rank.
+  unranked_title: "Unranked comparison"
+  # Leaderboard and Explore, the standings list, hover text on a plotted curve's swatch, which hides it. Fields: {algorithm}, the algorithm's label.
+  hide_curve_title: "Hide {algorithm} on the chart"
+  # Leaderboard and Explore, the standings list, hover text on a hidden curve's swatch, which plots it. Fields: {algorithm}, the algorithm's label.
+  plot_curve_title: "Plot {algorithm} on the chart"
+  # Leaderboard and Explore, screen-reader name of that swatch while the curve is plotted. Fields: {algorithm}, the algorithm's label.
+  hide_curve_aria: "Hide {algorithm}"
+  # Leaderboard and Explore, screen-reader name of that swatch while the curve is hidden. Fields: {algorithm}, the algorithm's label.
+  plot_curve_aria: "Plot {algorithm}"
+  # Leaderboard and Explore, the standings list, hover text on an algorithm's score. Fields: {value}, its error ratio at the quantile, or the unreached text; {percent}, the quantile in percent.
+  headline_title: "{percent}% of trials have error ratio at most {value}"
+  # Explore, the same under the median-per-instance setting. Fields: {value}, as above; {percent}, the quantile in percent.
+  headline_title_median: "{percent}% of problem instances have median error ratio at most {value}"
+  # Leaderboard and Explore, the Filter algorithms dialog, the core algorithm list's label.
+  cores_label: "Cores"
+  # Leaderboard and Explore, the Filter algorithms dialog, the transformation list's label.
+  transformations_label: "Transformations"
+  # Leaderboard and Explore, the Filter algorithms dialog, the button checking every option of a list.
+  select_all: "Select all"
+  # Leaderboard and Explore, the Filter algorithms dialog, the button unchecking every option of a list.
+  deselect_all: "Deselect all"
+  # Leaderboard and Explore, the Filter algorithms dialog, the core list's search box: its screen-reader name, and its greyed text before …
+  find_core: "Find a core"
+  # Leaderboard and Explore, the Filter algorithms dialog, the transformation list's search box: its screen-reader name, and its greyed text before …
+  find_transformation: "Find a transformation"
+  # Leaderboard and Explore, the Filter algorithms dialog, beside a list's label: how many options are checked. Fields: {selected}, the checked options; {total}, all options.
+  checklist_count: "{selected} of {total}"
+  # Leaderboard and Explore, the chart notice empty_no_cores, the button checking every core.
+  select_all_cores: "Select all cores"
+  # Leaderboard and Explore, the chart notice empty_no_transformation_match, the button checking every transformation.
+  select_all_transformations: "Select all transformations"
+  # Leaderboard and Explore, a curve's hover text, the line under its class. Fields: {tau}, the threshold under the pointer; {share}, the success rate there.
+  curve_hover_reading: "τ {tau} · {share} success rate"
+  # Home, the chart's quantile line, its label. Fields: {percent}, the quantile the standings are ranked at, in percent.
+  ranked_at_quantile: "Ranked at {percent}% of trials"
+  # Leaderboard and Explore, the chart's quantile line where no tab names it, its label. Fields: {percent}, the quantile in percent.
+  quantile_guide: "{percent}% of trials"
+  # The Explore notebook, its success-rate chart's threshold line, its label. Fields: {tau}, the threshold it marks.
+  threshold_guide: "τ = {tau}"
+  # Leaderboard and Explore, the rankings table's pager, the button showing the previous ten rows.
+  pager_previous: "Previous"
+  # Leaderboard and Explore, the rankings table's pager, the button showing the next ten rows.
+  pager_next: "Next"
+  # Leaderboard and Explore, screen-reader name of pager_previous.
+  pager_previous_aria: "Previous ten rankings"
+  # Leaderboard and Explore, screen-reader name of pager_next.
+  pager_next_aria: "Next ten rankings"
+  # Leaderboard and Explore, the rankings table's pager, which rows show. Fields: {first} and {last}, the first and last rows shown; {total}, every row.
+  pager_status: "Showing {first}–{last} of {total}"
+
+reference:
+  # API reference landing, the heading of its one column, which lists the API sections.
+  section_column: "Section"
+  # API reference, Algorithms section landing, the heading of the column linking each task's Transformations page.
+  task_transformations_column: "Task transformations"
+
+contact:
+  # Contact page, its heading.
+  title: "Contact"
+  # Contact page, the paragraph above the addresses: who they reach and what to write about.
+  introduction: "For any inquiries, please contact:"
+  # Contact page, the addresses, one per line, as the maintainer gave them.
+  addresses: "saminulh@stanford.edu\ncchoi1@stanford.edu\njduchi@stanford.edu"
+
+notebook:
+  # Download as notebook, the notebook's title heading.
+  title: "Recreate this Explore view"
+  # Download as notebook, the opening paragraphs under the title. Fields: {version}, the Distribution Release's version; {source}, source_local or source_hosted.
+  intro: 'This notebook recreates this view. It assumes the library is installed; the cell under "Open the release" fetches the benchmark.'
+  # Download as notebook, where the release comes from when the site was built from a local cut, inside intro.
+  source_local: "a local Distribution Release cut, which is not published"
+  # Download as notebook, where the release comes from when the site pins a published one, inside intro. Fields: {repository}, the release's repository; {revision}, its pinned revision.
+  source_hosted: "{repository} at {revision}"
+  # Download as notebook, the heading over the cell that opens the release.
+  open_heading: "Open the release"
+  # Download as notebook, under open_heading, the Hugging Face token instructions.
+  open_token: "If no Hugging Face token is saved on this machine, enter yours at the prompt. It is separate from the website password. A 401 or 403 error means access was refused; run the cell again to re-enter it."
+  # Download as notebook, the heading over the cell that reads the panel.
+  read_heading: "Read the panel"
+  # Download as notebook, under read_heading.
+  read_lead: "The notebook loads the results, measures the same metric, divides each error by the baseline, and draws the profile curves."
+  # Download as notebook, the heading over the cell applying the instance filters.
+  filter_heading: "Keep the instances the filter keeps"
+  # Download as notebook, under filter_heading.
+  condition_note: "The notebook computes the design's condition number from each instance's data, as the site does."
+  # Download as notebook, the heading over the cell reading errors against the baseline.
+  baseline_heading: "Read errors against the selected baseline"
+  # Download as notebook, success-rate view, the heading over the standings cell.
+  compare_heading: "Compare the selected algorithms"
+  # Download as notebook, success-rate view, under compare_heading.
+  compare_note: "This is a local comparison, not an official ranking. Each algorithm's privacy interpretation stays visible."
+  # Download as notebook, success-rate view, the heading over the plotting cell.
+  curves_heading: "The curves this page plots"
+  # Download as notebook, Error ratio view, the heading over the reading and plotting cells.
+  feature_heading: "The points and running medians this page plots"
+  # Download as notebook, Error ratio view, under feature_heading.
+  feature_note: "Each point is one trial's error ratio, or one instance's median under the median setting. A failed trial has infinite error; it counts toward the running median but isn't drawn."
+  # Download as notebook, Trial outcomes view, the heading over the reading and plotting cells.
+  outcomes_heading: "The outcome shares this page stacks"
+  # Download as notebook, Trial outcomes view, under outcomes_heading.
+  outcomes_note: "Each bin shows its instances' share of the weight, split by how each trial ended: within the threshold, above it, or an error. With a second algorithm, it plots the probability of both being within the threshold, only one within the threshold, and neither. Instances with no property value are left out; if one of the algorithms never ran on an instance, that instance is omitted."
+
+baselines:
+  # What each baseline is called wherever it is offered or named (Baseline control, chart formula, axis definitions); its full definition is on the task's Methodology page.
+  ols_se: "OLS standard error"
+  ols_l2_se: "OLS standard error"
+  published_se: "Published standard error"
+  ols_prediction_se: "OLS prediction standard error"
+  ols_residual_rmse: "OLS residual RMSE"
+  response_std: "Response standard deviation"
+  sample_mean_l2_se: "Sample mean standard error"
+  sample_mean_mahalanobis_se: "Sample mean Mahalanobis standard error"
+  best_median: "Best standard algorithm"
+  none: "None"

@@ -1,0 +1,14 @@
+task_conversion:
+  title: "Task conversion"
+  text: "Transformations that cast the problem instance as another task, so that task's algorithms can solve it."
+bounds:
+  title: "Bounds"
+  text: "Transformations that provide the bounds on the data, which some algorithms require."
+scaling_and_projection:
+  title: "Scaling and projection"
+  text: "Transformations that reshape the data before the algorithm sees it."
+feature_selection:
+  title: "Feature selection"
+  text: "Transformations that reduce the feature set before fitting."
+other:
+  title: "Other transformations"

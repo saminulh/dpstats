@@ -1,0 +1,64 @@
+# Every piece of the site's own machinery that a theme, framework or library
+# could have provided, with the reason it stays. Tabler, Bootstrap, Plotly,
+# noUiSlider and Pagefind come first; a piece is listed here only where they
+# fall short. tests/unit/docs/test_handrolled_inventory.py fails when a custom
+# property or a site script exists without an entry, or an entry names one
+# that no longer exists.
+
+css_tokens:
+  - names: [--dp-size-page, --dp-size-section, --dp-size-subsection, --dp-size-body, --dp-size-support,
+            --dp-font-page, --dp-font-section, --dp-font-subsection, --dp-font-body, --dp-font-support]
+    reason: The site's five-step type scale. Tabler's heading sizes are tuned for dashboards; the stylesheet lint allows only these sizes, so every font size stays on one scale.
+  - names: [--dp-control-border, --dp-warn]
+    reason: Darker than Tabler's border and warning colours so control outlines reach 3:1 and warning text 4.5:1.
+  - names: [--dp-accent-soft, --dp-warn-soft, --dp-bg]
+    reason: Tints that keep accent and warning text at 4.5:1; Tabler's -lt tints fail contrast on the Roster and in warnings (#2098 unit 7).
+  - names: [--dp-sidebar-surface, --dp-control-surface]
+    reason: The tinted sidebar and control-bar surfaces that set each area of a page apart; Tabler has no tinted surface tokens.
+  - names: [--dp-class-diagnostic, --dp-class-informal, --dp-class-nonprivate, --dp-class-theoretical]
+    reason: One colour per privacy interpretation, a benchmark concept with no Tabler counterpart.
+  - names: [--dp-chart-plot, --dp-chart-grid, --dp-chart-other, --dp-chart-diagnostic]
+    reason: Plotly takes literal colours; these give the charts the theme's surfaces in light and dark.
+  - names: [--dp-hist-success-strong, --dp-hist-success-soft, --dp-hist-pair-both, --dp-hist-pair-neither,
+            --dp-hist-fail-1, --dp-hist-fail-2, --dp-hist-fail-3, --dp-hist-fail-4, --dp-hist-fail-5, --dp-hist-fail-6]
+    reason: The outcome histogram's categorical palette, chosen to stay apart under colour blindness (test_series_style.py).
+  - names: [--dp-nav-chevron, --dp-nav-indent, --dp-nav-pad, --dp-nav-step]
+    reason: Indentation of the nested API and user-guide navigation, which Tabler's flat nav does not provide.
+  - names: [--dp-rail-link]
+    reason: The collapsed sidebar rail's link width, which keeps every icon in place on collapse (#2098 unit 3).
+  - names: [--dp-tau-tip]
+    reason: The geometry of the draggable τ handle on the success-rate chart; Plotly has no draggable reference line.
+  - names: [--dp-home-plot-height]
+    reason: Home's chart height, shared by the chart and the standings beside it.
+  - names: [--dp-tile-radius, --dp-motion]
+    reason: The corner radius and transition the site's own components share.
+
+scripts:
+  - names: [site.js]
+    reason: Theme toggle, sidebar collapse and rail, code-copy buttons and site-copy lookup; the desktop collapse cannot share an element with Bootstrap's responsive offcanvas.
+  - names: [profile-charts.js, comparison-charts.js, panel-data.js]
+    reason: Success-rate, error-ratio and outcome charts computed from the release's panels; the benchmark's own reading has no library.
+  - names: [playground.js]
+    reason: Explore's page controller (the control bar, view tabs, instance filter and the reading kept in the address).
+  - names: [leaderboard.js, home.js]
+    reason: Leaderboard and Home pages over the same standings; Home's tabs use Bootstrap's Tab plugin, the rest is results logic.
+  - names: [algorithm-picker.js]
+    reason: The searchable algorithm picker; a combobox over the roster with configuration-aware search, on the vendored combobox-nav for keyboard handling.
+  - names: [algorithm-provenance.js]
+    reason: The algorithm details dialog, read from each configuration's provenance record.
+  - names: [notebook-download.js]
+    reason: Builds a runnable notebook for the view on screen.
+  - names: [roster.js, corpus.js, task-space.js]
+    reason: Filters over the Roster, Corpus and task tables; each narrows rows a static table already shows.
+  - names: [table-sort.js]
+    reason: Sorting for generated tables, with the column order the library declares (classes strongest first) rather than alphabetical.
+  - names: [long-tables.js]
+    reason: Opens a table of more than 50 rows on its first 25 with "Show all N" and pins an expanded table's header (style guide W110-W112); Tabler ships no row folding.
+  - names: [mathjax.js]
+    reason: MathJax configuration for the site's notation.
+
+kept:
+  - piece: Explore's view tabs (playground.js)
+    reason: Two tabs share one panel per metric section, which Bootstrap's one-pane-per-tab model cannot express (#2098 unit 6).
+  - piece: Link rewriting (api_reference.rewrite_links)
+    reason: One pattern for one link shape; a Markdown parser would add machinery for the same result (#2098 unit 8).

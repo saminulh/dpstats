@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Explore comparison eligibility regression</title>
+<body>
+<h1>Explore comparison eligibility regression</h1>
+<p>Uses the generated Mean Estimation Explore page in <code>site/</code>.
+Two labels, markers, privacy interpretations and initial class visibility are fixture values.</p>
+<pre id="results" role="status">Running…</pre>
+<iframe title="Explore under test" style="width:1440px;height:800px"></iframe>
+<script>
+const SITE = new URL('../../../site/', location.href);
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#results');
+const outcomes = [];
+function check(name, passed) {
+  outcomes.push(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  report.textContent = outcomes.join('\n');
+}
+async function until(predicate, description = 'requested state') {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Comparison did not reach ' + description);
+}
+function fixtureRows() {
+  const originalFetch = window.fetch;
+  window.fetch = async function (url, options) {
+    const response = await originalFetch.call(this, url, options);
+    if (!String(url).endsWith('/index.json')) return response;
+    const index = await response.json();
+    index.algorithms.slice(0, 2).forEach((row, position) => {
+      row.label = position ? 'EligibilityFixtureStandard' : 'EligibilityFixtureDiagnostic';
+      row.class = position ? 'standard' : 'diagnostic';
+      row.marker = position ? 'diamond' : 'square';
+    });
+    index.visible_classes = ['standard'];
+    return new Response(JSON.stringify(index), { headers: { 'Content-Type': 'application/json' } });
+  };
+}
+async function runCases() {
+  try {
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    const active = () => doc.querySelector('.dp-metric:not([hidden])');
+    await until(() => active()?.dpState && active().dataset.loading === 'false');
+    doc.querySelector('[data-view="feature"]').click();
+    const comparison = active().querySelector('.dp-comparison');
+    const search = comparison.querySelector('[data-comparison-selection] [data-algorithm-picker] [role="combobox"]');
+    const options = comparison.querySelector('[data-comparison-selection] [data-algorithm-picker] [role="listbox"]');
+    const picker = search.closest('[popover]');
+    const openPicker = () => {
+      if (!picker.matches(':popover-open')) comparison.querySelector('[data-comparison-add]').click();
+    };
+    const plotted = () => Array.from(comparison.querySelectorAll('.dp-plotted-row'))
+      .filter(row => row.querySelector('.dp-plotted-remove'));
+    await until(() => plotted().length > 0);
+    check('initial selection uses the first eligible standard algorithm',
+      plotted().length === 1 && plotted()[0].textContent.includes('EligibilityFixtureStandard'));
+    // Points inside the view are the traces on the chart's own axes; ratios
+    // beyond it and ∞/0 sit on the ratio overlay axis, on its edges.
+    const scatter = () => comparison.querySelector('.js-plotly-plot');
+    const markerTraces = () => (scatter()?.data || []).filter(trace => trace.mode === 'markers' && trace.customdata);
+    const inView = () => markerTraces().filter(trace => trace.xaxis === 'x' && trace.yaxis === 'y');
+    await until(() => inView().length > 0);
+    check('finite points use the first comparison slot circle instead of the profile marker',
+      inView().every(trace => trace.marker.symbol === 'circle'));
+    const onEdges = markerTraces().filter(trace => trace.yaxis === 'y2');
+    check('ratios beyond the view are dots or rings on the edge, never triangles',
+      markerTraces().every(trace => ['circle', 'circle-open', 'square', 'triangle-up', 'diamond', 'cross']
+        .includes(trace.marker.symbol)) &&
+      onEdges.every(trace => ['circle', 'circle-open'].includes(trace.marker.symbol) &&
+        trace.y.every(y => y === 0 || y === 1)) &&
+      markerTraces().every(trace => trace.xaxis === 'x'));
+    check('the scatter opens in pan, with the reset in its modebar',
+      scatter()._fullLayout.dragmode === 'pan' && !comparison.querySelector('[data-comparison-reset]') &&
+      !!scatter().querySelector('.modebar-btn[data-val="reset"]'));
+    const opening = scatter()._fullLayout.yaxis.range.slice();
+    await win.Plotly.relayout(scatter(), {'yaxis.range': [opening[0], (opening[0] + opening[1]) / 2]});
+    await until(() => scatter()._fullLayout.yaxis.range[1] !== opening[1], 'a zoomed scatter');
+    scatter().querySelector('.modebar-btn[data-val="reset"]').click();
+    await until(() => Math.abs(scatter()._fullLayout.yaxis.range[1] - opening[1]) < 1e-9, 'the opening view after reset');
+    check('the modebar reset returns the scatter to its opening view', true);
+    for (const button of comparison.querySelectorAll('.dp-plotted-remove')) button.click();
+    await until(() => plotted().length === 0);
+    const query = async label => {
+      openPicker();
+      search.focus();
+      search.value = label;
+      search.dispatchEvent(new win.Event('input', { bubbles: true }));
+      await until(() => picker.matches(':popover-open') && options.textContent.includes(label), 'suggestions for ' + label);
+    };
+    openPicker();
+    search.focus();
+    search.value = 'EligibilityFixtureDiagnostic';
+    search.dispatchEvent(new win.Event('input', { bubbles: true }));
+    await until(() => !options.hidden && options.textContent.trim());
+    check('standard-only picker excludes the diagnostic algorithm',
+      options.querySelectorAll('[role="option"]').length === 0 && !!options.querySelector('.dp-picker-none'));
+    const toggleDiagnostic = async expected => {
+      search.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      doc.querySelector('[data-view="profiles"]').click();
+      active().querySelector('.dp-plotted-filter').click();
+      const dialog = doc.querySelector('dialog[open]');
+      const chip = dialog.querySelector('.dp-chip[data-filter="class"][data-value="diagnostic"]');
+      check('class control is outside the page subtree', !doc.querySelector('[data-playground]').contains(chip));
+      chip.click();
+      await until(() => chip.getAttribute('aria-pressed') === String(expected), 'Diagnostic selected=' + expected);
+      dialog.close();
+      doc.querySelector('[data-view="feature"]').click();
+    };
+    await toggleDiagnostic(true);
+    await query('EligibilityFixtureDiagnostic');
+    const diagnosticOption = options.querySelector('[role="option"]');
+    check('enabling Diagnostic offers its exact algorithm',
+      !!diagnosticOption && diagnosticOption.textContent.includes('EligibilityFixtureDiagnostic'));
+    const diagnosticId = diagnosticOption.dataset.algorithm;
+    diagnosticOption.click();
+    await until(() => plotted().some(row => row.dataset.uuid === diagnosticId));
+    check('choosing the enabled diagnostic algorithm plots it',
+      plotted().length === 1 && plotted()[0].dataset.uuid === diagnosticId);
+    await toggleDiagnostic(false);
+    await until(() => plotted().length === 0);
+    check('disabling Diagnostic removes it from the plotted legend', plotted().length === 0);
+    await toggleDiagnostic(true);
+    await until(() => plotted().some(row => row.dataset.uuid === diagnosticId));
+    check('reenabling Diagnostic restores the selected algorithm', plotted().length === 1);
+    const slot = role => comparison.querySelector(`[data-outcome-slot="${role}"]`);
+    doc.querySelector('[data-view="outcomes"]').click();
+    const algorithmSearch = slot('algorithm').querySelector('[role="combobox"]');
+    slot('algorithm').querySelector('[data-outcome-trigger]').click();
+    await until(() => algorithmSearch.closest('[popover]').matches(':popover-open'), 'Algorithm search');
+    algorithmSearch.value = 'EligibilityFixtureDiagnostic';
+    algorithmSearch.dispatchEvent(new win.Event('input', { bubbles: true }));
+    algorithmSearch.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await until(() => slot('algorithm').textContent.includes('EligibilityFixtureDiagnostic'), 'diagnostic Outcomes algorithm');
+    doc.querySelector('[data-view="feature"]').click();
+    const baselineSelect = doc.querySelector('[data-shared-baseline]');
+    baselineSelect.value = doc.querySelector('[data-baseline-algorithm-trigger]').value;
+    baselineSelect.dispatchEvent(new win.Event('change', { bubbles: true }));
+    await until(() => doc.querySelector('#baseline-picker').matches(':popover-open'));
+    const baselineSearch = doc.querySelector('#baseline-picker [role="combobox"]');
+    baselineSearch.value = 'EligibilityFixtureDiagnostic';
+    baselineSearch.dispatchEvent(new win.Event('input', { bubbles: true }));
+    const baselineOptions = doc.querySelector('#baseline-picker [role="listbox"]');
+    await until(() => baselineOptions.querySelector('[role="option"]'));
+    const baselineOption = baselineOptions.querySelector('[role="option"]');
+    baselineOption.click();
+    await until(() => active().dpState.baseline === 'algorithm:' + diagnosticId &&
+      plotted().length === 1 && plotted()[0].textContent.includes('EligibilityFixtureStandard'));
+    check('algorithm baseline excludes itself and selects an eligible peer',
+      plotted().every(row => row.dataset.uuid !== diagnosticId));
+    openPicker();
+    search.value = 'EligibilityFixtureDiagnostic';
+    search.dispatchEvent(new win.Event('input', { bubbles: true }));
+    await until(() => !!options.querySelector('.dp-picker-none'));
+    check('the baseline algorithm is absent from comparison suggestions',
+      options.querySelectorAll('[role="option"]').length === 0);
+    search.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    doc.querySelector('[data-view="outcomes"]').click();
+    // Outcomes opens on the Success rate leader among the eligible algorithms.
+    await until(() => slot('algorithm').querySelector('[data-outcome-trigger]').textContent.trim() !== '',
+      'Outcomes beside an algorithm baseline');
+    check('Outcomes never reads the baseline algorithm against itself',
+      !slot('algorithm').textContent.includes('EligibilityFixtureDiagnostic'));
+    const compareSearch = slot('compare').querySelector('[role="combobox"]');
+    const compareOptions = slot('compare').querySelector('[role="listbox"]');
+    slot('compare').querySelector('[data-outcome-trigger]').click();
+    await until(() => compareSearch.closest('[popover]').matches(':popover-open'), 'Compare with search');
+    compareSearch.value = 'EligibilityFixtureDiagnostic';
+    compareSearch.dispatchEvent(new win.Event('input', { bubbles: true }));
+    await until(() => !!compareOptions.querySelector('.dp-picker-none'), 'no Compare with suggestion');
+    check('the baseline algorithm is absent from Compare with suggestions',
+      compareOptions.querySelectorAll('[role="option"]').length === 0);
+    document.title = outcomes.some(result => result.startsWith('FAIL')) ? 'FAIL comparison eligibility' : 'PASS comparison eligibility';
+  } catch (error) {
+    check(error.message, false);
+    document.title = 'FAIL comparison eligibility';
+  }
+}
+(async () => {
+  const url = new URL('mean_estimation/public-results/', SITE);
+  const html = await (await fetch(url)).text();
+  frame.addEventListener('load', runCases, { once: true });
+  frame.srcdoc = html.replace('<head>', '<head><base href="' + url.href + '"><script>(' +
+    fixtureRows.toString() + ')();<\/script>');
+})().catch(error => { check(error.message, false); document.title = 'FAIL comparison eligibility'; });
+</script>
+</body>

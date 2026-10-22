@@ -1,0 +1,21 @@
+# Pinned docs toolchain for the unified site (docs/site/mkdocs.yml + assemble.py).
+# Pins match the versions that build `mkdocs build --strict` green, so CI is
+# reproducible. The library itself is installed separately (`pip install -e .[docs]`)
+# so mkdocstrings renders the API against the real package.
+#
+# The site installs the library and this toolchain and nothing else: it reads
+# one immutable Distribution Release and renders the views that release ships.
+#
+# Refresh: `pip install -U <pkg>`, confirm a green --strict build, then re-freeze
+# these lines.
+mkdocs==1.6.1
+mkdocs-material==9.7.6
+mkdocs-gen-files==0.6.1
+mkdocs-literate-nav==0.6.3
+# Renders a tutorial page as the executed notebook itself.
+mkdocs-jupyter==0.26.3
+mkdocstrings==1.0.4
+mkdocstrings-python==2.0.5
+pymdown-extensions==11.0
+# Site search: indexes the finished pages; the [bin] wheel carries the binary, so no Node.
+pagefind[bin]==1.5.2

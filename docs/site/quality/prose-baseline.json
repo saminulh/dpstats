@@ -1,0 +1,20 @@
+{
+  "docs/content/tasks/m_estimation/problem-formulation.md :: Google.Latin": 1,
+  "docs/submission.md :: Google.EmDash": 2,
+  "docs/tasks/m_estimation.md :: Google.EmDash": 4,
+  "site/library/reference/algorithm/dpstats.algorithm.BaseAlgorithm/index.html :: Google.EmDash": 1,
+  "site/library/reference/algorithm/dpstats.algorithm.Transformation/index.html :: Google.EmDash": 2,
+  "site/library/reference/collections/dpstats.TaskCollection/index.html :: Google.EmDash": 2,
+  "site/library/reference/collections/dpstats.TaskCollection/index.html :: Google.OptionalPlurals": 15,
+  "site/library/reference/collections/dpstats.fetch_benchmark/index.html :: Google.EmDash": 1,
+  "site/library/reference/collections/dpstats.open_collection/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.BoxDomain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.Domain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.EuclideanSpace/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.InterceptDomain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.LpBallDomain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.OneHotDomain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/domains/dpstats.domains.ProductDomain/index.html :: Google.OptionalPlurals": 1,
+  "site/library/reference/exceptions/dpstats.exceptions.NotApplicable/index.html :: Google.EmDash": 2,
+  "site/library/reference/instance/dpstats.instance.Instance/index.html :: Google.EmDash": 2
+}

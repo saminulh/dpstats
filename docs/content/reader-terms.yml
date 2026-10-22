@@ -1,0 +1,17 @@
+instance:
+  text: "One specific problem for the task: its input data together with the public information supplied about it (such as sample size or bounds), which algorithms may use without spending privacy."
+trial:
+  text: "One run of an algorithm on a problem instance at a given privacy budget. Because private algorithms are typically randomized, each is run as several trials to see the spread of its errors; each trial has a fixed seed so it can be reproduced."
+metric:
+  text: "How an algorithm's error on a trial is measured, such as the distance between its estimate and the non-private estimate. Each task defines its own metrics."
+baseline:
+  text: "The reference error for each problem instance that an algorithm's error is measured against. Dividing an algorithm's error by it gives a unit-free error ratio, so results on very different instances can be compared."
+performance_ratio:
+  text: "An algorithm's error on a trial divided by its problem instance's baseline: 1 means as good as the baseline, 2 means twice its error."
+tau:
+  text: "The threshold for success: a trial succeeds if its error is at most τ × the baseline, that is, if its error ratio is at most τ."
+success_rate:
+  text: "The share of trials that succeed at a given τ. A trial that returns no output never succeeds."
+privacy_interpretation:
+  text: "How far a result's privacy claim can be trusted, from standard (a proof covers exactly what ran) through qualified, theoretical, informal and diagnostic, down to nonprivate."
+  link: library/reference/algorithm/dpstats.algorithm.PrivacyInterpretation/

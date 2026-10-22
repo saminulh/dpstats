@@ -1,0 +1,18 @@
+{# The task heading switches task in place: each entry keeps the reader on
+   this page's route in that task where it exists (see task_target). #}
+<span class="dropdown dp-task-switch">
+  <button type="button" class="dp-task-switch-toggle dropdown-toggle" id="task-switch" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="task-switch-menu" title="{{ site_copy_text('switch_task') }}">{{ space.task.title }}</button>
+  <span class="dropdown-menu dp-task-menu" id="task-switch-menu" aria-labelledby="task-switch">
+    {% for benchmarked, label in [(true, site_copy_span('benchmarked_tasks')), (false, site_copy_span('other_tasks'))] %}
+      {% set group = namespace(tasks=[]) %}
+      {% for task in space.tasks %}
+        {% if (task.children[0].url.split('/')[0] in config.extra.benchmarked_tasks) == benchmarked %}{% set group.tasks = group.tasks + [task] %}{% endif %}
+      {% endfor %}
+      {% if group.tasks %}
+        {% if not benchmarked and config.extra.benchmarked_tasks %}<span class="dropdown-divider"></span>{% endif %}
+        <span class="dropdown-header">{{ label }}</span>
+        {% for task in group.tasks %}<a class="dropdown-item text-wrap{% if task == space.task %} active{% endif %}" href="{{ task_target(task) }}"{% if task == space.task %} aria-current="true"{% endif %}>{{ task.title }}</a>{% endfor %}
+      {% endif %}
+    {% endfor %}
+  </span>
+</span>

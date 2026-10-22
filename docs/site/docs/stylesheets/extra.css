@@ -1,0 +1,2081 @@
+@layer scientific {
+/* Scientific content styles. Tabler owns the shell and standard controls. */
+
+/* The homepage shares the results components, inside one task at a time. */
+
+.dp-home-intro { text-align: left; padding: 28px 0 30px; border-bottom: 1px solid var(--tblr-border-color); }
+.dp-content .dp-home-intro h1 { font-size: var(--dp-size-page); line-height: 1.25; font-weight: 600; letter-spacing: -.01em; margin: 16px 0; color: var(--tblr-body-color); }
+.dp-content .dp-home-intro p { max-width: 550px; margin: 18px 0; font-size: var(--dp-size-body); line-height: 1.5; }
+.dp-content .dp-home-intro p:last-of-type { font-size: var(--dp-size-body); }
+.dp-task-tabs { display: none; }
+.dp-home.is-interactive .dp-task-tabs,
+.dp-results.is-interactive > .dp-task-tabs {
+  display: flex;
+  justify-content: start;
+  border-bottom: 1px solid var(--tblr-border-color);
+  margin: 0 0 28px;
+}
+.dp-task-tabs button {
+  flex: 1;
+  padding: 18px 20px;
+  text-align: left;
+  border-bottom: 3px solid transparent;
+  color: var(--tblr-secondary);
+  font: inherit;
+  font-size: var(--dp-size-body);
+  cursor: pointer;
+}
+.dp-task-tabs button[aria-selected="true"] {
+  color: var(--tblr-primary);
+  border-bottom-color: currentColor;
+}
+.dp-results .dp-shared-baseline { display: inline-flex; align-items: center; gap: 8px; font-size: var(--dp-size-body); }
+.dp-content details.dp-comparison-view { border: 0; box-shadow: none; padding: 0; background: transparent; margin: 0; }
+.dp-comparison-view > summary { display: none !important; }
+body:has(.dp-home) .dp-content .dp-home-panel > .dp-empty { max-width: none; }
+.dp-home-task-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.dp-content .dp-home-task-heading h2 { margin: 0; font-size: var(--dp-size-section); font-weight: 600; letter-spacing: -.01em; }
+.dp-home-task-heading > div { font-size: var(--dp-size-body); }
+.dp-content .dp-home-source {
+  border: 0;
+  box-shadow: none;
+  font-size: var(--dp-size-body);
+  margin: 0.7rem 0;
+  padding: 0;
+  background: none;
+}
+.dp-content .dp-home-source:focus-within { box-shadow: none; }
+.dp-content .dp-home-source > summary:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 2px;
+}
+.dp-content .dp-home-source > summary {
+  width: fit-content;
+  padding: 0.25rem 1.2rem 0.25rem 0;
+  margin: 0;
+  background: none;
+  color: var(--tblr-secondary);
+}
+.dp-content .dp-home-source > summary::before { display: none; }
+.dp-content .dp-home-source > summary::after {
+  top: 0.3rem;
+  right: 0;
+}
+.dp-home { --dp-home-plot-height: 376px; }
+.dp-home .dp-table-scroll { max-height: var(--dp-home-plot-height); overflow: auto; border: 1px solid var(--tblr-border-color); }
+.dp-home .dp-leaderboard thead { position: sticky; top: 0; z-index: 1; background: var(--tblr-bg-surface-secondary); }
+.dp-home .dp-metric > .dp-chart,
+.dp-home .dp-chart-shell > .dp-chart { min-height: 420px; }
+.dp-content .dp-profile-heading,
+.dp-content .dp-rankings-heading { font-size: var(--dp-size-subsection); margin: 1rem 0 0.4rem; }
+.dp-home .dp-home-source { display: none; }
+.dp-home .dp-home-task-heading { margin-bottom: 25px; }
+.dp-home .dp-results.is-interactive { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.dp-home .dp-results.is-interactive > .dp-filters,
+.dp-home .dp-results.is-interactive > .dp-metric:not([hidden]) { display: contents; }
+.dp-home .dp-results > .dp-absences { grid-column: 1 / -1; }
+.dp-home .dp-results > .dp-filters > .dp-chip-group,
+.dp-home .dp-results > .dp-filters > .dp-comparison-pair,
+.dp-home .dp-results .dp-privacy-filters { grid-column: span 2; margin: 0; padding: 0; background: none; border: 0; }
+.dp-home .dp-results > .dp-filters > .dp-chip-group,
+.dp-home .dp-privacy-filters > .dp-chip-group { display: flex; flex-direction: row; align-items: center; gap: 8px; min-width: 0; }
+.dp-home .dp-chip-label { font: var(--dp-font-body); letter-spacing: normal; text-transform: none; color: var(--tblr-secondary); }
+.dp-home .dp-select { font-size: var(--dp-size-body); padding: 9px 28px 9px 10px; border-radius: 3px; }
+.dp-home .dp-results .dp-filters input[type=range] { flex: none; width: 100%; height: 34px; min-width: 0; margin: 0; }
+.dp-home .dp-results .dp-filters output { font: var(--dp-font-support); color: var(--tblr-primary); }
+.dp-home .dp-budget-family { order: 3; font-size: var(--dp-size-body); }
+.dp-home .dp-results > .dp-filters > .dp-comparison-pair { grid-column: 3 / span 4; grid-row: 1; }
+.dp-home .dp-results > .dp-filters > .dp-threshold-control { grid-column: 1 / -1; grid-row: 2; }
+.dp-home .dp-results .dp-privacy-filters { grid-column: 1 / span 2; grid-row: 1; }
+.dp-home .dp-chip-label { display: flex; align-items: center; min-height: 16px; }
+/* Home hides the slider: the fixed threshold reads as a value beside its label. */
+.dp-home .dp-results > .dp-filters > .dp-threshold-control { display: flex; align-items: baseline; gap: 8px; }
+/* A label carrying contextual help is the trigger for it: no icon beside the
+   label, and the dotted rule is the only thing that marks it as one. */
+.dp-help-label {
+  display: inline-flex; align-items: center; min-height: 24px;
+  margin: 0; padding: 0; border: 0; background: none; text-align: left;
+  color: inherit; font: inherit; cursor: default;
+}
+.dp-help-label.dp-has-help {
+  cursor: help;
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+}
+.dp-context-help {
+  position: fixed; inset: auto; margin: 0;
+  width: 280px; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
+  overflow: auto; padding: 12px; border: 1px solid var(--tblr-border-color);
+  border-radius: var(--dp-tile-radius); background: var(--tblr-bg-surface);
+  color: var(--tblr-body-color); font: var(--dp-font-body);
+  box-shadow: 0 4px 14px #0003;
+}
+.dp-home .dp-profile-view { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.dp-home .dp-results-table { order: -1; }
+.dp-results-table, .dp-results-profile { min-width: 0; }
+.dp-content .dp-home .dp-rankings-heading,
+.dp-content .dp-home .dp-profile-heading { margin: 0 0 14px; font: var(--dp-font-subsection); }
+.dp-content .dp-home .dp-panel-heading { margin: 0 0 8px; font: var(--dp-font-support); color: var(--tblr-secondary); }
+.dp-home.is-interactive .dp-panel-heading { display: none; }
+.dp-home .dp-leaderboard { background: transparent; border: 0; }
+.dp-content .dp-home .dp-leaderboard th { background: var(--tblr-bg-surface-secondary); color: var(--tblr-secondary); font: var(--dp-font-support); padding: 12px 10px; white-space: nowrap; }
+.dp-home .dp-leaderboard td { padding: 12px 10px; font-size: var(--dp-size-body); border-bottom: 1px solid var(--tblr-border-color); }
+.dp-home .dp-leaderboard .dp-alg { font-weight: 500; }
+.dp-home .dp-leaderboard .dp-value { font: var(--dp-font-support); }
+@media (max-width: 800px) {
+  .dp-content .dp-home-intro h1 { font-size: var(--dp-size-page); }
+  .dp-task-tabs { overflow: auto; }
+  .dp-task-tabs button { min-width: 150px; padding: 15px; font-size: var(--dp-size-body); }
+  .dp-home .dp-results.is-interactive { gap: 20px; }
+  .dp-home .dp-results .dp-privacy-filters { grid-column: 1 / span 3; }
+  .dp-home .dp-results > .dp-filters > .dp-comparison-pair { grid-column: 4 / span 3; }
+  .dp-home .dp-results > .dp-filters > .dp-threshold-control { grid-column: 1 / -1; grid-row: 2; }
+  .dp-home .dp-profile-view { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Results controls wrap within the full application canvas. */
+.dp-results.is-interactive > .dp-filters { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 12px 0; background: none; border: 0; }
+.dp-results .dp-shared-controls { gap: 12px 28px; }
+.dp-results .dp-shared-controls > .dp-privacy-filters { padding: 0; margin: 0; }
+.dp-results .dp-privacy-filters { flex-direction: row; align-items: center; flex-wrap: wrap; padding: 12px 0; background: none; border: 0; }
+.dp-results .dp-privacy-filters > .dp-chip-group { flex: 1; min-width: 180px; }
+.dp-results .dp-chip-label { font: var(--dp-font-body); text-transform: none; letter-spacing: normal; }
+.dp-results .dp-chip { text-transform: none; }
+/* The notebook control is an action, not a filter, so it reuses the action
+   button the results views already carry rather than the chip treatment. */
+.dp-results .dp-notebook-control { align-items: center; gap: 8px; }
+.dp-results .dp-notebook-download {
+  padding: 0.35rem 0.7rem; border: 1px solid var(--tblr-border-color); border-radius: 0.25rem;
+  background: transparent; color: var(--tblr-body-color);
+  font: inherit; font-size: var(--dp-size-body); cursor: pointer;
+}
+.dp-results .dp-notebook-download:hover { border-color: var(--tblr-primary); }
+.dp-results .dp-notebook-download:disabled { opacity: .5; cursor: default; }
+.dp-results .dp-notebook-download:focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: 3px; }
+/* A fixed row height is only correct for an actual native select: the
+   Baseline control's [data-shared-baseline] is now a multi-line segmented
+   radiogroup, and this rule forcing it to one select's height clipped its
+   real content height and let the Definition link overlap what follows. */
+.dp-results select:is([data-shared-baseline], [data-trial-aggregation]) { height: 30px; border-radius: 4px; font-size: var(--dp-size-body); }
+.dp-results .dp-chart-shell { margin-top: 12px; }
+
+
+/* A table's scroll region contains everything in the table, screen-reader
+   text included, so nothing in it can widen the page. */
+.dp-table-scroll { position: relative; }
+
+/* Reading pages keep running prose to a readable line, without constraining
+   code, tables or the results controls' own lists; display equations share the
+   column, so they centre on the text around them. Results pages (Home,
+   Leaderboard, Explore) carry short leads above full-width charts and tables,
+   so their text spans the content width (style guide W17). */
+.dp-content :is(p, blockquote, div.arithmatex),
+.dp-content :is(ul, ol):not(.dp-results *) {
+  max-width: 75ch;
+}
+.dp-content.dp-results-page :is(p, blockquote, div.arithmatex, ul, ol) {
+  max-width: none;
+}
+
+/* A restrained reading hierarchy; result and playground headings retain their
+   surface-specific typography below. */
+body:not(:has(.dp-results)) .dp-content
+  :is(h1, h2, h3, h4, .doc-heading) {
+  color: var(--tblr-body-color);
+  overflow-wrap: anywhere;
+}
+
+/* Preserve a clear keyboard indicator for content links, buttons, and native
+   navigation on reading pages. */
+body:not(:has(.dp-results))
+  :is(a, button):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+
+
+/* ── RESULTS SURFACES ────────────────────────────────────────────────────────
+   Leaderboard table, instance filters, and profile chart. The filter chrome is
+   inert without the page script, so it stays hidden until that script marks
+   its results section interactive; every panel ships expanded, which is also
+   the printable and no-script view. */
+.dp-filters {
+  display: none;
+  flex-direction: column;
+  gap: 1.1rem;
+  align-items: stretch;
+  padding: 0.7rem 1rem;
+  background: var(--tblr-bg-surface-secondary);
+  border: 1px solid var(--tblr-border-color);
+  border-radius: var(--dp-tile-radius);
+}
+.dp-results.is-interactive .dp-filters {
+  display: flex;
+}
+.dp-select {
+  appearance: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.4rem 1.5rem 0.4rem 0.55rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: var(--dp-tile-radius);
+  background: var(--tblr-bg-surface-secondary);
+  color: var(--tblr-body-color);
+  font: inherit;
+  font-size: var(--dp-size-body);
+  cursor: pointer;
+}
+/* Plain block flow, not flex: a wrapped multi-line radiogroup needs its own
+   reported height, and stacking the group, its Definition link, and its
+   status note as ordinary block children is what makes that height correct.
+   These carry no .dp-chip-group hook, so nothing pulls them into a flex
+   row. */
+.dp-baseline-control, .dp-metric-control {
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+.dp-baseline-control .dp-select, .dp-metric-control .dp-select { margin-right: 0.5rem; }
+.dp-baseline-control .dp-select, .dp-metric-control .dp-select { width: auto; max-width: 16rem; }
+
+/* One exclusive choice of at most five short options: native radios, inputs
+   visually hidden and their labels drawn as equal chips in one row, which
+   wraps as a unit at narrow widths. Checking one is a plain click or arrow
+   key on a native control; nothing here reimplements radio semantics. */
+.dp-segmented {
+  /* A flex fieldset does not reliably report a wrapped row's height in every
+     browser, so the wrap lives on the plain `.dp-segmented-row` div inside
+     it instead; the fieldset itself only resets the native chrome. */
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.dp-segmented > legend { padding: 0; }
+.dp-segmented-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+/* The Leaderboard's one line naming the selected slice's size, after its options. */
+.dp-slice-size {
+  margin-left: 0.5rem;
+  color: var(--tblr-secondary);
+  font-size: 0.875em;
+  font-variant-numeric: tabular-nums;
+}
+.dp-segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.dp-segmented-option input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.dp-segmented-option label {
+  padding: 0.15rem 0.7rem;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 999px;
+  color: var(--tblr-body-color);
+  font-size: var(--dp-size-body);
+  cursor: pointer;
+  transition: border-color var(--dp-motion), color var(--dp-motion);
+}
+.dp-segmented-option label:hover { border-color: var(--tblr-primary); }
+.dp-segmented-option input[type="radio"]:checked + label {
+  border-color: var(--tblr-primary);
+  background: var(--dp-accent-soft);
+  color: var(--tblr-primary);
+  font-weight: 600;
+}
+.dp-segmented-option input[type="radio"]:focus-visible + label {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 2px;
+}
+.dp-segmented-option input[type="radio"]:disabled + label {
+  color: var(--tblr-secondary);
+  cursor: default;
+}
+@media (forced-colors: active) {
+  .dp-segmented-option input[type="radio"]:checked + label { border: 2px solid CanvasText; }
+}
+
+/* The one "Full definition" link, shown inside its control label's help. */
+.dp-definition-link {
+  display: block;
+  margin-top: 0.5em;
+  font-size: var(--dp-size-body);
+  color: var(--tblr-primary);
+  white-space: nowrap;
+}
+
+/* The Baseline select and the × that forgets a chosen algorithm sit as one
+   unit; the select's width caps a long composite name, which the native
+   option list shows in full. */
+.dp-baseline-choice { display: flex; align-items: center; gap: 0.25rem; max-width: 100%; }
+.dp-baseline-choice .dp-select { margin-right: 0; }
+.dp-baseline-algorithm-clear {
+  border: 0;
+  background: none;
+  color: var(--tblr-secondary);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  padding: 0 2px;
+}
+.dp-baseline-algorithm-clear:hover, .dp-baseline-algorithm-clear:focus-visible { color: var(--tblr-primary); }
+
+/* Baseline choice and comparison additions share one native popover. */
+.dp-picker-popover {
+  position: relative;
+  width: min(24rem, 90vw);
+  padding: 0.6rem;
+}
+.dp-picker-popover[popover] {
+  inset: 0;
+  margin: auto;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 8px;
+  background: var(--tblr-bg-surface);
+  color: var(--tblr-body-color);
+  box-shadow: 0 12px 32px #0005;
+}
+.dp-picker-popover[popover]:not(:popover-open) { display: none; }
+.dp-select:disabled { cursor: default; opacity: 1; color: var(--tblr-secondary); }
+.dp-select:focus-visible,
+.dp-task-tabs button:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 3px;
+}
+[data-leaderboard] > .dp-filters,
+[data-leaderboard] > .dp-metric > .dp-filters {
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 0.6rem 0;
+  border: 0;
+  background: none;
+}
+.dp-empty {
+  margin: 1rem 0;
+  padding: 1.4rem 1.2rem;
+  border: 1px dashed var(--tblr-border-color);
+  border-radius: var(--dp-tile-radius);
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  text-align: center;
+}
+.dp-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+.dp-filter-title {
+  font-size: var(--dp-size-body);
+}
+.dp-algorithm-filters {
+  margin-top: 0.7rem;
+}
+.dp-results.is-interactive .dp-unavailable-baseline .dp-profile-view,
+.dp-results.is-interactive .dp-unavailable-baseline .dp-comparison {
+  display: none;
+}
+.dp-chip-label {
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+/* The one line naming the family every budget chip in the row shares, so
+   each chip itself can read as just its parameters. */
+.dp-budget-family {
+  flex-basis: 100%;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 600;
+}
+.dp-chip {
+  padding: 0.15rem 0.7rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tblr-body-color);
+  font: inherit;
+  font-size: var(--dp-size-body);
+  text-transform: none;
+  cursor: pointer;
+  transition: border-color var(--dp-motion), color var(--dp-motion);
+}
+.dp-chip:hover {
+  border-color: var(--tblr-primary);
+}
+.dp-chip[aria-pressed="true"] {
+  border-color: var(--tblr-primary);
+  background: var(--dp-accent-soft);
+  color: var(--tblr-primary);
+  font-weight: 600;
+}
+
+.dp-table-scroll {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+.dp-content .dp-leaderboard,
+.dp-content .dp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--dp-size-body);
+}
+.dp-content .dp-leaderboard th,
+/* A sortable column header is a button, so it reads and behaves as the
+   control it is rather than as styled header text. It keeps the header's own
+   convention: the button inherits the cell's case, tracking and colour, and
+   adds only the affordance and the direction it is sorted in. */
+.dp-content .dp-table th .dp-sort {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.dp-content .dp-table th .dp-sort:hover { color: var(--tblr-primary); }
+.dp-content .dp-table th[aria-sort] .dp-sort { color: var(--tblr-primary); }
+/* Which column is sorted, and which way, in shape as well as colour. */
+.dp-content .dp-table th .dp-sort::after { content: " \2195"; opacity: 0.45; }
+.dp-content .dp-table th[aria-sort="ascending"] .dp-sort::after {
+  content: " \2191";
+  opacity: 1;
+}
+.dp-content .dp-table th[aria-sort="descending"] .dp-sort::after {
+  content: " \2193";
+  opacity: 1;
+}
+.dp-content .dp-table th .dp-sort:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 2px;
+}
+.dp-content .dp-table th {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--tblr-border-color);
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dp-content .dp-leaderboard th {
+  /* A compact leaderboard wraps its column titles rather than forcing the
+     whole table into a horizontal scroller. */
+  white-space: normal;
+}
+/* A scientific symbol inside an uppercased label, which "uppercase" would
+   otherwise letter-case into its capital form. */
+.dp-symbol {
+  text-transform: none;
+}
+.dp-content .dp-leaderboard td,
+.dp-content .dp-table td {
+  padding: 0.4rem 0.45rem;
+  border-bottom: 1px solid var(--tblr-border-color);
+  vertical-align: middle;
+}
+.dp-content .dp-leaderboard tr:last-child td {
+  border-bottom: none;
+}
+/* The row of the hovered curve: the same accent the chart raises. */
+.dp-content .dp-leaderboard tr.dp-row-highlight td {
+  background: var(--dp-accent-soft);
+}
+.dp-content .dp-leaderboard tr.dp-row-highlight td:first-child {
+  box-shadow: inset 3px 0 0 var(--tblr-primary);
+}
+.dp-content .dp-leaderboard tr:hover td {
+  background: var(--dp-accent-soft);
+}
+.dp-rank,
+.dp-value {
+  color: var(--tblr-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dp-alg {
+  font-weight: 600;
+}
+.dp-alg small {
+  display: block;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 400;
+}
+.dp-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+.dp-badge--diagnostic {
+  color: var(--dp-class-diagnostic);
+}
+.dp-badge--theoretical {
+  color: var(--dp-class-theoretical);
+}
+.dp-badge--informal {
+  color: var(--dp-class-informal);
+}
+.dp-badge--nonprivate {
+  color: var(--dp-class-nonprivate);
+}
+
+/* The chart is an enhancement over the table below it, so it takes no room
+   until it has actually been drawn. */
+.dp-chart[data-rendered="true"] {
+  min-height: 12rem;
+}
+.dp-authored-copy { white-space: pre-line; }
+.dp-note {
+  margin: 0 0 0.6rem;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+}
+.dp-comparison { display: none; margin: 1rem 0; }
+.dp-results.is-interactive .dp-comparison { display: block; }
+.dp-comparison-plot { width: 100%; min-width: 0; }
+.dp-comparison input[type="checkbox"] { flex-shrink: 0; }
+/* The typeahead that commits one algorithm at a time into the plotted set. */
+.dp-picker { position: relative; margin-top: 0.8rem; max-width: 28rem; }
+.dp-picker-input {
+  width: 100%;
+  padding: 0.3rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.25rem;
+  background: var(--tblr-bg-surface-secondary);
+  color: inherit;
+  font: inherit;
+}
+.dp-picker-input:disabled { color: var(--tblr-secondary); cursor: not-allowed; }
+.dp-picker-options {
+  position: static;
+  width: 100%;
+  max-height: min(18rem, 50vh);
+  margin: 0.4rem 0 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.25rem;
+  background: var(--dp-bg);
+  list-style: none;
+  font-size: var(--dp-size-body);
+}
+.dp-picker-option {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.dp-picker-option[aria-selected="true"] { background: var(--dp-accent-soft); }
+.dp-picker-label { min-width: 0; overflow-wrap: anywhere; }
+.dp-picker-option > .dp-badge { flex-shrink: 0; }
+.dp-picker-more, .dp-picker-none { padding: 0.35rem 0.4rem; color: var(--tblr-secondary); }
+.dp-picker-count { margin: 0.3rem 0 0; color: var(--tblr-secondary); font-size: var(--dp-size-body); }
+.dp-plotted-baseline { color: var(--tblr-secondary); }
+/* The same swatch, drawn in a rankings row rather than the plotted set. */
+.dp-series-marker { margin-right: 8px; vertical-align: middle; }
+.dp-comparison input[type="search"], .dp-comparison select, .dp-shared-baseline select {
+  max-width: 100%; padding: 0.25rem; border: 1px solid var(--tblr-border-color); color: inherit; background: var(--tblr-bg-surface-secondary);
+}
+.dp-comparison button:not(.dp-help-label) { padding: 0.35rem 0.7rem; border: 1px solid var(--tblr-border-color); border-radius: 0.25rem; }
+
+.dp-comparison-selection { margin: .75rem 0 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--tblr-border-color); }
+.dp-comparison-selection .dp-plotted-rows { overflow: visible; }
+.dp-comparison-selection .dp-plotted-row { border: 0; }
+.dp-comparison-selection .dp-plotted-remove { padding: 0; width: 2rem; height: 2rem; }
+.dp-comparison-selection .dp-plotted-label { font-size: var(--dp-size-body); }
+.dp-content .dp-results h3 {
+  margin: 1.6rem 0 0.3rem;
+  font-size: var(--dp-size-subsection);
+}
+.dp-results .dp-filters {
+  gap: 0.6rem;
+}
+.dp-results .dp-filters input[type="range"] {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  accent-color: var(--tblr-primary);
+}
+.dp-results .dp-filters output {
+  min-width: 6.5rem;
+  font-weight: 700;
+}
+
+/* One budget's roster inside a metric's section. The budget selector above
+   shows at most one of these at a time, so the heading is a caption rather
+   than a document section of its own. */
+.dp-content .dp-panel-heading {
+  margin: 1.1rem 0 0.35rem;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* What a root cannot report on, and why. */
+.dp-absences {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid var(--dp-warn);
+  border-radius: 0 var(--dp-tile-radius) var(--dp-tile-radius) 0;
+  background: var(--dp-warn-soft);
+}
+.dp-content .dp-absences p {
+  margin: 0 0 0.3rem;
+  font-weight: 600;
+}
+.dp-content .dp-absences ul {
+  margin: 0;
+}
+
+/* One large chart needs room to breathe before it draws, so the results
+   section does not jump when Plotly replaces this placeholder. */
+.dp-metric > .dp-chart {
+  min-height: 35rem;
+  width: 100%;
+}
+
+/* Family chips keep algorithm choices out of the permanent plot layout. */
+.dp-chart-shell {
+  position: relative;
+  overflow: visible;
+  width: 100%;
+}
+.dp-chart-shell > .dp-chart {
+  min-height: 420px;
+  width: 100%;
+}
+
+/* The plotted set sits beside the chart where there is room for it and under
+   the chart where there is not, so the chart never loses more width than the
+   strip needs. */
+.dp-plotted {
+  margin-top: 12px;
+  font-size: var(--dp-size-support);
+}
+@media (min-width: 55em) {
+  .dp-chart-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .dp-chart-shell > .dp-chart {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .dp-plotted {
+    flex: 0 0 14rem;
+    width: 14rem;
+    margin-top: 0;
+  }
+}
+.dp-plotted-heading {
+  margin: 0 0 4px;
+  font-size: inherit;
+  font-weight: 700;
+}
+.dp-plotted-box > summary {
+  display: none;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.dp-plotted-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+/* The legend is a column capped at the chart's height (set by the
+   controller), so a long plotted set scrolls inside it. */
+.dp-plotted { display: flex; flex-direction: column; min-height: 0; }
+.dp-content details.dp-plotted-box { border: 0; box-shadow: none; padding: 0; background: transparent; margin: 0; }
+/* The legend box never shrinks below its capped list, so the filter block
+   beneath it takes what remains and scrolls; nothing is clipped mid-row. */
+.dp-plotted-box { display: flex; flex-direction: column; min-height: 0; flex: 0 0 auto; overflow: hidden; }
+.dp-plotted { overflow: hidden; }
+.dp-plotted-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 0;
+  border-radius: 3px;
+}
+.dp-plotted-row.dp-row-highlight {
+  background: var(--tblr-bg-surface);
+  outline: 1px solid var(--tblr-border-color);
+}
+.dp-plotted-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* The remove control is its own target; the row body highlights instead. */
+.dp-plotted-remove {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--tblr-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+.dp-plotted-remove:hover,
+.dp-plotted-remove:focus-visible {
+  background: var(--tblr-bg-surface);
+  color: var(--tblr-body-color);
+}
+.dp-plotted-more {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: inherit;
+}
+/* The two checklists that choose which configurations a chart may draw:
+   cores are alternatives, transformations are all required together. Native widths
+   and a scrolling list, so the pair stays inside the control row. */
+.dp-roster-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.dp-checklist {
+  flex: 1 1 15rem;
+  min-width: 0;
+  max-width: 22rem;
+}
+.dp-checklist-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+.dp-checklist-count {
+  margin-right: auto;
+  color: var(--tblr-secondary);
+  font-size: var(--dp-size-body);
+  font-variant-numeric: tabular-nums;
+}
+.dp-checklist-head button {
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.3rem;
+  background: var(--tblr-bg-surface-secondary);
+  color: inherit;
+  font: inherit;
+  font-size: var(--dp-size-body);
+  cursor: pointer;
+}
+.dp-checklist-search {
+  width: 100%;
+  padding: 0.35rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.3rem;
+  background: var(--tblr-bg-surface-secondary);
+  color: inherit;
+  font: inherit;
+  font-size: var(--dp-size-body);
+}
+.dp-checklist-rows {
+  max-height: 14rem;
+  margin-top: 0.3rem;
+  overflow-y: auto;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.3rem;
+  font-size: var(--dp-size-body);
+}
+.dp-checklist-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+}
+.dp-checklist-row label {
+  display: flex;
+  flex: 1;
+  gap: 0.4rem;
+  align-items: center;
+  min-width: 0;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.dp-checklist-row input { flex-shrink: 0; accent-color: var(--tblr-primary); }
+.dp-checklist-row:has(input:disabled) { color: var(--tblr-secondary); }
+.dp-checklist-row:has(input:disabled) label { cursor: default; }
+/* The count is supporting text beside the label, never inside it, so the
+   checkbox's accessible name stays the option's own name. */
+.dp-checklist-tally {
+  flex: none;
+  color: var(--tblr-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.dp-checklist-empty { margin: 0.4rem; color: var(--tblr-secondary); }
+.dp-empty-pool { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.dp-empty-pool button {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.3rem;
+  background: var(--tblr-bg-surface-secondary);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.dp-below-chart button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 0.3rem;
+  background: var(--tblr-bg-surface-secondary);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.dp-below-chart { display: flex; justify-content: flex-end; font-size: var(--dp-size-body); }
+.dp-home label:has([data-top-n]) { display: none; }
+/* One swatch shape, drawn at CSS size wherever a curve is named: the rankings
+   table and the plotted set. Drawing it at CSS size rather than inside the
+   scaled chart is what keeps its dash and marker legible at phone width. */
+.dp-series-swatch { display: inline-block; width: 26px; height: 12px; flex: none; margin-right: 8px; vertical-align: middle; }
+/* The dash is specified in screen pixels, so it must not take the chart's
+   scale; the same is true of the stroke width that carries the emphasis. */
+.dp-chart .scatterlayer .trace path { vector-effect: non-scaling-stroke; }
+
+.dp-provenance-trigger { margin-left: 8px; padding: 2px 6px; border: 1px solid var(--tblr-border-color); border-radius: 4px; color: var(--tblr-link-color); font-size: var(--dp-size-body); font-weight: 400; white-space: nowrap; cursor: pointer; }
+.dp-leaderboard .dp-row-highlight { background: var(--dp-accent-soft); }
+.dp-leaderboard tr[data-uuid]:focus-visible, .dp-below-chart button:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 2px;
+}
+.dp-empty-row {
+  padding: 1.2rem !important;
+  color: var(--tblr-secondary);
+  text-align: center;
+}
+
+@media screen and (max-width: 48rem) {
+  .dp-roster-filters {
+    flex: 1 0 100%;
+    margin-left: 0;
+  }
+  /* One checklist above the other rather than two narrow columns. */
+  .dp-checklist {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+/* The first load shows nothing until there is a chart to show; a later one
+   (another budget) keeps the chart on screen, dimmed, rather than blanking
+   and redrawing the whole view. */
+.dp-metric[data-loading="true"]:not([data-drawn]) .dp-profile-view,
+.dp-metric[data-loading="true"]:not([data-drawn]) .dp-comparison-view {
+  visibility: hidden;
+}
+.dp-metric[data-loading="true"][data-drawn] .dp-profile-view,
+.dp-metric[data-loading="true"][data-drawn] .dp-comparison-view {
+  opacity: 0.55;
+  transition: opacity 0.15s ease 0.1s;
+}
+
+/* Explicitly revealed Explore comparisons carry their privacy interpretation. */
+.dp-leaderboard tr.dp-paged-out { display: none; }
+.dp-pager {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin-top: 0.6rem; font-size: var(--dp-size-body);
+}
+.dp-pager-status { flex: 1 1 auto; min-width: 0; color: var(--tblr-secondary); font: var(--dp-font-support); }
+.dp-pager button {
+  min-height: 24px; padding: 0.25rem 0.7rem;
+  border: 1px solid var(--dp-control-border); border-radius: var(--dp-tile-radius);
+  background: var(--tblr-bg-surface-secondary); color: inherit; font: inherit;
+  font-size: var(--dp-size-body);
+}
+.dp-pager button:disabled { color: var(--tblr-secondary); cursor: default; opacity: 0.6; }
+.dp-class-badge { margin-left: 8px; padding: 1px 6px; border: 1px solid var(--tblr-border-color); border-radius: 9px; font: var(--dp-font-support); letter-spacing: .04em; text-transform: uppercase; color: var(--tblr-secondary); }
+.dp-content .dp-build-source { margin-top: 28px; font-size: var(--dp-size-body); color: var(--tblr-secondary); }
+
+/* Shared roles apply to prose, result components and plotting text alike. */
+[hidden] { display: none !important; }
+body, .dp-content { font: var(--dp-font-body); }
+.dp-content h1 { font: var(--dp-font-page); }
+.dp-content h2 { font: var(--dp-font-section); }
+.dp-content :is(h3, h4, h5, h6) { font: var(--dp-font-subsection); }
+.dp-content :is(code, pre), .dp-value, .dp-rank, .dp-budget-family,
+.dp-badge, .dp-class-badge,
+.dp-build-source, .dp-chart, .dp-comparison-plot, .dp-notebook-figure {
+  font: var(--dp-font-support);
+}
+.dp-chip-label {
+  font: var(--dp-font-body); text-transform: none; letter-spacing: normal;
+}
+.dp-results
+  :is(button, input:not([type=checkbox]):not([type=radio]):not([type=range]), select) {
+  min-height: 24px; border-color: var(--dp-control-border);
+}
+.dp-results input[type=range] { min-height: 24px; }
+:is(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--tblr-primary); outline-offset: 3px;
+}
+.dp-badge, .dp-class-badge { text-transform: none; letter-spacing: normal; }
+.dp-chip-group, .dp-metric, .dp-profile-view, .dp-comparison-view,
+.dp-shared-baseline { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+.dp-shared-baseline select { min-width: 0; max-width: 100%; }
+.dp-task-tabs { max-width: 100%; }
+.dp-task-tabs button { min-width: 0; overflow-wrap: anywhere; }
+.dp-tab-label-short { display: none; }
+@media (max-width: 480px) {
+  /* Full tab labels break mid-word at 375px; the short label never wraps
+     inside a word. The accessible name (aria-label on the button) stays the
+     full label either way. */
+  .dp-tab-label-full { display: none; }
+  .dp-tab-label-short { display: inline; }
+}
+.dp-build-source, .dp-home-task-heading, .dp-absences { overflow-wrap: anywhere; }
+.dp-content :is(pre, .highlight) { max-width: 100%; overflow: auto; }
+@media (max-width: 800px) {
+  .dp-results .dp-privacy-filters > .dp-chip-group { min-width: 0; flex-basis: 100%; }
+  .dp-results .dp-filters output { min-width: 0; }
+  .dp-task-tabs button { padding: 12px 8px; }
+  .dp-comparison :is(input, select) { min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+
+/* A generated table of four columns or more keeps its columns legible and
+   scrolls inside its own container on a phone. */
+.dp-table-scroll > .dp-table--wide { min-width: 34rem; }
+
+/* Corpus index: the search, task and field controls, and the sort buttons a
+   column header becomes. The table below them is complete without any of it,
+   so the controls stay hidden until their script reveals them. */
+.dp-corpus-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 1rem;
+  margin: 0.8rem 0 0.4rem;
+}
+.dp-corpus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.dp-corpus-field .dp-input {
+  max-width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: var(--dp-tile-radius);
+  background: var(--tblr-bg-surface-secondary);
+  color: var(--tblr-body-color);
+  font: inherit;
+  font-size: var(--dp-size-body);
+}
+.dp-corpus-field .dp-input:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 3px;
+}
+/* A Source page's citation. */
+.dp-content .dp-citation { margin: 0.4rem 0; }
+/* A citation and its copy button stand apart from what follows them. */
+.dp-content [data-dp-reference] { margin-bottom: 1rem; }
+/* One treatment for the page-local actions: copy a citation, clear a
+   selection. A filter chip is a filter control, so neither is one. */
+.dp-action {
+  margin: 0.2rem 0 0.6rem;
+  padding: 0.15rem 0.7rem;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tblr-body-color);
+  font: inherit;
+  font-size: var(--dp-size-body);
+  cursor: pointer;
+}
+.dp-action:hover { border-color: var(--tblr-primary); }
+.dp-action:focus-visible {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 3px;
+}
+
+
+
+/* A tutorial page is its notebook, rendered by mkdocs-jupyter. The plugin's
+   own stylesheet already scrolls a wide cell inside its output area, so only
+   the guarantee that no cell widens the page belongs here. */
+.jupyter-wrapper,
+.jupyter-wrapper .jp-Notebook,
+.jupyter-wrapper .jp-Cell { max-width: 100%; }
+.jupyter-wrapper .jp-OutputArea-output { overflow-x: auto; }
+/* A tutorial this build could not run says so above its cells. */
+.dp-tutorial-unrun {
+  margin: 0.6rem 0 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--tblr-border-color);
+  border-left: 3px solid var(--tblr-primary);
+  border-radius: 4px;
+  font-size: var(--dp-size-body);
+}
+
+/* Explore: the plotted strip is the legend, and each entry opens a details
+   dialog in the top layer; the rankings table stays as the dialog's source. */
+.dp-plotted-rows .dp-plotted-open, .dp-plotted-open {
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit;
+  text-align: left; cursor: pointer; text-decoration: underline dotted transparent;
+}
+.dp-plotted-open:hover, .dp-plotted-open:focus-visible { text-decoration-color: currentColor; }
+.dp-plotted-row-opens { cursor: pointer; }
+.dp-algorithm-dialog {
+  width: min(48rem, calc(100vw - 32px)); max-height: 85vh; overflow: auto;
+  padding: 22px 24px; border: 1px solid var(--tblr-border-color); border-radius: 10px;
+  background: var(--tblr-bg-surface); color: var(--tblr-body-color);
+  box-shadow: 0 18px 48px #0006; font-size: var(--dp-size-body); line-height: 1.5;
+}
+.dp-algorithm-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.dp-algorithm-dialog-header { display: flex; align-items: center; gap: 10px; margin-right: 32px; }
+.dp-algorithm-dialog-title { margin: 0; font-size: var(--dp-size-subsection); overflow-wrap: anywhere; }
+.dp-algorithm-dialog .dp-interpretation { margin: 0 0 18px; }
+.dp-algorithm-dialog-facts { margin: 0 0 18px; color: var(--tblr-secondary); font-size: var(--dp-size-body); line-height: 1.6; }
+.dp-algorithm-dialog-facts strong { color: var(--tblr-body-color); font-weight: 600; font-variant-numeric: tabular-nums; }
+.dp-summary-lead { color: var(--tblr-body-color); font-weight: 600; }
+.dp-summary-item { white-space: nowrap; }
+
+/* The legend's head: title left, the modal's button right. */
+.dp-plotted-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 0 0 4px; }
+.dp-content .dp-plotted-head .dp-plotted-heading { margin: 0; font-size: inherit; font-weight: 700; }
+.dp-plotted-filter {
+  font: inherit; padding: 1px 9px; border: 1px solid var(--tblr-border-color); border-radius: 999px;
+  background: none; color: inherit; cursor: pointer; line-height: 1.5;
+}
+.dp-plotted-filter:hover, .dp-plotted-filter:focus-visible { border-color: var(--tblr-primary); color: var(--tblr-primary); }
+.dp-filter-dialog { width: min(40rem, calc(100vw - 32px)); }
+/* Inside the modal the box is always interactive: the section rule that
+   hides filter chrome until scripting arrives does not reach it. */
+.dp-filter-dialog .dp-algorithm-filters { display: flex; flex-direction: column; gap: 12px; margin: 8px 0 0; padding: 0; border: 0; background: none; }
+.dp-filter-dialog .dp-filter-title { font-size: var(--dp-size-subsection); }
+
+.dp-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* The browser places each picker against its own input or trigger and flips
+   it at a viewport edge. No scroll listener or measured positioning is needed. */
+.dp-picker-popover[popover] {
+  inset: auto;
+  margin: 0.4rem;
+  position-area: bottom span-left;
+  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  max-width: min(28rem, calc(100vw - 2rem));
+}
+.dp-content .dp-plotted-rows .dp-plotted-open { border: 0; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+
+/* Card hyperparameters: a value at its default recedes; a changed one leads. */
+
+}
+
+/* Shared shell and Tabler component layout. */
+/* Tokens: every colour, size and font the site's rules name. This is the one
+   place a literal value is written (docs/site/quality/stylelint.config.js);
+   a theme block repeats only what differs. Tabler's own variables are set here
+   too, so the shell and the scientific content draw from the same values, and
+   Plotly, which cannot parse Tabler's light-dark() values, reads resolved ones. */
+:root, [data-bs-theme] {
+  --tblr-font-sans-serif: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --tblr-border-radius: 4px;
+  --tblr-card-border-radius: 6px;
+  --tblr-box-shadow-card: none;
+  --dp-size-page: 1.75rem;
+  --dp-size-section: 1.375rem;
+  --dp-size-subsection: 1.125rem;
+  --dp-size-body: .875rem;
+  --dp-size-support: .75rem;
+  --dp-font-page: 600 var(--dp-size-page)/1.25 var(--tblr-font-sans-serif);
+  --dp-font-section: 600 var(--dp-size-section)/1.3 var(--tblr-font-sans-serif);
+  --dp-font-subsection: 600 var(--dp-size-subsection)/1.35 var(--tblr-font-sans-serif);
+  --dp-font-body: 400 var(--dp-size-body)/1.5 var(--tblr-font-sans-serif);
+  --dp-font-support: 400 var(--dp-size-support)/1.34 var(--tblr-font-monospace);
+  --dp-tile-radius: 4px;
+  --dp-motion: 110ms cubic-bezier(.2, 0, .38, .9);
+  --dp-accent-soft: color-mix(in srgb, var(--tblr-primary) 13%, var(--dp-bg));
+  /* The feature histogram's stacks are a shared categorical chart palette
+     (style-guide.md: chart series may carry their own semantic colours,
+     distinct from the site accent, when a page needs categories to read
+     apart rather than to match the brand). Each of the seven outcome
+     colours in the theme blocks is chosen, and separately tuned per colour
+     scheme, so that every adjacent pair in the drawn stack order (≤ τ, > τ,
+     invalid regime, no release, timeout, memory limit, algorithm error)
+     clears a CIEDE2000 ΔE of at least 20 under normal vision and simulated
+     deuteranopia/protanopia, and every colour clears 3:1 contrast against
+     --dp-chart-plot (tests/unit/docs/test_series_style.py and the site
+     quality contrast check hold both). ≤ τ and > τ are separate hues, not
+     tints of one hue, so success and non-conformant-but-completed runs never
+     read as the same category. "Not run" is a faint muted neutral mixed
+     from --tblr-secondary, drawn hatched. Pair
+     mode's "Both ≤ τ" and "Neither ≤ τ" are a strong and a quiet neutral,
+     each 3:1 or more against --dp-chart-plot, so the only hues in a paired
+     chart are the two algorithms' own series colours. "A only"/"B only" are
+     not page tokens: comparison-charts.js reads each algorithm's own series
+     colour at draw time, the same colour that names it everywhere else on
+     the page. */
+  --dp-hist-fail-6: color-mix(in srgb, var(--tblr-secondary) 14%, transparent);
+}
+
+/* Light theme avoids large pure-white fields: a cool grey page with slightly
+   lighter panels, so surfaces separate without glare. One deep accent. */
+[data-bs-theme="light"] {
+  --tblr-body-bg: #e9ecf0;
+  --tblr-bg-surface: #f5f6f8;
+  --tblr-bg-surface-secondary: #eceef2;
+  --tblr-border-color: #d3d8df;
+  --tblr-body-color: #1f2937;
+  --tblr-secondary: #5b6470;
+  --tblr-secondary-color: #5b6470;
+  --tblr-primary: #2c5d8f;
+  --tblr-primary-rgb: 44, 93, 143;
+  --tblr-primary-fg: #ffffff;
+  --tblr-link-color: #2c5d8f;
+  --tblr-link-color-rgb: 44, 93, 143;
+  --tblr-link-hover-color: #1f4468;
+  --dp-bg: #f5f6f8;
+  --dp-control-border: #737a7e;
+  --dp-warn: #9e5800;
+  --dp-warn-soft: rgba(255, 171, 0, 0.14);
+  --dp-class-diagnostic: #7959d3;
+  --dp-class-theoretical: #3e6ec2;
+  --dp-class-informal: #9e5800;
+  --dp-class-nonprivate: #a95084;
+  /* Neutral ink for references and context curves. A leading curve's colour
+     comes from the categorical palette that ships with the page. */
+  --dp-chart-diagnostic: #1c1c1c;
+  --dp-chart-other: #848484;
+  --dp-chart-plot: #e6e9ee;
+  --dp-chart-grid: #ffffff;
+  --dp-hist-success-strong: #0072b2;
+  --dp-hist-success-soft: #a85d00;
+  --dp-hist-pair-both: #2f3b44;
+  --dp-hist-pair-neither: #77858f;
+  --dp-hist-fail-1: #9c4b77;
+  --dp-hist-fail-2: #5e1f00;
+  --dp-hist-fail-3: #00875e;
+  --dp-hist-fail-4: #3e1d06;
+  --dp-hist-fail-5: #0e7a9e;
+}
+
+/* Dark theme: a lightened accent keeps focus rings and selected states at 3:1
+   or more on dark surfaces; secondary text is raised for small sizes. */
+[data-bs-theme="dark"] {
+  --tblr-secondary: #b4bcc8;
+  --tblr-primary: #8cb4e0;
+  --tblr-primary-rgb: 140, 180, 224;
+  --tblr-primary-fg: #0f1a26;
+  --tblr-link-color: #8cb4e0;
+  --tblr-link-color-rgb: 140, 180, 224;
+  --tblr-link-hover-color: #b3cdea;
+  --dp-bg: #1f2937;
+  --dp-control-border: #69818d;
+  --dp-warn: #ffc164;
+  --dp-warn-soft: rgba(255, 171, 0, 0.16);
+  --dp-class-diagnostic: #a58af0;
+  --dp-class-theoretical: #7ea6e8;
+  --dp-class-informal: #ffc164;
+  --dp-class-nonprivate: #e08ab6;
+  --dp-chart-diagnostic: #f2f2f2;
+  --dp-chart-other: #9c9c9c;
+  --dp-chart-plot: #17232e;
+  --dp-chart-grid: #30414f;
+  --dp-hist-success-strong: #5fb3e8;
+  --dp-hist-success-soft: #f2b341;
+  --dp-hist-pair-both: #d5dde2;
+  --dp-hist-pair-neither: #65747f;
+  --dp-hist-fail-1: #e8a3ca;
+  --dp-hist-fail-2: #ff8a4c;
+  --dp-hist-fail-3: #21dcbe;
+  --dp-hist-fail-4: #e8d24c;
+  --dp-hist-fail-5: #9ad6ff;
+}
+.page-wrapper, .container-fluid, .dp-content { min-width: 0; }
+/* Section navigation is subordinate to the full-width global header. */
+.page > header.navbar { z-index: 1031; }
+.dp-task-menu { width: 19rem; max-width: calc(100vw - 2rem); max-height: 75vh; overflow-y: auto; }
+.dp-task-menu .dropdown-header { margin: 0; }
+.dp-task-menu .dropdown-item { padding-block: .6rem; }
+.dp-sidebar-shell { width: 3rem; border-inline-end: 1px solid var(--tblr-border-color); }
+.dp-sidebar-heading { padding-inline-start: .625rem; }
+.dp-sidebar-heading h2 { display: none; min-width: 0; }
+.dp-sidebar { --tblr-offcanvas-width: 16rem; }
+.dp-sidebar .offcanvas-body { display: block; padding: .5rem; }
+.dp-sidebar .nav-link { display: flex; align-items: center; gap: .75rem; }
+.dp-sidebar .nav-link, .dp-results .nav-link { color: var(--tblr-body-color); }
+.dp-sidebar .nav-link.active, .dp-results .nav-link.active { color: var(--tblr-link-color); }
+.dp-sidebar .nav-link-icon { color: inherit; }
+@media (min-width: 992px) {
+  .dp-sidebar-shell { width: 16rem; }
+  .dp-sidebar-heading h2 { display: block; }
+  .dp-sidebar { width: 100%; }
+  /* Collapsing narrows the shell to a rail and clips what it holds, which
+     keeps its full width: nothing reflows, so the toggle and every icon stay
+     where they were. Hidden text is invisible rather than removed, and so
+     out of the focus order. */
+  .dp-sidebar-shell { overflow: hidden; }
+  .dp-sidebar-heading, .dp-sidebar { width: 16rem; }
+  /* The toggle and each task link's icon share the rail's centre line. */
+  .dp-task-sidebar { --dp-rail-link: 2rem; }
+  .dp-task-sidebar .nav-link { padding-inline: .375rem; }
+  [data-sidebar-collapsed] .dp-sidebar-shell { width: 3rem; }
+  [data-sidebar-collapsed] .dp-sidebar-heading h2,
+  [data-sidebar-collapsed] .dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar,
+  [data-sidebar-collapsed] .dp-task-sidebar .dp-nav-group-label { visibility: hidden; }
+  /* A link's title leaves the rail but keeps naming the link, as Bootstrap's
+     visually-hidden text does; the script shows it as the link's tooltip. */
+  [data-sidebar-collapsed] .dp-task-sidebar .nav-link-title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  /* A link's pill shrinks to its icon, so the rail does not cut it off. */
+  [data-sidebar-collapsed] .dp-task-sidebar .nav-link { width: var(--dp-rail-link); }
+}
+.dp-content:not(:has(.dp-results)) { max-width: 1100px; }
+.page-body > .container-fluid { max-width: 1280px; margin-inline: auto; }
+.dp-content > h1 { margin-bottom: 1.5rem; }
+.dp-content h2 { margin-top: 1.75rem; }
+.dp-content h3 { margin-top: 1.2rem; }
+.dp-content :is(pre, .highlight) { overflow: auto; }
+.dp-content img, .dp-content svg { max-width: 100%; }
+.dp-content .dp-results { background: var(--tblr-bg-surface); border: 1px solid var(--tblr-border-color); border-radius: var(--tblr-border-radius); padding: 1rem; }
+.dp-comparison-controls, .dp-results .dp-privacy-filters { gap: 1rem 2rem; }
+.dp-profile-heading, .dp-rankings-heading { font-size: 1rem; font-weight: 600; }
+.dp-results :is(select, input[type=search], input[type=text]) { height: auto; }
+.dp-results select { max-width: 100%; }
+.dp-results .dp-chip-label { font-weight: 500; }
+.dp-segmented-option .btn { white-space: normal; text-align: left; }
+.dp-segmented-option input:disabled + label { opacity: .75; }
+.dp-segmented-option .btn-check:checked + .btn { color: var(--tblr-link-color); border-color: var(--tblr-link-color); }
+.dp-chip[aria-pressed=true] { color: var(--tblr-primary); border-color: var(--tblr-primary); background: var(--tblr-primary-lt); }
+.dp-chip[aria-pressed=true] { font-weight: 600; }
+.dp-table-scroll { max-width: 100%; }
+.dp-content table { width: 100%; border-collapse: collapse; font-size: var(--dp-size-body); color: var(--tblr-body-color); }
+.dp-content table :is(th, td) { padding: 10px 12px; line-height: 20px; border-bottom: 1px solid var(--tblr-border-color); vertical-align: top; }
+.dp-content table th { background: var(--tblr-bg-surface-secondary); color: var(--tblr-body-color); font-weight: 600; text-transform: none; letter-spacing: normal; white-space: normal; }
+.dp-content table td code { white-space: normal; overflow-wrap: break-word; }
+.dp-content table td.dp-value { font-variant-numeric: tabular-nums; }
+.dp-content a:not(.btn):not(.nav-link):not(.dropdown-item):not(.dp-home-board-link) { color: var(--tblr-link-color); }
+.dp-results .dp-plotted { width: 18rem; }
+.dp-legend-rank, .dp-legend-score { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.dp-legend-rank { min-width: 2ch; color: var(--tblr-secondary-color); }
+.dp-legend-score { margin-left: auto; white-space: nowrap; }
+.dp-results .dp-plotted { flex-basis: 45%; width: 45%; }
+.dp-ranked-row { display: grid; grid-template-columns: 2ch 36px minmax(0, 1fr) auto; align-items: center; gap: .5rem; }
+.dp-ranked-row .dp-plotted-label { min-width: 0; overflow-wrap: normal; }
+.dp-standings-rail .dp-plotted-box > summary { display: none; }
+.dp-home .dp-plotted-filter,
+.dp-home .dp-threshold-control input { display: none; }
+.dp-standings-columns, .dp-standings-rail .dp-ranked-row { grid-template-columns: 3rem 36px minmax(0, 1fr) 6.5rem; }
+.dp-standings-columns { display: grid; gap: .5rem; padding-block: .5rem; font-weight: 600; border-bottom: 1px solid var(--tblr-border-color); }
+.dp-standings-columns > :nth-child(2) { grid-column: 2 / 4; }
+.dp-standings-columns > .dp-score-heading { grid-column: 4; text-align: right; }
+.dp-profile-column { flex: 1 1 auto; min-width: 0; width: 100%; }
+.dp-profile-column > .dp-chart { min-height: 420px; width: 100%; }
+.dp-content .dp-profile-column > .dp-profile-heading { margin-top: 0; }
+.dp-plotted-open, .dp-plotted-remove, .dp-plotted-filter, .dp-picker-option, .dp-sort { font: inherit; color: inherit; }
+.dp-plotted-row { padding: .5rem 0; background: transparent; }
+.dp-plotted-rows, .dp-content details.dp-plotted-box { font-size: .8rem; }
+.dp-chart-shell { gap: 1.5rem; }
+.dp-algorithm-dialog { font-size: var(--dp-size-body); }
+.dp-checklist-head { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.dp-checklist-head .badge { justify-self: end; }
+.dp-checklist-head .dp-help-label { justify-self: start; background: none; border: 0; padding: 0; }
+.dp-checklist-row { padding: .5rem; }
+.dp-checklist-row .form-check { flex: 1; display: block; min-width: 0; }
+.dp-checklist-row .form-check-label { overflow-wrap: anywhere; }
+.dp-checklist-search { margin-block: .75rem; }
+.dp-picker-options { padding: 0; border-radius: var(--tblr-border-radius); }
+.dp-picker-option { cursor: pointer; }
+.dp-picker-option[aria-selected=true] { color: var(--tblr-primary); background: var(--tblr-primary-lt); }
+.dp-provenance-close { position: absolute; right: 1rem; top: 1rem; }
+.dp-pager { padding-block: .75rem; }
+.dp-task-tabs.nav { margin-block: 1rem; gap: .5rem 1.5rem; }
+.dp-task-tabs .nav-link { flex: 0 1 auto; }
+.dp-results-table { margin-top: 1.5rem; }
+.dp-context-help { background: var(--tblr-bg-surface); color: var(--tblr-body-color); border: 1px solid var(--tblr-border-color); padding: .75rem; border-radius: var(--tblr-border-radius); }
+.offcanvas { --tblr-offcanvas-width: 36rem; }
+.navbar .dropdown { max-width: calc(100% - 3rem); }
+.navbar-vertical .dropdown { max-width: 100%; }
+@media (max-width: 879px) {
+  .dp-chart-shell { flex-direction: column; }
+  .dp-results .dp-plotted { width: 100%; flex-basis: auto; }
+  .dp-results { padding: .75rem !important; }
+  .dp-task-tabs.nav { gap: .25rem .75rem; }
+}
+
+/* A value the benchmark fixes (a group with one frozen option) reads as a value,
+   not as a greyed-out control. A choice disabled among others keeps its disabled look. */
+.dp-segmented-row:has(> .dp-segmented-option:only-child) .btn-check:disabled + .btn {
+  opacity: 1; border-color: transparent; background: none; box-shadow: none;
+  padding-inline: 0; color: var(--tblr-body-color); font-weight: 500;
+}
+
+/* One code theme site-wide: code sits on Tabler's dark surface in both themes,
+   with a syntax palette that keeps every token at 4.5:1 or more on it. The
+   notebook plugin inlines a light-background palette after this file, so these
+   selectors repeat .dp-content to outrank it. Plain text outputs are results,
+   not code: they take the page's own text colour on a light surface. */
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) pre {
+  background: var(--tblr-bg-surface-dark); color: #e5e7eb;
+}
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.k, .kn, .kd, .kc, .kr, .kp, .kt, .ow) { color: #93c5fd; font-weight: 400; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.s, .s1, .s2, .sa, .sb, .sc, .sd, .se, .sh, .si, .sx, .sr, .ss) { color: #86efac; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.c, .c1, .ch, .cm, .cp, .cs, .cpf) { color: #aab3bf; font-style: italic; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.m, .mi, .mf, .mh, .mo, .mb, .il) { color: #fcd34d; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.nf, .nc, .fm, .nn) { color: #c4b5fd; font-weight: 400; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.nb, .bp, .ne) { color: #67e8f9; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.nd, .na) { color: #f9a8d4; }
+.dp-content.dp-content :is(.highlight, .highlight-ipynb) :is(.n, .nv, .nx, .o, .p, .w, .gp, .go, .err) { color: inherit; background: none; border: 0; }
+.dp-content .jupyter-wrapper .jp-OutputArea-output:not(.highlight) > pre {
+  background: var(--tblr-bg-surface-secondary); color: var(--tblr-body-color);
+}
+
+/* Section disclosures in the sidebar use one chevron instead of the browser's triangle. */
+.dp-sidebar details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.dp-sidebar details > summary::-webkit-details-marker { display: none; }
+.dp-sidebar details > summary::before {
+  content: ""; flex: none; width: 6px; height: 6px; margin-inline: 1px 3px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform var(--dp-motion); opacity: .7;
+}
+.dp-sidebar details[open] > summary::before { transform: rotate(45deg); }
+
+/* Foundations: a quiet publication look. White page, flat surfaces separated by
+   hairlines, one deep accent, 4 px controls. Tables are 40 px rows by default
+   and 32 px where rows are results to scan. Reading pages set prose at 16/24
+   with lines near 72 characters. */
+.card, .dp-content .dp-results { box-shadow: none; }
+.navbar { border-bottom: 1px solid var(--tblr-border-color); box-shadow: none; }
+.dp-content table.dp-leaderboard :is(th, td),
+.dp-content table.dp-table--wide :is(th, td) { padding-block: 6px; }
+.dp-content table :is(th, td).dp-value, .dp-content table :is(th, td).dp-rank { text-align: right; font-variant-numeric: tabular-nums; }
+.dp-prose :is(p, li, dd, blockquote),
+.dp-prose .jp-MarkdownOutput :is(p, li) { font-size: 1rem; line-height: 1.5; max-width: 72ch; }
+[data-bs-theme=dark] .dp-content.dp-content :is(.highlight, .highlight-ipynb) pre { background: #0b1019; }
+.dp-task-tabs .nav-link:not(.active) { color: var(--tblr-secondary); }
+.dp-content .jupyter-wrapper {
+  --jp-cell-inprompt-font-color: var(--tblr-secondary);
+  --jp-cell-prompt-not-active-font-color: var(--tblr-secondary);
+  --jp-cell-prompt-not-active-opacity: 1;
+  --jp-content-font-color0: var(--tblr-body-color);
+  --jp-content-font-color1: var(--tblr-body-color);
+  --jp-content-font-color2: var(--tblr-secondary);
+  --jp-ui-font-color0: var(--tblr-body-color);
+  --jp-ui-font-color1: var(--tblr-body-color);
+  --jp-rendermime-table-row-background: var(--tblr-bg-surface-secondary);
+  --jp-rendermime-table-row-hover-background: var(--tblr-active-bg, var(--tblr-bg-surface-secondary));
+}
+.dp-content.dp-content .jupyter-wrapper table.dataframe { color: var(--tblr-body-color); font-size: var(--dp-size-body); font-variant-numeric: tabular-nums; }
+.dp-content.dp-content .jupyter-wrapper table.dataframe tbody tr:nth-child(2n+1) { background: var(--tblr-bg-surface-secondary); }
+
+/* The standings head is one compact row: title, then a small inline
+   "Show top" select and the Filter button at control height. */
+.dp-plotted-head .dp-shared-baseline { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: var(--dp-size-body); color: var(--tblr-secondary); white-space: nowrap; }
+.dp-plotted-head .dp-shared-baseline select { height: 28px; min-height: 28px; padding: 0 26px 0 8px; font-size: var(--dp-size-body); background-position: right 6px center; }
+.dp-plotted-head .dp-plotted-filter { height: 28px; padding: 0 10px; font-size: var(--dp-size-body); }
+
+/* Legend swatch as the plot toggle: filled when the curve is drawn, an empty
+   dashed outline when hidden. The whole 36 x 28 px area is the target. */
+.dp-swatch-toggle { width: 36px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 4px; }
+/* Hover repaints the swatch; it must never be the click target, or a press and
+   release land on different nodes and the click is lost. */
+.dp-swatch-toggle .dp-series-swatch { margin: 0; pointer-events: none; }
+.dp-swatch-toggle:hover, .dp-swatch-toggle:focus-visible { border-color: var(--tblr-border-color); background: var(--tblr-bg-surface-secondary); }
+.dp-swatch-toggle[aria-pressed=false] .dp-series-swatch { width: 24px; height: 10px; border: 1.5px dashed var(--tblr-secondary); border-radius: 2px; opacity: .8; }
+
+/* Leaderboard controls: one compact row. Metric, Baseline, then Privacy budget and the threshold reading. The
+   threshold is set on the chart; its range input stays in the page, visually
+   hidden, as the keyboard route, and its readout shows focus. */
+.dp-results[data-leaderboard] > .dp-comparison-controls { border-bottom: 0 !important; padding-bottom: 0 !important; }
+.dp-results[data-leaderboard] > :is(.dp-comparison-controls, .dp-shared-controls) { display: inline-flex; vertical-align: top; margin: 0 2.5rem 1rem 0; }
+.dp-results[data-leaderboard] .dp-shared-controls { gap: 1rem 2.5rem; align-items: flex-start; }
+/* The chart's tab is the threshold control here; the range input it drives
+   stays in the page as state only. */
+/* The threshold is read from the chart (its tab, or Home's fixed line) and the
+   standings heading, so no page shows the separate control. */
+:is(.dp-results[data-leaderboard], [data-playground]) .dp-threshold-control { display: none; }
+
+/* Threshold playhead: a head with a pointer whose tip meets the top of the
+   guide line, in the line's colour, after the playhead of a video editor. */
+.dp-tau-host { position: relative; }
+.dp-tau-handle {
+  --dp-tau-tip: 6px;
+  position: absolute; z-index: 2; transform: translate(-50%, calc(-100% - var(--dp-tau-tip)));
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 7px;
+  border-radius: 4px; background: var(--tblr-primary); color: var(--tblr-body-bg);
+  font: 600 12px/1 var(--tblr-font-monospace); white-space: nowrap; cursor: ew-resize; user-select: none; touch-action: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  transition: box-shadow var(--dp-motion), transform var(--dp-motion);
+}
+.dp-tau-handle::after {
+  content: ""; position: absolute; left: 50%; bottom: calc(-1 * var(--dp-tau-tip)); transform: translateX(-50%);
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: var(--dp-tau-tip) solid var(--tblr-primary);
+}
+.dp-tau-handle:hover, .dp-tau-handle.is-dragging { box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.dp-tau-handle.is-dragging { cursor: grabbing; }
+.dp-tau-handle:focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: 3px; }
+.dp-tau-arrow { font-weight: 400; opacity: .75; }
+.dp-standings-columns > .dp-score-heading.dp-help-label { justify-self: end; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+.dp-standings-columns > .dp-score-heading { white-space: nowrap; }
+/* Pinned to the plot's edge while its threshold is out of view: no pointer,
+   an outline instead of a fill, and only the chevron that points toward tau. */
+.dp-tau-handle[data-side] { background: var(--tblr-bg-surface); color: var(--tblr-primary); box-shadow: inset 0 0 0 1.5px var(--tblr-primary); }
+.dp-tau-handle[data-side]::after { display: none; }
+.dp-tau-handle[data-side=left] { transform: translate(0, calc(-100% - var(--dp-tau-tip))); }
+.dp-tau-handle[data-side=right] { transform: translate(-100%, calc(-100% - var(--dp-tau-tip))); }
+.dp-tau-handle[data-side=left] .dp-tau-arrow:last-child,
+.dp-tau-handle[data-side=right] .dp-tau-arrow:first-child { display: none; }
+.dp-tau-handle[data-side] .dp-tau-arrow { opacity: 1; font-weight: 700; }
+
+/* Details card header. */
+.dp-algorithm-dialog-header { padding-bottom: 14px !important; margin-bottom: 16px !important; }
+
+/* Leaderboard names: the core estimator, then its transformation chain muted. */
+
+/* On a Leaderboard the playhead rides the top margin, so the chart toolbar
+   sits just inside the plot's top-right corner instead of over it. */
+.dp-tau-host[data-orient=x] .js-plotly-plot .modebar-container { top: 40px !important; right: 6px !important; }
+
+/* On the Leaderboard and Explore the chart leads: taller, and the standings
+   column beside it narrows so the plot takes most of the width. */
+.dp-results:is([data-leaderboard], [data-playground]):not(.dp-home *) .dp-plotted { flex-basis: 36%; width: 36%; }
+.dp-results:is([data-leaderboard], [data-playground]):not(.dp-home *) .dp-profile-column > .dp-chart { min-height: 600px; }
+@media (max-width: 879px) {
+  .dp-results:is([data-leaderboard], [data-playground]):not(.dp-home *) .dp-plotted { width: 100%; flex-basis: auto; }
+  .dp-results:is([data-leaderboard], [data-playground]):not(.dp-home *) .dp-profile-column > .dp-chart { min-height: 420px; }
+}
+
+/* Explore's algorithm list reads like the Leaderboard's: the same columns,
+   headed Rank · Algorithm · Within tau. */
+[data-playground] .dp-ranked-row { grid-template-columns: 3rem 36px minmax(0, 1fr) 6.5rem; }
+[data-playground] .dp-legend-score { text-align: right; }
+
+/* Explore's controls: comparison choices on one row, then the privacy
+   budget with the notebook download at its far end. */
+[data-playground] > .dp-comparison-controls { border-bottom: 0 !important; padding-bottom: 0 !important; margin-bottom: 1rem; }
+[data-playground] > .dp-shared-controls { align-items: flex-end; margin-bottom: 1rem; }
+[data-playground] > .dp-shared-controls > .dp-notebook-control { margin-left: auto; }
+
+/* Unlayered: Tabler's element rules (summary, legend) outrank the scientific
+   layer, which hid neither the Explore rail's empty summary caret nor its
+   filter row gap, and set legends at heading size. */
+.dp-plotted-box > summary { display: none; }
+legend.dp-chip-label { float: none; width: auto; margin-bottom: 4px; font: var(--dp-font-body); color: var(--tblr-secondary); }
+
+/* Code blocks: a corner copy button, faint until the block is hovered or the
+   button focused; always visible where there is no hover. */
+.dp-code { position: relative; }
+.dp-copy {
+  position: absolute; top: 6px; right: 6px; display: inline-flex; align-items: center; gap: 6px;
+  min-width: 28px; height: 28px; padding: 0 6px; justify-content: center;
+  border: 1px solid rgb(255 255 255 / .16); border-radius: 4px;
+  background: var(--tblr-bg-surface-dark); color: #cbd5e1; cursor: pointer; opacity: 0;
+}
+.dp-code:hover .dp-copy, .dp-copy:focus-visible, .dp-copy:has(.dp-copy-status:not(:empty)) { opacity: 1; }
+.dp-copy:hover { color: #fff; border-color: rgb(255 255 255 / .32); }
+.dp-copy-status { font: 400 0.75rem/1 var(--tblr-font-sans-serif); }
+.dp-copy-status:empty { display: none; }
+@media (hover: none) { .dp-copy { opacity: 1; } }
+
+/* On this page: a sticky right rail from 1200px; the dropdown serves below. */
+@media (min-width: 1200px) {
+  .dp-with-toc { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 2.5rem; align-items: start; }
+}
+.dp-toc { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; font-size: 0.8rem; line-height: 1.4; }
+.dp-toc-title { margin: 0 0 8px; font-weight: 600; color: var(--tblr-body-color); }
+.dp-toc ul { list-style: none; margin: 0; padding: 0; }
+.dp-toc ul ul { padding-left: 12px; }
+.dp-toc a { display: block; padding: 4px 0 4px 10px; border-left: 2px solid var(--tblr-border-color); color: var(--tblr-secondary); text-decoration: none; overflow-wrap: anywhere; }
+.dp-toc a:hover { color: var(--tblr-body-color); }
+.dp-toc a[aria-current="true"] { color: var(--tblr-primary); border-left-color: var(--tblr-primary); }
+
+/* API reference: member kinds as quiet pills, breathing room between the
+   Methods and Attributes summaries, one name-column width per page. */
+.dp-content .doc-labels { margin-left: 8px; vertical-align: middle; }
+.dp-content .doc-label code {
+  padding: 1px 8px; border: 1px solid var(--tblr-border-color); border-radius: 999px;
+  background: transparent; color: var(--tblr-secondary); font-size: 0.7rem; font-weight: 400;
+}
+.dp-content .doc-contents > p:has(> .doc-section-title) { margin: 1.5rem 0 0.5rem; }
+.dp-content .doc-contents table td:first-child { width: clamp(10rem, 30%, 20rem); }
+
+/* A long bare URL or identifier in prose wraps rather than widening the page. */
+.dp-content :is(p, li, dd, blockquote) { overflow-wrap: break-word; }
+
+/* Notebook cells: one copy button site-wide, so the plugin's own gives way to
+   .dp-copy; cell tags mark cells for the tutorial test harness, not readers. */
+.dp-content .jupyter-wrapper .zeroclipboard-container,
+.dp-content .jupyter-wrapper .celltoolbar { display: none; }
+
+/* Notebook code cells sit on the site's code surface with no light-theme rim
+   or backing showing at the edges of the dark block. */
+.dp-content .jupyter-wrapper .jp-Cell .jp-InputArea-editor.jp-Editor,
+.dp-content .jupyter-wrapper .jp-Cell .highlight-ipynb { border: 0; background: transparent; }
+
+/* Header icon buttons: one 32px target each; the theme icon names the mode a
+   press switches to (a sun in dark mode, a moon in light). */
+.dp-icon-btn { display: inline-flex; align-items: center; align-self: center; gap: 6px; min-width: 32px; height: 32px; justify-content: center; }
+[data-bs-theme=dark] .dp-when-light, [data-bs-theme=light] .dp-when-dark { display: none; }
+
+/* No notebook prompts: outputs carry no execution count, and a tutorial runs
+   its cells in order, so "In [n]:" only pushed code off the left edge prose
+   and outputs share. Unlayered, to outrank the plugin's inlined stylesheet. */
+.dp-content .jupyter-wrapper .jp-Cell :is(.jp-InputPrompt.jp-InputArea-prompt, .jp-OutputPrompt.jp-OutputArea-prompt) { display: none; }
+.dp-content .jupyter-wrapper :is(.jp-Notebook, .jp-Cell) { padding-left: 0; padding-right: 0; }
+
+/* Home: the comparison choices take the first half of the row, the privacy
+   budget the second, each laid out as the Leaderboard's compact groups. */
+.dp-home .dp-results.is-interactive > .dp-shared-controls { grid-column: 1 / -1; grid-row: 1; margin: 0; }
+
+/* The footer keeps the page column's width and edge on every page. */
+.footer > .container-fluid { max-width: 1280px; margin-inline: auto; }
+
+/* While the tau tab is held, a plain line under it stands in for the chart's
+   guide, so moving it costs no chart redraw. */
+.dp-tau-line { position: absolute; z-index: 1; height: 3px; transform-origin: 0 1.5px; background: var(--tblr-primary); pointer-events: none; display: none; }
+.dp-tau-host.is-seeking .dp-tau-line { display: block; }
+
+/* A tab on a horizontal or sloped tau line sits at the plot's right edge and
+   points left at the line; pinned above or below the view, it points there. */
+.dp-tau-handle[data-orient=y] { transform: translate(var(--dp-tau-tip), -50%); cursor: ns-resize; }
+.dp-tau-handle[data-orient=y]::after {
+  left: calc(-1 * var(--dp-tau-tip)); bottom: auto; top: 50%; transform: translateY(-50%);
+  border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 0;
+  border-right: var(--dp-tau-tip) solid var(--tblr-primary);
+}
+.dp-tau-handle[data-orient=y][data-side=top] { transform: translate(var(--dp-tau-tip), 0); }
+.dp-tau-handle[data-orient=y][data-side=bottom] { transform: translate(var(--dp-tau-tip), -100%); }
+.dp-tau-handle[data-orient=y][data-side=top] .dp-tau-arrow:last-child,
+.dp-tau-handle[data-orient=y][data-side=bottom] .dp-tau-arrow:first-child { display: none; }
+
+/* The outcome histogram's threshold, beside its feature controls. */
+.dp-hist-tau { display: inline-flex; align-items: center; gap: 8px; vertical-align: bottom; margin-left: 1rem; }
+.dp-hist-tau input[type=range] { width: 11rem; accent-color: var(--tblr-primary); }
+.dp-hist-tau output { min-width: 2.5rem; font: var(--dp-font-support); color: var(--tblr-primary); }
+
+[data-histogram-breakdown] td { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Section navigation as one tree: every row (link or group) is a full-width
+   36px target whose highlight spans the sidebar; each level indents one step,
+   so a group's children start under its label, and a link leaves the gutter
+   a sibling group's chevron takes, so labels at one level share an edge.
+   Task spaces keep their flat, icon-led list. */
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar {
+  --dp-nav-pad: 10px; --dp-nav-chevron: 18px; --dp-nav-step: 18px;
+}
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar nav > ul > li { --dp-nav-indent: 0px; }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar nav > ul > li ul > li { --dp-nav-indent: var(--dp-nav-step); }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar nav > ul > li ul ul > li { --dp-nav-indent: calc(2 * var(--dp-nav-step)); }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar nav > ul > li ul ul ul > li { --dp-nav-indent: calc(3 * var(--dp-nav-step)); }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar .dp-nav-children { margin: 0; padding: 0; }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar :is(.nav-link, .dp-nav-group) {
+  display: flex; align-items: center; min-height: 36px; margin: 1px 0; border-radius: 6px;
+  padding: 6px 10px 6px calc(var(--dp-nav-pad) + var(--dp-nav-indent) + var(--dp-nav-chevron));
+  line-height: 1.35; overflow-wrap: anywhere; color: var(--tblr-body-color);
+}
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar .dp-nav-group {
+  padding-left: calc(var(--dp-nav-pad) + var(--dp-nav-indent)); gap: 0;
+}
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar .dp-nav-group::before {
+  width: 6px; height: 6px; margin: 0 calc(var(--dp-nav-chevron) - 9px) 0 3px;
+}
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar :is(.nav-link, .dp-nav-group):hover { background: var(--tblr-active-bg, rgba(255 255 255 / .05)); }
+.dp-sidebar-shell:not(.dp-task-sidebar) .dp-sidebar .nav-link.active { background: var(--tblr-active-bg, rgba(255 255 255 / .07)); color: var(--tblr-link-color); }
+/* The heading names the space in the row the collapse button sits in. */
+.dp-sidebar-heading h2 { line-height: 1.25; }
+
+/* Global navigation: items rest a step quieter and brighten under the
+   pointer; no hover box, which floated clear of the active item's
+   underline at the header's foot. */
+.page > header #global-menu .nav-link { color: var(--tblr-secondary); background: transparent; }
+.page > header #global-menu .nav-link:is(:hover, :focus-visible, .show),
+.page > header #global-menu .nav-item.active > .nav-link { color: var(--tblr-body-color); background: transparent; }
+
+/* On a wide screen the whole sidebar column stays in view, its heading (the
+   collapse button and the task switcher) on top and the links scrolling on
+   their own beneath it, so a long API tree never strands the page's own link
+   below the fold and a scrolled page keeps its way to switch. */
+@media (min-width: 992px) {
+  .dp-sidebar-shell {
+    position: sticky; top: 0; align-self: flex-start; height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  .dp-sidebar-shell .dp-sidebar.offcanvas-lg {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  }
+}
+.dp-sidebar :is(.nav-link, summary):focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: -2px; }
+
+/* Below the desktop width: the site menu button joins Search and the theme
+   toggle at the header's right, and the section navigation is a full-width
+   bar under the header (its drawer button and the section's name) instead
+   of a narrow column that held only the button. */
+@media (max-width: 991.98px) {
+  .page > header .navbar-nav.order-lg-last { margin-left: auto; padding-inline: 0; }
+  .page > header .navbar-toggler { order: 3; margin-left: 8px; }
+  /* The opened menu wraps onto its own rows after the button, which stays put,
+     its items on the brand's left edge. */
+  .page > header .navbar-collapse { order: 4; }
+  .page > header #global-menu > .navbar-nav { margin: 0; padding: 0; }
+  .page > header #global-menu > .navbar-nav > .nav-item > .nav-link { padding-inline: 0; }
+  /* The menu button takes the same framed 32px form as Search and the theme toggle. */
+  .page > header .navbar-toggler {
+    display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 32px; padding: 0;
+    border: 1px solid var(--tblr-border-color); border-radius: 4px;
+  }
+  .dp-workspace { flex-direction: column; }
+  .dp-sidebar-shell { width: 100%; border-inline-end: 0; border-bottom: 1px solid var(--tblr-border-color); }
+  .dp-sidebar-heading h2 { display: block; font-size: 1rem; }
+}
+
+/* The task heading is the task switcher: the heading's own type, a chevron,
+   and the global picker's menu. */
+.dp-task-switch-toggle {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 2px 6px; margin: -2px -6px;
+  border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; text-align: left;
+}
+/* A long task name wraps rather than pushing the chevron out of the sidebar
+   (Bootstrap's dropdown toggle does not wrap). */
+.dp-task-switch-toggle { white-space: normal; }
+.dp-task-switch-toggle::after { flex-shrink: 0; }
+.dp-task-switch-toggle:hover, .dp-task-switch-toggle[aria-expanded=true] { background: var(--tblr-active-bg, rgba(255 255 255 / .06)); }
+.dp-task-switch-toggle:focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: 1px; }
+.dp-task-switch .dropdown-menu { font-size: var(--dp-size-body); font-weight: 400; }
+/* Inside the heading the menu is built of phrasing elements; the divider still draws. */
+.dp-task-switch .dropdown-divider { display: block; }
+
+/* The brand stands apart from the areas it heads, not as one more item. */
+@media (min-width: 992px) {
+  .page > header .navbar-brand { margin-right: 2rem; }
+}
+
+/* Home and Leaderboard. */
+/* The release a build read is a footnote: body type, small and quiet. */
+.dp-content .dp-build-source { font: 400 .8125rem/1.45 var(--tblr-font-sans-serif); color: var(--tblr-secondary); margin-top: 12px; }
+/* A preview build says so in a visible pill, so the line it opens reads as intended. */
+.dp-content .dp-preview-badge {
+  padding: 2px 7px; margin-right: 4px; border-radius: 4px; font-weight: 600;
+  background: color-mix(in srgb, var(--tblr-primary) 16%, transparent); color: var(--tblr-primary);
+}
+/* Home: one rule under the title (the task tabs'). Once the tabs show, the
+   selected one names the task, so the panel's own heading is for assistive
+   technology only; without script every panel keeps its visible name. */
+.dp-home-intro { border-bottom: 0; padding-bottom: 4px; }
+.dp-home.is-interactive .dp-home-task-heading h2 {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.dp-home.is-interactive .dp-home-task-heading { justify-content: flex-end; }
+/* A scrolling list with more below fades at its foot. */
+.dp-more-below { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
+
+/* Algorithm dialogs: names wrap only where their words meet, and the close
+   button is a full-size target. */
+.dp-checklist-row, .dp-checklist-row .form-check-label { overflow-wrap: break-word; }
+.btn.dp-provenance-close { min-width: 32px; min-height: 32px; font-size: 1.25rem; line-height: 1; }
+
+/* Task sidebar group headings: non-interactive, never links or a collapse.
+   Benchmark carries the site accent; Reference is muted. */
+.dp-nav-group-heading { list-style: none; padding: .625rem .75rem .25rem; }
+.dp-nav-group-label { font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.dp-nav-group-heading--benchmark .dp-nav-group-label { color: var(--tblr-primary); }
+.dp-nav-group-heading--reference .dp-nav-group-label { color: var(--tblr-secondary); }
+
+/* The card's recipe: the steps it runs, each with its summary and values. */
+.dp-pipeline { list-style: none; margin: 0; padding: 0; }
+.dp-step { position: relative; padding: 0 0 18px 26px; }
+.dp-step::before {
+  content: ""; position: absolute; left: 3px; top: 5px; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--tblr-primary); border: 2px solid var(--tblr-primary); box-sizing: border-box;
+}
+.dp-step[data-kind=Transformation]::before { background: var(--tblr-bg-surface); }
+.dp-step:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 19px; bottom: 3px; width: 1px; background: var(--tblr-border-color); }
+.dp-pipeline-nested { margin-top: 12px; }
+.dp-step-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dp-step-name { font-size: .9375rem; font-weight: 600; color: var(--tblr-body-color); overflow-wrap: anywhere; }
+a.dp-step-name { color: var(--tblr-link-color); text-decoration: none; }
+a.dp-step-name:hover { text-decoration: underline; }
+.dp-step-kind { font-size: .6875rem; color: var(--tblr-secondary); border: 1px solid var(--tblr-border-color); border-radius: 999px; padding: 0 7px; line-height: 1.6; }
+.dp-step-summary { margin: 2px 0 0; font-size: .8125rem; line-height: 1.45; color: var(--tblr-body-color); }
+.dp-step-summary code { font-size: var(--dp-size-support); }
+.dp-step-params {
+  margin-top: 6px; display: grid; grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 14px; row-gap: 2px; align-items: baseline; font-size: .8125rem;
+}
+.dp-param { display: contents; }
+.dp-param-cell { white-space: nowrap; }
+.dp-param-name { color: var(--tblr-body-color); background: none; padding: 0; font-size: .8125rem; white-space: nowrap; }
+.dp-param-value { font-family: var(--tblr-font-monospace); font-size: .8125rem; white-space: nowrap; }
+.dp-param-value.dp-value-default { color: var(--tblr-body-color); }
+.dp-param-value.dp-value-changed { color: var(--tblr-primary); font-weight: 600; }
+.dp-param-default { margin-left: 6px; font-size: var(--dp-size-support); color: var(--tblr-secondary); }
+.dp-provenance-muted { font-size: var(--dp-size-body); color: var(--tblr-secondary); }
+/* A defined reader term: the dotted rule is the only mark that it opens help. */
+.dp-term {
+  display: inline; margin: 0; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; cursor: help;
+  text-decoration: underline dotted currentColor; text-underline-offset: 3px;
+}
+.dp-profile-formula { margin: 0 0 0.6rem; font: var(--dp-font-support); color: var(--tblr-secondary); }
+
+/* Task table groups: the shared columns keep one width in every group's table,
+   so the groups read as one list. The class column is the one declaring an
+   order; a third column that is not it is the conversion group's "Hands off
+   to"; a Reference column, where a group has one, is the last. The first
+   column is the Algorithm or Transformation name. */
+.dp-table-group .dp-table { table-layout: fixed; }
+.dp-table-group .dp-table th:first-child { width: 28%; }
+.dp-table-group .dp-table th:nth-child(3):not([data-dp-order]) { width: 19%; }
+.dp-table-group .dp-table th[data-dp-order] { width: 15%; }
+.dp-table-group .dp-table th:last-child:not([data-dp-order]) { width: 15%; }
+.dp-table-group .dp-table td:first-child a { overflow-wrap: anywhere; }
+
+/* Home: each task panel opens with its paragraph, which says what is measured;
+   the Metric and Baseline choices and the formula line stay on Explore. */
+.dp-home-reading { margin: 0 0 0.75rem; }
+/* On a wide screen a panel's Task · Leaderboard · Explore links share the
+   tab row, so the paragraph follows the tabs directly. */
+.dp-home { position: relative; }
+@media (min-width: 48em) {
+  .dp-content .dp-home .dp-home-task-heading {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 40px;
+    margin: 0;
+    align-items: center;
+  }
+}
+.dp-home-reading p { margin: 0; }
+.dp-home .dp-results[data-leaderboard] > .dp-comparison-controls,
+.dp-content .dp-home .dp-profile-formula { display: none; }
+
+/* Home prototype: links live in the paragraph and the standings heading; the
+   budget sits on the chart's heading line. */
+.dp-home .dp-home-task-heading { display: none; }
+.dp-home .dp-results.is-interactive > .dp-shared-controls { grid-row: auto; }
+.dp-home-chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+.dp-home-chart-head > .dp-profile-heading { margin: 0; }
+.dp-home-chart-head > .dp-shared-controls { margin: 0; display: flex; }
+.dp-home-chart-head .dp-privacy-filters { flex-direction: row; align-items: center; gap: 0.5rem; }
+.dp-home .dp-plotted-head .dp-plotted-heading { display: none; }
+.dp-home .dp-plotted-head { display: flex; align-items: baseline; gap: 1rem; }
+.dp-content .dp-home .dp-home-board-link { font-size: var(--dp-size-section); font-weight: 600; color: inherit; text-decoration: none; }
+.dp-content .dp-home .dp-home-board-link:hover { text-decoration: underline; }
+.dp-home-explore-link { font-size: var(--dp-size-body); }
+.dp-home-chart-head .dp-segmented { display: flex; align-items: center; gap: 0.5rem; }
+.dp-home-chart-head .dp-segmented > .dp-chip-label { margin: 0; white-space: nowrap; }
+.dp-content .dp-home .dp-home-chart-head > .dp-shared-controls { border: 0; padding: 0; background: none; box-shadow: none; }
+.dp-content .dp-home .dp-home-board-link .dp-home-board-icon { color: var(--tblr-link-color); font-weight: 500; transition: transform 0.15s; display: inline-block; }
+.dp-content .dp-home .dp-home-board-link:hover .dp-home-board-icon,
+.dp-content .dp-home .dp-home-board-link:focus-visible .dp-home-board-icon { transform: translateX(3px); }
+
+/* One cited work per paragraph, its wrapped lines set in from the first. */
+.dp-content p.dp-reference {
+  padding-left: 1.5em;
+  text-indent: -1.5em;
+  margin: 0 0 0.6em;
+}
+
+/* An unwritten text slot from docs/content/site-copy.yml: a dashed, muted box
+   naming the slot, so the maintainer can find and fill each one. A long slot
+   name breaks anywhere rather than widen a narrow control row. */
+.dp-copy-slot {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 0.1em 0.5em;
+  border: 1px dashed var(--tblr-secondary);
+  border-radius: 4px;
+  color: var(--tblr-secondary);
+  font: 400 0.8125rem/1.4 var(--tblr-font-monospace, monospace);
+  font-style: normal;
+  background: transparent;
+}
+p.dp-copy-slot, div.dp-copy-slot { display: block; width: fit-content; }
+
+/* Tabler's :has() rules are removed from the vendored stylesheet
+   (docs/site/trim_vendor_css.py); the one value they set on this site's
+   horizontal-navbar pages is restated here. */
+.page > .navbar, .page > .page-wrapper { --tblr-sidebar-width: 0; }
+
+/* A link inside running text is underlined, so it reads as a link without
+   relying on colour (WCAG 2.2, 1.4.1). A link that is a table cell's whole
+   content has no text to stand apart from and stays plain; a cell holding a
+   sentence marks it .dp-sentence. A section heading's link sits among its
+   words, as in "Leaderboard ranks". Unlayered, since Tabler's own
+   unlayered rule removes every link's underline. */
+.dp-content :is(p, li, dd, blockquote, h2, .dp-reference, .dp-interpretation, .dp-sentence) > a:not(.btn, .nav-link, .dropdown-item),
+.dp-algorithm-dialog .dp-interpretation > a {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .15em;
+}
+
+/* Component page: the summary line, the at-a-glance block, and the
+   Parameters list after numpydoc's `name : type, default value`. */
+.dp-content p.dp-summary { font-size: var(--dp-size-subsection); line-height: 1.45; color: var(--tblr-body-color); }
+.dp-content .dp-glance { margin: 1rem 0 1.25rem; padding: .75rem 1rem; border: 1px solid var(--tblr-border-color); border-radius: var(--dp-tile-radius); background: var(--tblr-bg-surface-secondary); }
+.dp-content .dp-glance dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .45rem 1rem; margin: 0; }
+.dp-content .dp-glance dt { color: var(--tblr-secondary); font-weight: 600; }
+.dp-content .dp-glance dd { margin: 0; min-width: 0; }
+.dp-content .dp-glance dd ul { margin: 0; padding-left: 1.1rem; }
+.dp-content .dp-glance .dp-badge { margin-left: 0; }
+.dp-content dl.dp-parameters { margin: .5rem 0 1rem; }
+.dp-parameters > dt { margin-top: .9rem; font-weight: 400; font-family: var(--tblr-font-monospace); font-size: var(--dp-size-body); overflow-wrap: anywhere; }
+.dp-parameters > dt:first-child { margin-top: 0; }
+.dp-parameters .dp-parameter-name { font-weight: 700; color: var(--tblr-body-color); }
+.dp-parameters .dp-parameter-type { color: var(--tblr-secondary); }
+.dp-parameters > dd { margin: .2rem 0 0 1.5rem; }
+.dp-parameters > dd > p { margin: 0 0 .2rem; }
+.dp-parameters .dp-parameter-note { color: var(--tblr-secondary); }
+@media (max-width: 575.98px) {
+  .dp-content .dp-glance dl { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+  .dp-content .dp-glance dd { margin-bottom: .45rem; }
+  .dp-parameters > dd { margin-left: .75rem; }
+}
+.dp-content details.dp-fold { margin: .75rem 0 1rem; border: 1px solid var(--tblr-border-color); border-radius: var(--dp-tile-radius); }
+.dp-fold > summary { padding: .45rem .75rem; cursor: pointer; font-weight: 600; }
+.dp-fold > :not(summary) { margin-left: .75rem; margin-right: .75rem; }
+.dp-content p.dp-roster-link { margin: 1.25rem 0; font-size: var(--dp-size-subsection); }
+
+/* Roster landing: search and sort, three facets that fold behind "Filters"
+   below 768px, and each configured algorithm as its chain of steps with the
+   core last and emphasised. */
+.dp-roster-landing .dp-facets { display: grid; grid-template-columns: minmax(0, 1fr); gap: .6rem; margin: .75rem 0; }
+.dp-roster-landing fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.dp-roster-landing fieldset > legend { float: none; width: auto; margin: 0 0 .25rem; font: var(--dp-font-body); font-weight: 600; color: var(--tblr-secondary); }
+.dp-roster-landing .dp-facet-row { display: flex; flex-wrap: wrap; gap: .6rem 1.25rem; align-items: end; }
+.dp-roster-landing .dp-facet-row > * { max-width: 100%; }
+.dp-roster-landing .dp-facet-row > div { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.dp-roster-landing label { font-weight: 600; color: var(--tblr-secondary); font-size: var(--dp-size-body); }
+.dp-roster-landing input[type=search] { min-width: min(14rem, 100%); max-width: 100%; }
+.dp-roster-landing .dp-facet-row select { max-width: 100%; }
+.dp-roster-landing .dp-muted { color: var(--tblr-secondary); font-weight: 400; }
+.dp-roster-landing .dp-active { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; min-height: 1.9rem; margin: .5rem 0; }
+.dp-roster-landing .dp-active-label { color: var(--tblr-secondary); font-size: var(--dp-size-body); }
+.dp-roster-landing .dp-active .dp-chip { border-color: var(--tblr-primary); background: var(--dp-accent-soft); color: var(--tblr-primary); }
+.dp-roster-landing .dp-active .dp-chip span[aria-hidden] { margin-left: .35rem; }
+.dp-roster-landing .dp-count { margin: .25rem 0; color: var(--tblr-secondary); font-size: var(--dp-size-body); }
+.dp-roster-landing .dp-filters-fold > summary { display: none; }
+@media (max-width: 767.98px) {
+  .dp-roster-landing .dp-filters-fold { margin: .5rem 0 0; border: 1px solid var(--tblr-border-color); border-radius: var(--dp-tile-radius); }
+  .dp-roster-landing .dp-filters-fold > summary { display: list-item; padding: .4rem .75rem; cursor: pointer; font-weight: 600; }
+  .dp-roster-landing .dp-filters-fold > .dp-facets { margin: 0; padding: 0 .75rem .6rem; }
+}
+.dp-roster-landing td { vertical-align: top; }
+.dp-roster-landing td:first-child { min-width: 18rem; }
+@media (max-width: 767.98px) {
+  .dp-roster-landing td:first-child { min-width: 14rem; }
+}
+.dp-roster-landing td.dp-value { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dp-roster-landing .dp-badge { margin-left: 0; }
+.dp-roster-landing td.dp-empty { padding: 1rem; color: var(--tblr-secondary); }
+.dp-roster-landing .dp-table-notes { color: var(--tblr-secondary); font-size: var(--dp-size-support); }
+.dp-roster-name { display: block; font-weight: 600; margin-bottom: .25rem; }
+.dp-chain { display: flex; flex-wrap: wrap; gap: .25rem; align-items: center; margin: 0; padding: 0; list-style: none; }
+.dp-chain > li { display: inline-flex; align-items: center; gap: .25rem; margin: 0; }
+.dp-chain > li + li::before { content: "\203A"; color: var(--tblr-secondary); }
+.dp-content .dp-chain > li > .dp-chain-step { display: inline-block; padding: 0 .5rem; border: 1px solid var(--tblr-border-color); border-radius: 999px; color: var(--tblr-body-color); font-size: var(--dp-size-body); line-height: 1.6; text-decoration-line: none; white-space: nowrap; }
+.dp-content .dp-chain > li > a.dp-chain-step:hover { border-color: var(--tblr-primary); }
+.dp-content .dp-chain > li > .dp-chain-step.is-core { border-color: var(--tblr-primary); background: var(--dp-accent-soft); color: var(--tblr-primary); font-weight: 600; }
+.dp-content .dp-chain > li > .dp-chain-step.is-match { border-style: dashed; border-color: var(--tblr-primary); }
+.dp-chain .dp-hp { color: var(--tblr-secondary); font-weight: 400; }
+
+/* The Instance filter: a panel under the control bar holding one noUiSlider
+   per axis, side by side, each with its label, reset and two typed endpoints. */
+.dp-instance-filter { margin-bottom: 12px; }
+.dp-instance-ranges { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0 2rem; }
+/* Each axis spans four rows of the shared grid, so a label that wraps keeps
+   every histogram, slider and value pair in line with its neighbours. */
+.dp-numeric-range { display: grid; grid-template-rows: subgrid; grid-row: span 4; align-items: end; padding-bottom: 1rem; }
+.dp-numeric-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.dp-numeric-head .form-label { margin: 0; }
+/* The histogram spans the slider's track: the bar is what the other ranges
+   keep in that tenth, its filled part what this range keeps too. */
+.dp-numeric-hist { display: flex; align-items: flex-end; gap: 1px; height: 2rem; margin: .5rem .5rem 0; }
+.dp-numeric-hist > span { flex: 1 1 0; display: flex; align-items: flex-end; min-height: 0; background: var(--tblr-border-color); border-radius: 1px 1px 0 0; }
+.dp-numeric-hist > span > span { width: 100%; background: var(--tblr-primary); border-radius: inherit; }
+.dp-numeric-slider { margin: .25rem .5rem .75rem; }
+.dp-numeric-endpoints { display: flex; justify-content: space-between; gap: .5rem; }
+.dp-numeric-endpoints input { width: 9ch; font-variant-numeric: tabular-nums; }
+.dp-numeric-endpoints input:last-child { text-align: right; }
+
+
+/* Outcomes: the chart and the bar being read share one row, the panel at a
+   fixed width beside the chart; below the desktop width it follows the chart. */
+.dp-chart-shell > .dp-comparison-plot { flex: 1 1 auto; min-width: 0; }
+@media (min-width: 55em) { .dp-chart-shell > .dp-bar-panel { flex: 0 0 20rem; width: 20rem; } }
+.dp-bar-panel th[scope="col"]:not(:first-child) { text-align: right; }
+.dp-bar-panel caption { caption-side: top; padding-top: 0; }
+.dp-bin-instances-heading { font-size: var(--dp-size-body); margin: 1rem 0 .25rem; }
+.dp-bin-instances { list-style: none; padding: 0; margin: 0 0 .5rem; max-height: 16rem; overflow: auto; font-size: var(--dp-size-body); }
+.dp-bin-instances code { overflow-wrap: anywhere; }
+
+/* Pagefind's Component UI takes its colours from Tabler, so it follows the theme. */
+#search-panel {
+  --pf-text: var(--tblr-body-color);
+  --pf-text-secondary: var(--tblr-secondary-color);
+  --pf-text-muted: var(--tblr-secondary);
+  --pf-background: var(--tblr-bg-surface);
+  --pf-border: var(--tblr-border-color);
+  --pf-border-focus: var(--tblr-primary);
+  --pf-outline-focus: var(--tblr-primary);
+  --pf-hover: var(--tblr-bg-surface-secondary);
+  --pf-mark: var(--tblr-body-color);
+  --pf-skeleton: var(--tblr-bg-surface-secondary);
+  --pf-skeleton-shine: var(--tblr-tertiary-bg);
+  --pf-border-radius: var(--tblr-border-radius);
+  --pf-font: var(--tblr-body-font-family);
+}
+/* Pagefind resets its elements with `all: initial`; Tabler's light-dark() colours need the page's scheme. */
+#search-panel :is(pagefind-input, pagefind-filter-pane, pagefind-summary, pagefind-results) { color-scheme: inherit; }
+/* Tabler pads every mark; a highlighted search term sits flush in its excerpt. */
+#search-panel mark { padding: 0; }
+/* An instance's card: its label, its study, then its facts as a compact list. */
+.dp-instance-card { display: grid; gap: .25rem; }
+.dp-instance-card code { overflow-wrap: anywhere; }
+/* Its popover fits the card rather than the fixed width help text takes. */
+.dp-context-help:has(> .dp-instance-card) { width: max-content; max-width: min(28rem, calc(100vw - 24px)); }
+[data-comparison-runs] > .dp-instance-card + .dp-instance-card, .dp-point-more { border-top: 1px solid var(--tblr-border-color); margin-top: .5rem; padding-top: .5rem; }
+.dp-point-facts { display: grid; gap: .25rem; overflow-wrap: anywhere; font-size: var(--dp-size-body); padding-bottom: .5rem; margin-bottom: .5rem; border-bottom: 1px solid var(--tblr-border-color); }
+.dp-instance-card dl { display: grid; grid-template-columns: auto 1fr; gap: .125rem .75rem; margin: .25rem 0 0; }
+.dp-instance-card dt { font-weight: 400; color: var(--tblr-secondary); }
+.dp-instance-card dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* A page named by one long identifier, such as an instance label, wraps in its breadcrumb as its title does. */
+.breadcrumb-item.active { overflow-wrap: anywhere; min-width: 0; }
+/* A datagrid title may name a symbol (n, κ(X)), whose case is its meaning. */
+.dp-content .datagrid-title { text-transform: none; letter-spacing: normal; }
+
+/* Surfaces. Each area of a page sits on its own tone, so the sidebar, the
+   controls and the results read as separate places. */
+:root { --dp-sidebar-surface: color-mix(in srgb, var(--tblr-primary) 14%, var(--tblr-bg-surface)); --dp-control-surface: color-mix(in srgb, var(--tblr-body-color) 5%, var(--tblr-bg-surface)); }
+.dp-sidebar-shell { background: var(--dp-sidebar-surface); border-inline-end: 1px solid color-mix(in srgb, var(--tblr-primary) 30%, var(--tblr-border-color)); }
+/* An unwritten slot inside a link or button reads in that control's own colour,
+   which keeps its contrast on a filled or tinted state. */
+:is(.nav-link, .btn) .dp-copy-slot { color: inherit; border-color: currentColor; }
+.dp-sidebar-shell .dp-sidebar-heading { border-bottom: 1px solid var(--tblr-border-color); }
+/* On the tinted sidebar a section's name takes the body colour, which keeps
+   its contrast. */
+.dp-sidebar-shell .dp-nav-group-label { font-size: var(--dp-size-support); letter-spacing: .06em; color: var(--tblr-body-color); }
+.dp-sidebar .nav-link { padding-block: .45rem; border-radius: 6px; }
+.dp-sidebar .nav-link:hover { background: color-mix(in srgb, var(--tblr-primary) 14%, transparent); }
+.dp-sidebar .nav-link.active { background: var(--tblr-primary); color: var(--tblr-primary-fg); font-weight: 600; }
+.dp-results { border-radius: 8px; box-shadow: var(--tblr-box-shadow); }
+/* The view tabs as one segmented control, the open view raised. */
+.dp-task-tabs.nav { width: fit-content; max-width: 100%; gap: .25rem; padding: .25rem; border-radius: 8px; background: var(--dp-control-surface); }
+.dp-task-tabs .nav-link { border: 0; border-radius: 6px; padding: .45rem .9rem; }
+.dp-task-tabs .nav-link.active { background: var(--tblr-bg-surface); color: var(--tblr-body-color); font-weight: 600; box-shadow: var(--tblr-box-shadow-sm); }
+
+/* Explore's control bar: every evaluation setting as a labelled group in one
+   band, the instance filter and the notebook download closing it. */
+.dp-control-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem 1.75rem; margin: 0 0 1rem; padding: .9rem 1rem; border: 1px solid var(--tblr-border-color); border-radius: 10px; background: var(--dp-control-surface); }
+.dp-control-bar .dp-comparison-controls, .dp-control-bar .dp-shared-controls { display: contents; }
+.dp-control-bar .dp-filters, .dp-control-bar .dp-privacy-filters { margin: 0; padding: 0; border: 0; }
+.dp-control-bar .dp-chip-label, .dp-control-bar .dp-shared-baseline { font-size: var(--dp-size-support); font-weight: 600; color: var(--tblr-secondary); }
+.dp-control-bar .dp-shared-baseline { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
+.dp-control-bar select { min-width: 9rem; }
+.dp-control-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-left: auto; min-width: 0; }
+.dp-control-actions .dp-notebook-control { margin: 0; }
+.dp-control-action, .dp-notebook-download { display: inline-flex; align-items: center; gap: .4rem; min-height: 32px; font-weight: 600; border: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface); }
+.dp-control-action[aria-expanded="true"] { border-color: var(--tblr-primary); background: var(--tblr-primary); color: var(--tblr-primary-fg); }
+.dp-control-count { font-weight: 500; opacity: .75; }
+/* The filter panel opens at once, not as an animation. */
+.dp-instance-filter.collapsing { transition: none; }
+/* The algorithm filter beside its heading; Show top at the far end. */
+.dp-plotted-head .dp-shared-baseline { margin-left: auto; }
+/* The heading, filter and Show top fit one row on Explore and the Leaderboard. */
+.dp-plotted-head { gap: 6px; }
+
+/* A claim quoted from the source paper, verbatim, with its page and table under it. */
+.dp-source-claim { margin: 0 0 1rem; }
+.dp-source-claim .blockquote { margin-bottom: .25rem; }
+/* Bootstrap's quote footer is too faint on the dark theme; the page and table read in the body colour. */
+.dp-source-claim .blockquote-footer { color: var(--tblr-body-color); }
+
+/* A choice of several: chips while short, a checkbox list past the rule.
+   Each option's count sits beside it as supporting text, outside its name. */
+.dp-chip-option, .dp-check-option { display: inline-flex; align-items: center; gap: 0.3rem; }
+.dp-option-count { color: var(--tblr-secondary); font-size: var(--dp-size-support); font-variant-numeric: tabular-nums; }
+.dp-check-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 0.25rem 1.25rem; }
+.dp-check-option label { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; cursor: pointer; }
+.dp-check-option .form-check-input { margin: 0; }
+
+/* A value the benchmark fixes: its label over plain text in a control's
+   place, never a disabled control (W24). */
+.dp-fixed-value { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.dp-fixed-text { font-weight: 500; line-height: 1.5; padding-block: 0.125rem; }
+
+/* The results settings (Error metric, Baseline, Trial aggregation), one box
+   each on Explore and the Leaderboard alike: the label beside its control or
+   fixed value, then one line saying what the current choice means. */
+.dp-comparison-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); align-items: stretch; gap: 1rem; flex-basis: 100%; width: 100%; }
+.dp-setting { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding: 0.75rem 1rem;
+  border: 1px solid var(--tblr-border-color); border-radius: 10px; background: var(--tblr-bg-surface-secondary); }
+.dp-setting-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; min-width: 0; }
+.dp-setting-head :is(.dp-chip-label, .dp-help-label) { margin: 0; font-weight: 600; color: var(--tblr-body-color); }
+.dp-setting-head :is(.dp-chip-label, .dp-help-label)::after { content: ":"; }
+.dp-setting-head .dp-fixed-value, .dp-setting-head .dp-segmented { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; }
+.dp-setting-head .dp-select { max-width: 100%; margin: 0; }
+.dp-setting-desc { margin: 0; color: var(--tblr-secondary); font-size: 0.875rem; }
+.dp-setting-desc .dp-definition-link { display: inline; margin: 0 0 0 0.25rem; font-size: inherit; }
+.dp-results[data-leaderboard] > .dp-comparison-controls { display: flex; flex-wrap: wrap; width: 100%; margin-right: 0; }
+
+/* Long tables open short (W110): rows past the first 25 wait behind
+   "Show all N"; an expanded long table scrolls in its own box with its
+   header pinned (W111). */
+.dp-row-folded { display: none; }
+.dp-table-more { margin: 0.5rem 0 1rem; }
+.dp-table-pinned { max-height: 80vh; overflow: auto; }
+.dp-table-pinned thead th { position: sticky; top: 0; z-index: 1; background: var(--tblr-bg-surface); }
+
+/* The parameters every budget shares (a fixed delta), once, beside the budget buttons. */
+.dp-budget-shared { align-self: flex-end; margin: 0 0 0.4rem; color: var(--tblr-secondary); font-size: var(--dp-size-support); font-variant-numeric: tabular-nums; }

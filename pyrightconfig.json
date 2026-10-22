@@ -1,0 +1,49 @@
+{
+  "include": [
+    "dpstats",
+    "tests/fixtures",
+    "tools"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "tools",
+      "extraPaths": [".", "docs/site"]
+    },
+    {
+      "root": "tests/unit/docs",
+      "extraPaths": [".", "docs/site"]
+    },
+    {
+      "root": "tests/fixtures",
+      "extraPaths": ["."]
+    },
+    // The journeys harness writes the executed notebooks the site renders, so
+    // it reads that directory's name and metadata key from the site module
+    // that owns them.
+    {
+      "root": "tests/integration",
+      "extraPaths": [".", "docs/site"]
+    },
+    // Listed after the more specific tests/* roots above: pyright matches the
+    // first execution environment whose root contains the file, so a broader
+    // "tests" entry earlier would shadow tests/fixtures's and
+    // tests/integration's own extraPaths. tests/docstring_blocks.py reuses
+    // the renderer's own section-heading regex, so every documentation gate
+    // parses one shape.
+    {
+      "root": "tests",
+      "extraPaths": [".", "docs/site"]
+    }
+  ],
+  "venvPath": ".",
+  "venv": ".venv",
+  "typeCheckingMode": "strict",
+  // Third-party NumPy/Pandas annotations still leave these values partially unknown.
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownLambdaType": "none",
+  "reportMissingTypeStubs": "none",
+  // Scientific locals such as X, A, and T are reassigned intentionally.
+  "reportConstantRedefinition": "none"
+}

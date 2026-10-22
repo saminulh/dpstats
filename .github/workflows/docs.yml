@@ -1,0 +1,93 @@
+name: Docs
+
+# Builds the MkDocs site from the current library guide and API, then deploys it
+# to GitHub Pages. A benchmark release is not fetched until the output-first
+# public task-store projection has a current reader.
+
+# Manual only until public builds begin: the local strict build
+# (docs/site/check_build.py) before every push is the docs gate today, and no
+# consumer waits on a hosted run. Dispatch builds and deploys to Pages.
+on:
+  workflow_dispatch:
+
+# One thread per numerical library, for the wheel build, the notebook
+# executions, and the site builds alike.
+env:
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  VECLIB_MAXIMUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      # The journeys harness builds a wheel with uv and runs each tutorial in a
+      # fresh interpreter, so this job needs uv and the dev extra.
+      - uses: astral-sh/setup-uv@v6
+      - name: Install the library, the gate tools and the pinned docs toolchain
+        run: |
+          uv venv --seed
+          uv sync --all-extras
+          uv pip install -r docs/site/requirements-docs.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      # A tutorial page is the executed copy the journeys harness writes to the
+      # gitignored tutorials/_executed/, keyed by the source notebook's content
+      # hash. The harness runs here as an anonymous reader of the public
+      # release; the builds below render its copies and execute nothing.
+      - name: Execute the tutorials
+        run: pytest tests/integration/test_tutorials.py -m slow -n 0
+      # Autodoc-coverage gate (stdlib-only, no extra deps): every module a task
+      # owes docs/reference/ (its losses module; task types, algorithms and
+      # transformations render in the task space) must be referenced by a :::
+      # directive there, and no directive may name a deleted module. Complements
+      # --strict below, which checks that ::: targets resolve, not coverage.
+      - name: Check autodoc coverage of the API reference
+        run: python tools/validate_docs.py
+      # The strict build itself, in every release configuration the site
+      # supports, not just the public one this job deploys. This is the
+      # site build's end-to-end gate; `pytest tests/unit` never builds a
+      # real site (see docs/site/check_build.py's own docstring).
+      - name: Check the strict build across release configurations
+        env:
+          DOCS_LIB_DOCS_DIR: ${{ github.workspace }}/docs
+          DISABLE_MKDOCS_2_WARNING: "true"
+          NO_MKDOCS_2_WARNING: "true"
+        run: python docs/site/check_build.py
+      - name: Build the unified site
+        env:
+          DOCS_LIB_DOCS_DIR: ${{ github.workspace }}/docs
+          DISABLE_MKDOCS_2_WARNING: "true"
+          NO_MKDOCS_2_WARNING: "true"
+        run: mkdocs build --strict -f docs/site/mkdocs.yml --site-dir "${{ github.workspace }}/site"
+      - name: Upload Pages artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

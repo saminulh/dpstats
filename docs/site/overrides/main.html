@@ -1,0 +1,252 @@
+{% from 'icons.html' import icon %}
+{% macro first_url(item) -%}
+  {%- if item.url is defined -%}{{ item.url | url }}
+  {%- elif item.children -%}{{ first_url(item.children[0]) }}{%- endif -%}
+{%- endmacro %}
+{% macro has_url(items, target) -%}
+  {%- for item in items -%}
+    {%- if item.url is defined and item.url == target -%}1{%- elif item.children -%}{{ has_url(item.children, target) }}{%- endif -%}
+  {%- endfor -%}
+{%- endmacro %}
+{# Walks *items* collecting, into *ns*, the "::"-joined section-title chain
+   for the item whose own url is the longest prefix of *target* -- a page
+   kept out of navigation (a configured algorithm, an Algorithm/Transformation sub-page)
+   matches its nearest listed ancestor leaf this way, not by exact url. #}
+{% macro _longest_prefix(items, target, trail, ns) -%}
+  {%- for item in items -%}
+    {%- if item.url is defined and target.startswith(item.url) and (item.url | length) > ns.best_len -%}
+      {%- set ns.best_len = item.url | length -%}
+      {%- set ns.best_path = trail ~ item.title -%}
+    {%- endif -%}
+    {%- if item.children -%}{{ _longest_prefix(item.children, target, trail ~ item.title ~ '::', ns) }}{%- endif -%}
+  {%- endfor -%}
+{%- endmacro %}
+{# The chain of section titles (Benchmark, Reference, Transformations, ...)
+   containing *target*'s url within *items*, "::"-joined; "" where *target*
+   is a top-level item or matches nothing under *items*. #}
+{% macro group_path(items, target) -%}
+  {%- set ns = namespace(best_len=-1, best_path='') -%}
+  {%- set _unused = _longest_prefix(items, target, '', ns) -%}
+  {{- ns.best_path -}}
+{%- endmacro %}
+{# *item*'s own url, or its first child's (recursively), unfiltered by `url`
+   so a caller can compose it before filtering once. #}
+{% macro raw_first_url(item) -%}
+  {%- if item.url is defined -%}{{ item.url }}
+  {%- elif item.children -%}{{ raw_first_url(item.children[0]) }}{%- endif -%}
+{%- endmacro %}
+{# The first page under *items* found by walking *path*'s "::"-joined section
+   titles as far as they match; "" where none of them exist in *items*. #}
+{% macro group_first_url(items, path) -%}
+  {%- set head = path.split('::')[0] -%}
+  {%- set matched = items | selectattr('title', 'equalto', head) | list -%}
+  {%- if matched -%}
+    {%- set rest = path.split('::')[1:] | join('::') -%}
+    {%- if rest and matched[0].children -%}
+      {%- set deeper = group_first_url(matched[0].children, rest) -%}
+      {{ deeper if deeper else raw_first_url(matched[0]) }}
+    {%- else -%}{{ raw_first_url(matched[0]) }}
+    {%- endif -%}
+  {%- else -%}{{ raw_first_url(items[0]) if items else '' }}
+  {%- endif -%}
+{%- endmacro %}
+{# Where switching to `task` lands: this page's route in that task, else the
+   first page in the same nav section (a single algorithm's page reaches the
+   Algorithms index; a Transformations sub-page reaches that task's first
+   Reference page), else the task's Overview. #}
+{% macro task_target(task) -%}
+  {%- set other = task.children[0].url.split('/')[0] -%}
+  {%- set rest = page.url[slug | length + 1:] if page else '' -%}
+  {%- if rest and has_url(task.children, other ~ '/' ~ rest) | trim -%}{{ (other ~ '/' ~ rest) | url }}
+  {%- else -%}
+    {%- set path = group_path(space.task.children, page.url) if page and space.task else '' -%}
+    {%- set fallback = group_first_url(task.children, path) if path else '' -%}
+    {%- if fallback -%}{{ fallback | url }}
+    {%- else -%}{{ first_url(task) }}{%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+{% macro links(items, with_icons=false, landing=none) %}
+  {% for item in items %}
+    {# A space's own landing reads "Overview": the sidebar heading already names the space. #}
+    {# *name* picks the entry's icon; *label* and *spoken* are what it shows and announces. #}
+    {% set overview = (space.task and item.url == slug ~ '/') or (landing is not none and item == landing) %}
+    {% set name = 'Overview' if overview else item.title %}
+    {% set label = site_copy_span('nav_overview') if overview else item.title %}
+    {% set spoken = site_copy_text('nav_overview') if overview else item.title | e %}
+    {# A page kept out of navigation (a configured algorithm) still marks its Roster
+       entry active, by url prefix, since it carries no nav ancestry of its own. #}
+    {% set active = item.active or (page and item.url is defined and item.url != (slug ~ '/') and page.url.startswith(item.url)) %}
+    <li class="nav-item{% if active %} active{% endif %}"><a class="nav-link{% if active %} active{% endif %}" href="{{ first_url(item) }}"{% if active %} aria-current="{{ 'page' if item == page else 'true' }}"{% endif %}{% if with_icons %} aria-label="{{ spoken }}" title="{{ spoken }}"{% endif %}>{% if with_icons %}<span class="nav-link-icon">{{ icon(name) }}</span><span class="nav-link-title">{{ label }}</span>{% else %}{{ label }}{% endif %}</a></li>
+  {% endfor %}
+{% endmacro %}
+{# A task sidebar section (Benchmark, Reference) renders as a non-link, non-
+   collapsible heading followed by its children; other items render as usual. #}
+{% macro task_sidebar(items) %}
+  {% for item in items %}
+    {% if item.title in ['Benchmark', 'Reference'] and item.children %}
+      <li class="nav-item dp-nav-group-heading dp-nav-group-heading--{{ item.title | lower }}"><span class="dp-nav-group-label">{{ item.title }}</span></li>
+      {{ links(item.children, true) }}
+    {% else %}
+      {{ links([item], true) }}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+{% macro api_links(items, parent=none) %}
+  {% for item in items %}
+    {% if item.children %}
+      <li class="nav-item"><details{% if item.active %} open{% endif %}>
+        <summary class="dp-nav-group">{{ item.title }}</summary>
+        <ul class="nav flex-column dp-nav-children">{{ api_links(item.children, item) }}</ul>
+      </details></li>
+    {% elif (parent and loop.first and item.title == parent.title) or (not parent and loop.first and not item.children) %}
+      <li class="nav-item{% if item.active %} active{% endif %}"><a class="nav-link{% if item.active %} active{% endif %}" href="{{ item.url | url }}"{% if item.active %} aria-current="page"{% endif %}>{{ site_copy_span('nav_overview') }}</a></li>
+    {% else %}
+      {{ links([item]) }}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+{% macro toc_rail(items) %}
+  {% for item in items %}
+    <li><a href="{{ item.url }}">{{ item.title }}</a>{% if item.children %}<ul>{{ toc_rail(item.children) }}</ul>{% endif %}</li>
+  {% endfor %}
+{% endmacro %}
+{% macro contents(items) %}
+  {% for item in items %}
+    <a class="dropdown-item text-wrap" href="{{ item.url }}">{{ item.title }}</a>
+    {{ contents(item.children) }}
+  {% endfor %}
+{% endmacro %}
+{% set space = namespace(task=none, tasks=[], area=none) %}
+{% set slug = page.url.split('/')[0] if page else '' %}
+{% for area in nav.items %}
+  {% if area.active %}{% set space.area = area %}{% endif %}
+  {% if area.title == 'Tasks' %}
+    {% for child in area.children | default([], true) %}
+      {% if child.children %}
+        {% set space.tasks = space.tasks + [child] %}
+        {% for leaf in child.children %}
+          {% if leaf.url == slug ~ '/' %}{% set space.task = child %}{% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+{% set sections = space.task.children if space.task else space.area.children if space.area and space.area.children and space.area.title not in ['Tasks', 'Corpus'] else [] %}
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    try {
+      document.documentElement.dataset.bsTheme = localStorage.getItem('dp-theme-choice') || 'dark';
+      // A collapsed sidebar lasts for this tab only; every new visit opens it.
+      localStorage.removeItem('dp-sidebar-collapsed');
+      if (sessionStorage.getItem('dp-sidebar-collapsed') === 'true') document.documentElement.setAttribute('data-sidebar-collapsed', '');
+    } catch (_) { /* Storage can be unavailable in a private browser. */ }
+  </script>
+  <title>{{ page.title if page else config.site_name }} · {{ config.extra.short_name }}</title>
+  <link rel="icon" href="{{ 'images/favicon.svg' | url }}" type="image/svg+xml">
+  {% if page and page.canonical_url %}<link rel="canonical" href="{{ page.canonical_url }}">{% endif %}
+  {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}">{% endfor %}
+  {% if page and page.nb_css %}{{ page.nb_css }}{% endif %}
+</head>
+<body>
+<script>document.body.dataset.bsTheme = document.documentElement.dataset.bsTheme;</script>
+<div hidden{{ site_copy_attribute }}></div>
+<a class="visually-hidden-focusable" href="#main">{{ site_copy_span('skip_to_content') }}</a>
+<div class="page">
+  <header class="navbar navbar-expand-lg d-print-none" data-pagefind-ignore>
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ nav.homepage.url | url }}">DPStatsBench</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#global-menu" aria-controls="global-menu" aria-expanded="false" aria-label="{{ site_copy_text('open_navigation') }}"><span class="navbar-toggler-icon"></span></button>
+      <div class="navbar-nav flex-row order-lg-last gap-2">
+        <button class="btn btn-sm dp-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#search-panel" aria-controls="search-panel" aria-label="{{ site_copy_text('search') }}" title="{{ site_copy_text('search_shortcut') }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="m20 20-5.6-5.6"/></svg><span class="d-none d-md-inline">{{ site_copy_span('search') }}</span></button>
+        <button class="btn btn-sm dp-icon-btn" id="theme-toggle" type="button" aria-label="{{ site_copy_text('theme_light') }}" title="{{ site_copy_text('theme_light') }}"><svg class="dp-when-dark" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="dp-when-light" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+      </div>
+      <div class="collapse navbar-collapse" id="global-menu"><ul class="navbar-nav">
+        {% for area in nav.items %}{% if area.title == 'Tasks' %}{% include 'task-picker.html' %}{% elif area.title != 'Home' %}{{ links([area]) }}{% endif %}{% endfor %}
+      </ul></div>
+    </div>
+  </header>
+  {% if sections %}
+  <div class="dp-workspace d-flex flex-fill">
+    <div class="dp-sidebar-shell flex-shrink-0{% if space.task %} dp-task-sidebar{% endif %}" data-pagefind-ignore>
+    <div class="dp-sidebar-heading d-flex align-items-center gap-2 py-2 pe-2">
+      <button class="btn btn-icon btn-sm flex-shrink-0" id="sidebar-toggle" type="button" aria-controls="section-sidebar" aria-expanded="true" aria-label="{{ site_copy_text('sidebar_collapse') }}" title="{{ site_copy_text('sidebar_collapse') }}">{{ icon('Sidebar') }}</button>
+      <h2 class="h4 m-0 flex-fill" id="section-heading">{% if space.task %}{% include 'task-switch.html' %}{% else %}{{ space.area.title }}{% endif %}</h2>
+    </div>
+    <aside class="offcanvas-lg offcanvas-start dp-sidebar" id="section-sidebar" tabindex="-1" aria-labelledby="section-heading">
+      <div class="offcanvas-header">
+        <h2 class="offcanvas-title">{{ space.task.title if space.task else space.area.title }}</h2>
+        <button class="btn-close d-lg-none" type="button" data-bs-dismiss="offcanvas" data-bs-target="#section-sidebar" aria-label="{{ site_copy_text('sidebar_collapse') }}"></button>
+      </div>
+      <div class="offcanvas-body"><nav aria-label="{{ site_copy_text('section_navigation') }}"><ul class="nav nav-pills flex-column">{% if space.area.title in ['API', 'User guide'] %}{{ api_links(sections) }}{% elif space.task %}{{ task_sidebar(sections) }}{% else %}{{ links(sections, false, sections[0]) }}{% endif %}</ul></nav></div>
+    </aside>
+    </div>
+  {% endif %}
+  <div class="page-wrapper flex-fill">
+    <main class="page-body" id="main"><div class="container-fluid">
+      {% set trail = page.ancestors | reverse | rejectattr('title', 'equalto', page.title) | rejectattr('title', 'in', ['Benchmark', 'Reference']) | list if page else [] %}
+      {# A configured algorithm page carries no nav ancestry of its own (it is kept out
+         of navigation); its task-space breadcrumb is built from the task and
+         its Roster landing instead. An instance page, kept out the same way,
+         takes the task alone. #}
+      {% if not trail and space.task and page and page.url != slug ~ '/roster/' and page.url.startswith(slug ~ '/roster/') %}
+        {% set trail = [{'title': 'Tasks'}, {'title': space.task.title, 'url': raw_first_url(space.task)}, {'title': 'Roster', 'url': slug ~ '/roster/'}] %}
+      {% elif not trail and space.task and page and page.url.startswith(slug ~ '/instances/') %}
+        {% set trail = [{'title': 'Tasks'}, {'title': space.task.title, 'url': raw_first_url(space.task)}] %}
+      {% endif %}
+      {% if trail %}<ol class="breadcrumb mb-3" aria-label="{{ site_copy_text('breadcrumb') }}">
+        {% for ancestor in trail %}<li class="breadcrumb-item"><a href="{{ 'index.html#task-menu' | url if ancestor.title == 'Tasks' else first_url(ancestor) }}">{{ ancestor.title }}</a></li>{% endfor %}
+        <li class="breadcrumb-item active" aria-current="page">{{ page.title }}</li>
+      </ol>{% endif %}
+      {% set toc = page and page.toc and 'dp-results' not in page.content and (page.toc | list | length > 1 or (page.toc | first).children) %}
+      {% set notebook = page.nb_url.split('/')[-1] if page and page.nb_url else none %}
+      {% if toc or notebook %}<div class="dp-page-tools d-flex flex-wrap gap-2 mb-3{% if toc %} d-xl-none{% endif %}">
+        {% if toc %}<div class="dropdown">
+        <button class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ site_copy_span('on_this_page') }}</button>
+        <div class="dropdown-menu overflow-auto" style="max-height:60vh">{{ contents(page.toc) }}</div>
+        </div>{% endif %}
+        {% if notebook %}<a class="btn btn-sm" href="{{ notebook }}" download>{{ site_copy_span('download_notebook') }}</a>{% endif %}
+      </div>{% endif %}
+      {# Search indexes the article and nothing else on the page. Each result is
+         labelled with, and can be narrowed to, its top-level site section (one
+         meta value per attribute: Pagefind reads a valued meta to the attribute's end).
+         `image:` stops Pagefind keeping a notebook's inline plot as the result image.
+         `tone` names the Tabler colour of the dot beside the section's name, which
+         keeps the text's own colour and so its contrast. #}
+      {% set searchable = page and not (page.meta.search or {}).exclude %}
+      {% set search_section = (page.ancestors | last).title if page and page.ancestors else page.title if page else '' %}
+      {% set search_tone = {'Home': 'secondary', 'Methodology': 'yellow', 'Tasks': 'blue', 'Corpus': 'orange', 'User guide': 'green', 'API': 'purple', 'Submit': 'pink'}.get(search_section, 'secondary') %}
+      {% if searchable %}<span hidden data-pagefind-meta="tone:{{ search_tone }}"></span>{% endif %}
+      <div class="{% if toc %}dp-with-toc{% endif %}"{% if searchable %} data-pagefind-meta="section:{{ search_section | e }}" data-pagefind-filter="section:{{ search_section | e }}"{% endif %}>
+      <article class="dp-content{% if page and (page.nb_url or (space.area and space.area.title == 'User guide')) %} dp-prose{% endif %}{% if page and page.meta.results_page %} dp-results-page{% endif %}"{% if searchable %} data-pagefind-body data-pagefind-meta="image:"{% endif %}>
+        {% if page %}{{ page.content }}{% else %}<h1>{{ site_copy_span('page_not_found') }}</h1><a href="{{ nav.homepage.url | url }}">{{ site_copy_span('not_found_home') }}</a>{% endif %}
+      </article>
+      {% if toc %}<nav class="dp-toc d-none d-xl-block" aria-labelledby="dp-toc-title" data-pagefind-ignore>{% if notebook %}<a class="btn btn-sm w-100 mb-3" href="{{ notebook }}" download>{{ site_copy_span('download_notebook') }}</a>{% endif %}<p id="dp-toc-title" class="dp-toc-title">{{ site_copy_span('on_this_page') }}</p><ul>{{ toc_rail(page.toc) }}</ul></nav>{% endif %}
+      </div>
+    </div></main>
+    <footer class="footer footer-transparent d-print-none" data-pagefind-ignore><div class="container-fluid text-secondary d-flex flex-wrap gap-3"><a href="{{ 'corpus/about/' | url }}">{{ site_copy_span('footer_data_link') }}</a>{% if config.repo_url %}<a href="{{ config.repo_url }}">{{ config.repo_name }}</a>{% endif %}</div></footer>
+  </div>
+  {% if sections %}</div>{% endif %}
+</div>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="search-panel" aria-labelledby="search-heading">
+  <div class="offcanvas-header"><h2 id="search-heading" class="offcanvas-title">{{ site_copy_span('search') }}</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ site_copy_text('close_search') }}"></button></div>
+  <div class="offcanvas-body">{# site.js loads Pagefind's Component UI and stamps this template on first open. #}
+    <template id="dp-search-ui" data-src="{{ 'pagefind/pagefind-component-ui.js' | url }}" data-href="{{ 'pagefind/pagefind-component-ui.css' | url }}">
+      <pagefind-input placeholder="{{ site_copy_text('search_placeholder') }}" debounce="150"></pagefind-input>
+      <pagefind-filter-pane></pagefind-filter-pane>
+      <pagefind-summary></pagefind-summary>
+      <pagefind-results><script type="text/pagefind-template">{% raw %}
+<li class="pf-result">
+  <div class="pf-result-card"><div class="pf-result-content">
+    <p class="pf-result-title"><a class="pf-result-link" href="{{ meta.url | default(url) | safeUrl }}">{{ meta.title }}</a>{{#if meta.section}} <span class="dp-search-section small text-nowrap ms-2"><span class="status-dot status-{{ meta.tone }} me-1"></span>{{ meta.section }}</span>{{/if}}</p>
+    {{#if excerpt}}<p class="pf-result-excerpt">{{+ excerpt +}}</p>{{/if}}
+  </div></div>
+</li>{% endraw %}</script></pagefind-results>
+    </template>
+  </div>
+</div>
+{% for script in config.extra_javascript %}{{ script | script_tag }}{% endfor %}
+</body>
+</html>
