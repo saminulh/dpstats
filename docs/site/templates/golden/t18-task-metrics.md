@@ -66,3 +66,14 @@ $$
 </tbody>
 </table>
 </div>
+
+## Baselines
+
+<table class="dp-table dp-table--wide table table-vcenter table-hover">
+<thead><tr><th scope="col">Baseline</th><th scope="col">Declared by</th><th scope="col">Definition</th><th scope="col">Applies to</th><th scope="col">Role</th></tr></thead>
+<tbody>
+<tr><th scope="row" id="baseline-filler_scale"><code>filler_scale</code></th><td><span class="dp-badge badge">Benchmark protocol</span></td><td>The description the protocol states for a value the source supplies.</td><td><span class="dp-sentence"><a href="#metric-one">metric_one</a></span></td><td>Headline baseline</td></tr>
+<tr><th scope="row" id="baseline-filler_reference"><code>filler_reference</code></th><td><span class="dp-badge badge">Library</span></td><td>The description the library's metric argument registry declares.</td><td><span class="dp-sentence"><a href="#metric-one">metric_one</a>, <a href="#metric-two">metric_two</a></span></td><td>Offered on Explore</td></tr>
+<tr><th scope="row" id="baseline-best_median"><code>best_median</code></th><td><span class="dp-badge badge">Benchmark protocol</span></td><td>The best median cost among the standard-class algorithms, per instance and budget.</td><td><span class="dp-sentence"><a href="#metric-one">metric_one</a>, <a href="#metric-two">metric_two</a></span></td><td>Offered on Explore</td></tr>
+</tbody>
+</table>

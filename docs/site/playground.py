@@ -54,8 +54,8 @@ from profile_chart import (
     element_id,
     embed,
     metrics_page_href,
-    methodology_baseline_href,
-    methodology_page_href,
+    baseline_href,
+    baselines_page_href,
     runtime_scripts,
     results_controls,
     results_section,
@@ -278,7 +278,7 @@ def _metric_section(
     label: str,
     active: bool,
     depth: int,
-    protocol: str,
+    baselines_page: str,
     baseline: str,
     percent: str,
 ) -> str:
@@ -293,7 +293,7 @@ def _metric_section(
         active=active,
         comparisons=_comparison(chart),
         definition_href=href,
-        baseline_definition_href=methodology_baseline_href(protocol, baseline),
+        baseline_definition_href=baseline_href(baselines_page, baseline),
         depth=depth,
         interactive_only=True,
     )
@@ -305,7 +305,7 @@ BASELINE_ALGORITHM_SEARCH = "algorithm-search"
 
 
 def _baseline_control(
-    index: Mapping[str, Any], metric: str, *, depth: int, protocol: str
+    index: Mapping[str, Any], metric: str, *, depth: int, baselines_page: str
 ) -> str:
     """The baseline control for one Metric: named baselines plus "Algorithm…".
 
@@ -339,7 +339,7 @@ def _baseline_control(
         + "</option>"
     )
     legend = ("shared", "baseline_label")
-    href = methodology_baseline_href(protocol, default)
+    href = baseline_href(baselines_page, default)
     description = next(
         str(option.get("description", ""))
         for option in catalogue["options"]
@@ -372,11 +372,13 @@ def _controls(
     *,
     depth: int,
     notebook: bool,
-    protocol: str,
+    baselines_page: str,
 ) -> str:
     """Render the control bar: what to read, against what, and over which trials."""
     declared = sorted({str(entry["class"]) for entry in index["algorithms"]})
-    baseline_control = _baseline_control(index, opening, depth=depth, protocol=protocol)
+    baseline_control = _baseline_control(
+        index, opening, depth=depth, baselines_page=baselines_page
+    )
     groups = [
         chip_group(
             "class",
@@ -415,7 +417,7 @@ def playground_page(
     provenance: str,
     absent: Sequence[tuple[str, str]] = (),
     notebooks: Mapping[str, str] | None = None,
-    protocol_href: str | None = None,
+    baselines_href: str | None = None,
     leaderboard_href: str | None = None,
 ) -> RenderedPage:
     """Render one task's Explore page over its emitted panel datasets.
@@ -432,9 +434,9 @@ def playground_page(
         notebooks: Each view's notebook recreating this page's reading, by
             view, relative to the page, or ``None`` where it ships none. The
             one download control hands over the open view's.
-        protocol_href: The page-relative link to this task's methodology page, or
-            ``None`` for the task's own, which every baseline's Definition
-            link points into.
+        baselines_href: The page-relative link to the page carrying this
+            task's baselines table, or ``None`` for the task's own Metrics page,
+            which every baseline's Definition link points into.
         leaderboard_href: The page-relative link to this task's Leaderboard,
             or ``None`` for the task's own.
 
@@ -445,7 +447,7 @@ def playground_page(
         raise ValueError(f"{identity} measured no panel for an Explore page.")
     index = data.index
     task_id = str(index["task"])
-    protocol = protocol_href or methodology_page_href(depth, task_id)
+    baselines_page = baselines_href or baselines_page_href(depth, task_id)
     by_metric: dict[str, list[tuple[PanelData, Mapping[str, Any]]]] = {}
     for panel, listed in zip(data.panels, index["panels"]):
         by_metric.setdefault(panel.metric, []).append((panel, listed))
@@ -469,7 +471,7 @@ def playground_page(
             else ""
         )
         + f' data-algorithm-baseline-href="{html.escape(algorithm_baseline_href(depth), quote=True)}"'
-        + f' data-protocol-href="{html.escape(protocol, quote=True)}"'
+        + f' data-baselines-href="{html.escape(baselines_page, quote=True)}"'
         + f' data-algorithm-provenance="{provenance}"'
         + f' data-interpretation-href="{html.escape(privacy_interpretation_href(depth), quote=True)}"'
         + f' data-task="{html.escape(task_id, quote=True)}"'
@@ -494,7 +496,7 @@ def playground_page(
             index,
             depth=depth,
             notebook=bool(notebooks),
-            protocol=protocol,
+            baselines_page=baselines_page,
         )
         + view_tabs(element_id("playground", task_id, opening))
         + absences_note(absent)
@@ -508,7 +510,7 @@ def playground_page(
                 label=str(index["metric_labels"][metric]),
                 active=metric == opening,
                 depth=depth,
-                protocol=protocol,
+                baselines_page=baselines_page,
                 baseline=str(index["baselines"][metric]["default"]),
                 percent=f"{float(index['headline_quantile']) * 100:g}",
             )

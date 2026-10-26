@@ -82,7 +82,7 @@ sign_disagreement_with_ols = Metric(
     calculation=_sign_disagreement_with_ols,
     requires=(ols_coef,),
     formula=r"\mathbf{1}\{\operatorname{sign}(\hat{\beta}_j) \neq "
-    r"\operatorname{sign}(\hat{\beta}_{j,\mathrm{OLS}})\}",
+    r"\operatorname{sign}(\hat{\beta}_{{\rm OLS}, j})\}",
     label="Sign disagreement vs OLS",
 )
 
@@ -98,7 +98,7 @@ def _absolute_error_to_ols(
             The OLS coefficient of interest.
 
     Notes:
-        Computes :math:`\lvert\hat\beta_j-\hat\beta_{j,\mathrm{OLS}}\rvert`, the
+        Computes :math:`\lvert\hat\beta_j-\hat\beta_{{\rm OLS}, j}\rvert`, the
         absolute error between the output and OLS coefficients.
 
         Divided by a standard error of the coefficient, it has the form of a
@@ -114,7 +114,7 @@ absolute_error_to_ols = Metric(
     name="absolute_error_to_ols",
     calculation=_absolute_error_to_ols,
     requires=(ols_coef,),
-    formula=r"\lvert \hat{\beta}_j - \hat{\beta}_{j,\mathrm{OLS}} \rvert",
+    formula=r"\lvert \hat{\beta}_j - \hat{\beta}_{{\rm OLS}, j} \rvert",
     label="Absolute error vs OLS",
     baseline=ols_se,
 )
@@ -142,7 +142,7 @@ def _absolute_error_of_median_to_ols(
             The OLS coefficient of interest.
 
     Notes:
-        Computes :math:`\lvert\operatorname{med}_t\hat\beta_{j,t}-\hat\beta_{j,\mathrm{OLS}}\rvert`:
+        Computes :math:`\lvert\operatorname{med}_t\hat\beta_{j,t}-\hat\beta_{{\rm OLS}, j}\rvert`:
         how far the algorithm's centre sits from OLS, its bias with the noise
         averaged out. Read as one median per instance, a failed trial counting
         :math:`+\infty`, it is infinite unless more than half the trials succeed.
@@ -157,7 +157,7 @@ absolute_error_of_median_to_ols = Metric(
     calculation=_absolute_error_of_median_to_ols,
     requires=("outputs", ols_coef),
     formula=r"\lvert \operatorname{med}_t \hat{\beta}_{j,t} - "
-    r"\hat{\beta}_{j,\mathrm{OLS}} \rvert",
+    r"\hat{\beta}_{{\rm OLS}, j} \rvert",
     label="Error of median",
     baseline=ols_se,
 )

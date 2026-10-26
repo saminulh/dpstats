@@ -1,8 +1,8 @@
-"""Render the site-wide Methodology page from the release a build renders.
+"""Render the site-wide Methodology page from ``docs/content/methodology.md``.
 
-The page renders the release's own protocol narrative verbatim under the
-narrative's own title. Other pages link it by that title, and a tuned
-configured algorithm's page links its tuning section.
+The page renders that narrative verbatim under its own title, whichever
+release the build reads; a release ships a copy of it taken when it was cut.
+A tuned configured algorithm's page links its tuning section.
 """
 
 from __future__ import annotations
@@ -16,9 +16,8 @@ from templates.model import Methodology
 
 # Where the page is published, from the site root.
 METHODOLOGY_ROUTE = "methodology/"
-# The page's title where the build reads no narrative to name it: the
-# banner's own label for the page.
-TITLE = "Methodology"
+# Where the narrative lives, from the library's docs directory.
+METHODOLOGY_SOURCE = Path("content") / "methodology.md"
 
 
 # A Markdown link in the narrative. A relative target names a file beside the
@@ -95,35 +94,25 @@ def split_title(narrative: str) -> tuple[str, str]:
     return first[2:].strip(), rest.lstrip("\n")
 
 
-def methodology_page(
-    narrative: str | None, identity: str, *, banner: str = ""
-) -> Methodology:
-    """The T15 record: the release's narrative, verbatim.
+def methodology_page(narrative: str, identity: str, *, banner: str = "") -> Methodology:
+    """The T15 record: the methodology narrative, verbatim.
 
-    The narrative renders as written, except that a link to a file inside the
-    release shows as its text: the site publishes no such file
+    The narrative renders as written, except that a relative link shows as its
+    text: the site publishes no file beside the narrative
     (:func:`release_relative_links` names them for the build's output).
 
     Args:
-        narrative: The release's protocol narrative, or ``None`` where the
-            build reads no narrative.
-        identity: The release the page was built from, as the reader is told.
+        narrative: The methodology narrative.
+        identity: The release the page was built from, as the reader is told,
+            or empty where the build reads none.
         banner: The status line a build reading no release shows.
     """
-    title, body = split_title(narrative) if narrative else (TITLE, "")
+    title, body = split_title(narrative)
     return Methodology(
         title=title, narrative=_unlink(body), identity=identity, banner=banner
     )
 
 
-def narrative_title(narrative: str | None) -> str:
-    """What a link to the page reads: the narrative's own title, or the page's."""
-    return split_title(narrative)[0] if narrative else TITLE
-
-
-def read_narrative(snapshot: Path | None, name: str) -> str | None:
-    """The narrative a prepared snapshot carries, or ``None`` where it has none."""
-    if snapshot is None:
-        return None
-    path = snapshot / name
-    return path.read_text(encoding="utf-8") if path.is_file() else None
+def read_methodology(docs: Path) -> str:
+    """The methodology narrative under the library's *docs* directory."""
+    return (docs / METHODOLOGY_SOURCE).read_text(encoding="utf-8")

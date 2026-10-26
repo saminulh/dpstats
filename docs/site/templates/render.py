@@ -41,7 +41,7 @@ from .model import (
     RosterRow,
     TransformationGroup,
     TransformationsIndex,
-    Protocol,
+    BaselineEntry,
     ReaderTerm,
     RosterLanding,
     RosterPage,
@@ -53,9 +53,7 @@ from .spec import (
     FACT_TABLE,
     INSTANCE_COLUMNS_TABLE,
     OUTCOME_TABLE,
-    PROTOCOL_BASELINE_TABLE,
-    PROTOCOL_GRID_TABLE,
-    PROTOCOL_STANDINGS_TABLE,
+    BASELINE_TABLE,
     RECIPE_TABLE,
     ROSTER_LANDING_TABLE,
     STANDING_TABLE,
@@ -121,8 +119,6 @@ def render(template: TemplateSpec, obj: object) -> str:
         )
     if template.name == "T22" and isinstance(obj, RosterLanding):
         return _page(template, obj.title, _roster_landing(obj))
-    if template.name == "T23" and isinstance(obj, Protocol):
-        return _page(template, obj.title, _protocol(obj))
     if template.name == "T24" and isinstance(obj, InstancePage):
         return _page(
             template,
@@ -822,7 +818,34 @@ def _metrics(page: Metrics) -> dict[str, str]:
             else ""
         ),
         "sections": "\n\n".join(sections),
+        "baselines": _baselines(page.baselines),
     }
+
+
+def _baselines(baselines: Sequence[BaselineEntry]) -> str:
+    """The task's baselines table, or nothing where the build has none."""
+    if not baselines:
+        return ""
+    heads = "".join(f'<th scope="col">{escape(name)}</th>' for name in BASELINE_TABLE)
+    # The baseline's name identifies its row and carries the anchor every
+    # Definition link lands on.
+    body = "\n".join(
+        "<tr>"
+        f'<th scope="row" id="baseline-{escape(row.name, quote=True)}">'
+        f"{code(row.name)}</th>"
+        f'<td><span class="dp-badge badge">{escape(row.declarer)}</span></td>'
+        f"<td>{row.definition}</td>"
+        f"<td>{row.applies}</td>"
+        f"<td>{escape(row.role)}</td>"
+        "</tr>"
+        for row in baselines
+    )
+    return (
+        '<table class="dp-table dp-table--wide table table-vcenter table-hover">\n'
+        f"<thead><tr>{heads}</tr></thead>\n"
+        f"<tbody>\n{body}\n</tbody>\n"
+        "</table>\n"
+    )
 
 
 def _swatch_hook(marker: Mapping[str, str]) -> str:
@@ -1218,70 +1241,6 @@ def _roster_landing(page: RosterLanding) -> dict[str, str]:
         "</div>\n" + note + "</div>\n"
     )
     return {"table": "".join(parts)}
-
-
-def _protocol(page: Protocol) -> dict[str, str]:
-    heads = "".join(
-        f'<th scope="col">{escape(name)}</th>' for name in PROTOCOL_BASELINE_TABLE
-    )
-    # The baseline's name identifies its row and carries the anchor every
-    # Definition link lands on.
-    body = "\n".join(
-        "<tr>"
-        f'<th scope="row" id="baseline-{escape(row.name, quote=True)}">'
-        f"{code(row.name)}</th>"
-        f'<td><span class="dp-badge badge">{escape(row.declarer)}</span></td>'
-        f"<td>{row.definition}</td>"
-        f"<td>{row.applies}</td>"
-        f"<td>{escape(row.role)}</td>"
-        "</tr>"
-        for row in page.baselines
-    )
-    return {
-        "lead": (
-            f"<p>{anchor(page.methodology.text, page.methodology.url)}</p>\n\n"
-            + copy_html(
-                "protocol",
-                "ranking_rule",
-                classes="",
-                fields={
-                    "headline": page.headline.text,
-                    "baseline": page.baseline.text,
-                    "percent": page.percent,
-                },
-                pages={
-                    name: link.url
-                    for name, link in (
-                        ("headline", page.headline),
-                        ("baseline", page.baseline),
-                    )
-                    if link.url
-                },
-            )
-        ),
-        "baselines": (
-            '<table class="dp-table dp-table--wide table table-vcenter table-hover">\n'
-            f"<thead><tr>{heads}</tr></thead>\n"
-            f"<tbody>\n{body}\n</tbody>\n"
-            "</table>\n"
-        ),
-        "grid": table(PROTOCOL_GRID_TABLE, [page.grid], numeric=(0, 1, 3), wide=False),
-        "standings": (
-            table(
-                PROTOCOL_STANDINGS_TABLE,
-                [(escape(rule), text) for rule, text in page.standings],
-                wide=False,
-            )
-            if page.standings
-            else ""
-        ),
-        "build_source": copy_html(
-            "shared",
-            "built_from",
-            classes="dp-build-source",
-            fields={"identity": page.identity},
-        ),
-    }
 
 
 def _methodology(page: Methodology) -> dict[str, str]:

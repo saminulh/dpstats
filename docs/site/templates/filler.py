@@ -43,8 +43,7 @@ from .model import (
     TransformationsIndex,
     RecipeComponent,
     Row,
-    Protocol,
-    ProtocolBaseline,
+    BaselineEntry,
     Parameter,
     RosterLanding,
     RosterLink,
@@ -95,7 +94,6 @@ FILLER_PAGES: tuple[tuple[str, str], ...] = (
     ("T24", "t24-instance"),
     ("T21", "t21-configured-algorithm"),
     ("T22", "t22-roster-landing"),
-    ("T23", "t23-task-methodology"),
     ("T15", "t15-methodology"),
 )
 
@@ -103,7 +101,6 @@ FILLER_PAGES: tuple[tuple[str, str], ...] = (
 # two of them names its neighbour rather than a task space.
 SOURCE_PAGE = "../t20-source/"
 INSTANCE_PAGE = "../t24-instance/"
-METHODOLOGY_PAGE = "../t15-methodology/"
 
 
 def _task_link(text: str) -> Link:
@@ -700,6 +697,32 @@ def _metrics() -> Metrics:
             ),
         ),
         arguments_intro=render_slot("task", "metric_arguments_intro", PLACEHOLDER),
+        baselines=(
+            BaselineEntry(
+                "filler_scale",
+                "Benchmark protocol",
+                "The description the protocol states for a value the source supplies.",
+                '<span class="dp-sentence"><a href="#metric-one">metric_one</a></span>',
+                "Headline baseline",
+            ),
+            BaselineEntry(
+                "filler_reference",
+                "Library",
+                "The description the library's metric argument registry declares.",
+                '<span class="dp-sentence"><a href="#metric-one">metric_one</a>, '
+                '<a href="#metric-two">metric_two</a></span>',
+                "Offered on Explore",
+            ),
+            BaselineEntry(
+                "best_median",
+                "Benchmark protocol",
+                "The best median cost among the standard-class algorithms, "
+                "per instance and budget.",
+                '<span class="dp-sentence"><a href="#metric-one">metric_one</a>, '
+                '<a href="#metric-two">metric_two</a></span>',
+                "Offered on Explore",
+            ),
+        ),
     )
 
 
@@ -894,50 +917,6 @@ def roster_landing_page() -> RosterLanding:
     )
 
 
-def protocol_page() -> Protocol:
-    """The invented T23 protocol-and-baselines record."""
-    metrics = "../t18-task-metrics/#"
-    return Protocol(
-        title="Task Name: methodology",
-        methodology=Link("Filler protocol", METHODOLOGY_PAGE),
-        headline=Link("metric_one", f"{metrics}metric-one"),
-        baseline=Link("filler_scale", "#baseline-filler_scale"),
-        percent="90",
-        baselines=(
-            ProtocolBaseline(
-                "filler_scale",
-                "Benchmark protocol",
-                "The description the protocol states for a value the source supplies.",
-                f'<span class="dp-sentence"><a href="{metrics}metric-one">metric_one</a></span>',
-                "Headline baseline",
-            ),
-            ProtocolBaseline(
-                "filler_reference",
-                "Library",
-                "The description the library's metric argument registry declares.",
-                f'<span class="dp-sentence"><a href="{metrics}metric-one">metric_one</a>, '
-                f'<a href="{metrics}metric-two">metric_two</a></span>',
-                "Offered on Explore",
-            ),
-            ProtocolBaseline(
-                "best_median",
-                "Benchmark protocol",
-                "The best median cost among the standard-class algorithms, "
-                "per instance and budget.",
-                f'<span class="dp-sentence"><a href="{metrics}metric-one">metric_one</a>, '
-                f'<a href="{metrics}metric-two">metric_two</a></span>',
-                "Offered on Explore",
-            ),
-        ),
-        grid=("0", "10", "linear", "1001"),
-        identity="Distribution Release Filler",
-        standings=(
-            ("Weighting", code("provenance_ref")),
-            ("Eligibility", code("standard")),
-        ),
-    )
-
-
 def configured_algorithm_page() -> RosterPage:
     """The invented T21 configured-algorithm record."""
     return RosterPage(
@@ -1078,7 +1057,6 @@ def filler_registry() -> dict[str, object]:
         "T24": _instance(),
         "T21": configured_algorithm_page(),
         "T22": roster_landing_page(),
-        "T23": protocol_page(),
         "T15": methodology_page(),
     }
 

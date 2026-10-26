@@ -992,6 +992,7 @@ _UNIDENTIFIED_WORKS: dict[str, str] = {
     "alabi2022code": "GitHub repository at a pinned commit; no DOI or arXiv version",
     "amin2022code": "GitHub repository at a pinned commit; no DOI or arXiv version",
     "dick2023code": "GitHub repository at a pinned commit; no DOI or arXiv version",
+    "iyengar2019code": "GitHub repository at a pinned commit; no DOI or arXiv version",
 }
 
 

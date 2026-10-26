@@ -22,6 +22,7 @@ from dpstats.workspace.layout import (
 )
 
 from .conftest import (
+    FIXTURE_REVISION,
     EXTERNAL_DESCRIPTION,
     EXTERNAL_REFERENCE,
     MEASURED_METRIC,
@@ -53,7 +54,7 @@ from results_roots import (
 )
 
 OTHER_TASK = "linear_regression"
-PIN = BenchmarkPin(repo_id="owner/dataset", revision="a" * 40)
+PIN = BenchmarkPin(repo_id="owner/dataset", version="measurable-v1")
 
 
 def read(root: Path, **kwargs: object):
@@ -571,7 +572,8 @@ def test_a_pinned_release_reports_a_published_release_and_names_its_revision(
     assert release is not None
     assert release.published is True
     assert PIN.repo_id in release.identity
-    assert PIN.revision in release.identity
+    assert FIXTURE_REVISION in release.identity
+    assert release.revision == FIXTURE_REVISION
     assert all(
         route.published
         for routes in results_routes(release).values()
@@ -595,7 +597,20 @@ def test_one_pinned_revision_is_fetched_once_and_reused(
     assert fetched > 0
     assert len(downloads) == fetched
     assert first is not None and second is not None
-    assert first.root == second.root == cache / PIN.revision
+    assert first.root == second.root == cache / FIXTURE_REVISION
+
+
+def test_a_revision_of_another_benchmark_version_stops_the_build(
+    tmp_path: Path, measurable_release_root: Path, serve_release: ServeRelease
+) -> None:
+    """A Results update renders; a new version waits for the lock to name it."""
+    source = tmp_path / "published"
+    shutil.copytree(measurable_release_root, source)
+    serve_release(source)
+    stale = BenchmarkPin(repo_id=PIN.repo_id, version="an-earlier-version")
+
+    with pytest.raises(ValueError, match="pins version 'an-earlier-version'"):
+        release_input(stale, None, cache_dir=tmp_path / "cache")
 
 
 def test_a_pinned_release_missing_what_it_declares_stops_the_build(

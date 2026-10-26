@@ -679,8 +679,10 @@ def test_a_home_paragraph_states_the_quantile_its_standings_rank_at(
     assert stated, "no Home paragraph states the quantile its ranking uses"
 
 
-def test_leaderboard_and_explore_point_to_their_task_protocol(built_site: Path) -> None:
-    """Each results page's Baseline definition link reaches its task's protocol."""
+def test_leaderboard_and_explore_point_to_their_task_baselines(
+    built_site: Path,
+) -> None:
+    """Each results page's Baseline definition link reaches its task's Metrics page."""
     pages = [
         page
         for surface in ("leaderboard", "public-results")
@@ -695,17 +697,33 @@ def test_leaderboard_and_explore_point_to_their_task_protocol(built_site: Path) 
         )
         assert found, page
         here = f"/{page.relative_to(built_site).as_posix()}"
-        assert urlsplit(urljoin(here, found[1])).path == f"/{slug}/methodology/", page
+        assert urlsplit(urljoin(here, found[1])).path == f"/{slug}/metrics/", page
+
+
+def test_a_benchmarked_tasks_baselines_table_is_on_its_metrics_page(
+    built_site: Path,
+) -> None:
+    """The baselines table lives on the Metrics page; no task has its own methodology."""
+    slugs = [
+        page.parent.parent.name for page in built_site.glob("*/leaderboard/index.html")
+    ]
+    assert slugs, "this build publishes no Leaderboard"
+    for slug in slugs:
+        markup = (built_site / slug / "metrics" / "index.html").read_text("utf-8")
+        assert 'id="baseline-' in markup, slug
+        for key in re.findall(r'<a href="#baseline-([^"]+)"', markup):
+            assert f'id="baseline-{key}"' in markup, (slug, key)
+        assert not (built_site / slug / "methodology").exists(), slug
 
 
 def _definition_tables(built_site: Path) -> list[tuple[Path, str]]:
-    """Every methodology and definition page's tables, with the page they are on."""
+    """Every methodology, metrics and definition page's tables, with its page."""
     pages = [
         page
         for page in _pages(built_site)
-        if page.parent.name in ("methodology", "definition")
+        if page.parent.name in ("methodology", "metrics", "definition")
     ]
-    assert pages, "this build publishes no methodology or definition page"
+    assert pages, "this build publishes no methodology, metrics or definition page"
     return [(page, page.read_text(errors="replace")) for page in pages]
 
 

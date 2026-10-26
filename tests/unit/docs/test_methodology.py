@@ -69,7 +69,7 @@ def test_a_narrative_without_its_own_title_is_refused() -> None:
 
 
 def test_a_build_reading_no_release_says_so() -> None:
-    record = methodology_page(None, "", banner="No release.")
+    record = methodology_page(NARRATIVE, "", banner="No release.")
     page = render(TEMPLATES["T15"], record)
-    assert record.title == "Methodology"
+    assert record.title == "Benchmark protocol"
     assert '<p class="dp-build-source">No release.</p>' in page

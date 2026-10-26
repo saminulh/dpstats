@@ -24,7 +24,6 @@ export const TEMPLATES = {
   "task overview": /^linear_regression\/$/,
   leaderboard: /^linear_regression\/leaderboard\/$/,
   explore: /^linear_regression\/public-results\/$/,
-  protocol: /^linear_regression\/methodology\/$/,
   definition: /^linear_regression\/definition\/$/,
   metrics: /^linear_regression\/metrics\/$/,
   "native algorithms": /^linear_regression\/algorithms\/$/,

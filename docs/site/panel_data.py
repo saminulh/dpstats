@@ -105,7 +105,7 @@ from results_roots import (
     ReleasedBaseline,
     ReleasedComparison,
 )
-from protocol_page import baseline_definition
+from baseline_catalogue import baseline_definition
 from profile_chart import (
     LEADING_CURVES,
     OPENING_TAU,
@@ -1408,7 +1408,7 @@ def baseline_label(key: str) -> str:
     """What one baseline is called for a reader: its name in the site copy.
 
     The name carries no qualifier; the baseline's full definition is on the
-    task's Methodology page. A key the copy names nothing for is shown as the
+    task's Metrics page. A key the copy names nothing for is shown as the
     key the release gives it.
     """
     if key not in SITE_COPY_KEYS["baselines"]:

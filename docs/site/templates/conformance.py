@@ -97,8 +97,8 @@ RETIRED_UNIT_PHRASES = (
 )
 
 # Pages whose prose the maintainer owns and rewrites later: the tutorial
-# notebooks and each task's methodology page.
-UNIT_PHRASE_EXEMPT = re.compile(r"^(library/tutorials/|[^/]+/methodology/$)")
+# notebooks.
+UNIT_PHRASE_EXEMPT = re.compile(r"^library/tutorials/")
 
 # Math delimiters and macros that mean the page shows a formula's source rather
 # than the formula. Checked only outside the typeset class.

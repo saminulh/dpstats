@@ -43,6 +43,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import huggingface_hub
+
+from dpstats.transport.validators import is_immutable_revision
 from dpstats.workspace.fetch import _fetch_release_tree
 from dpstats.workspace.layout import (
     BENCHMARK_INFO_DIRECTORY,
@@ -121,6 +124,8 @@ class ReleaseInput:
         version: The version the release names itself by.
         manifest_id: The release manifest's own content identity.
         identity: The release as the reader is told about it.
+        revision: The repository commit a published release was installed
+            from, or empty for a local cut.
         published: Whether these pages report a published release rather than
             a local cut.
         tasks: Each Benchmarked task the release declares, in manifest order.
@@ -132,6 +137,7 @@ class ReleaseInput:
     version: str
     manifest_id: str
     identity: str
+    revision: str
     published: bool
     tasks: dict[str, ReleasedTask]
     protocol: bytes
@@ -838,6 +844,7 @@ def _local_release(root: Path, current: Path | None) -> ReleaseInput:
         version=manifest["version"],
         manifest_id=manifest["manifest_id"],
         identity=f"Benchmark {manifest['version']}, Results {manifest['manifest_id'][:12]}",
+        revision="",
         published=False,
         tasks=tasks,
         protocol=_protocol(root, current),
@@ -847,44 +854,64 @@ def _local_release(root: Path, current: Path | None) -> ReleaseInput:
 def _pinned_release(
     pin: BenchmarkPin, cache_dir: Path, current: Path | None
 ) -> ReleaseInput:
-    """Install the release the committed lock pins, and read that tree.
+    """Install the latest revision of the version the lock pins, and read it.
 
-    The pinned revision is an immutable commit, so it binds every byte the
-    library's fetch installs; the installed tree is read exactly as a local one
-    and these pages report a published release.
+    The repository's latest commit is resolved once and installed by that
+    commit, which binds every byte; the pages name it, so a built page stays
+    reproducible. A release naming another benchmark version is refused: a new
+    version is a deliberate edit of the lock, a Results update is not.
     """
-    root = _installed(pin, cache_dir)
+    revision = _latest_revision(pin.repo_id)
+    root = _installed(pin.repo_id, revision, cache_dir)
     manifest, tasks = _released_tasks(root)
+    if manifest["version"] != pin.version:
+        raise ValueError(
+            f"{pin.repo_id} at {revision} is benchmark version "
+            f"{manifest['version']!r}, but the committed lock pins version "
+            f"{pin.version!r}; name the new version in the lock to render it."
+        )
     return ReleaseInput(
         root=root,
         version=manifest["version"],
         manifest_id=manifest["manifest_id"],
         identity=(
             f"Benchmark {manifest['version']}, Results {manifest['manifest_id'][:12]}, "
-            f"{pin.repo_id} at {pin.revision}"
+            f"{pin.repo_id} at {revision}"
         ),
+        revision=revision,
         published=True,
         tasks=tasks,
         protocol=_protocol(root, current),
     )
 
 
-def _installed(pin: BenchmarkPin, cache_dir: Path) -> Path:
-    """The installed tree of one pinned revision, fetching it once.
+def _latest_revision(repo_id: str) -> str:
+    """The commit the dataset repository's default branch holds now."""
+    info = huggingface_hub.HfApi(token=False).repo_info(
+        repo_id=repo_id, repo_type="dataset"
+    )
+    revision = info.sha
+    if not is_immutable_revision(revision):
+        raise ValueError(f"{repo_id} reported no commit for its latest revision.")
+    return revision
+
+
+def _installed(repo_id: str, revision: str, cache_dir: Path) -> Path:
+    """The installed tree of one revision, fetching it once.
 
     The revision is an immutable commit, so it names the bytes: an install
     already under that name is that release and is reused rather than fetched
     again. A fetch lands in a sibling directory and is renamed into place, so
     an interrupted one is never read as a release.
     """
-    root = cache_dir / pin.revision
+    root = cache_dir / revision
     if (root / RELEASE_MANIFEST_NAME).is_file():
         return root
     staging = root.with_name(f"{root.name}.staging-{os.getpid()}")
     shutil.rmtree(staging, ignore_errors=True)
     root.parent.mkdir(parents=True, exist_ok=True)
     try:
-        _fetch_release_tree(pin.repo_id, revision=pin.revision, destination=staging)
+        _fetch_release_tree(repo_id, revision=revision, destination=staging)
         if (root / RELEASE_MANIFEST_NAME).is_file():
             shutil.rmtree(staging, ignore_errors=True)
         else:

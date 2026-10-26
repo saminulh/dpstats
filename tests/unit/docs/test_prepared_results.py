@@ -20,8 +20,8 @@ from dpstats import open_collection
 from dpstats.metric import MetricArgument
 from dpstats.task import TaskInput, TaskMetadata
 from dpstats.workspace.layout import (
-    BENCHMARK_INFO_DIRECTORY,
     BENCHMARK_NARRATIVE_NAME,
+    BENCHMARK_PROTOCOL_NAME,
 )
 
 from tests.unit.docs.conftest import (
@@ -202,18 +202,10 @@ def test_evaluation_prepares_while_distribution_is_pending(
     assert standings is not None and standings.panels
 
 
-def test_the_snapshot_carries_the_release_narrative(snapshot: Path) -> None:
-    assert (snapshot / BENCHMARK_NARRATIVE_NAME).is_file()
-    assert read_manifest(snapshot)["narrative"] is True
-
-
-def test_a_release_shipping_no_narrative_prepares_without_one(
-    tmp_path: Path, write_release_root: WriteReleaseRoot
-) -> None:
-    root = write_release_root(tmp_path / "release", published={TASK: [MEASURED_METRIC]})
-    (root / BENCHMARK_INFO_DIRECTORY / BENCHMARK_NARRATIVE_NAME).unlink()
-    prepared = prepared_snapshot(resolve(root), cache=tmp_path / "cache")
-    assert read_manifest(prepared)["narrative"] is False
+def test_the_snapshot_carries_no_narrative(snapshot: Path) -> None:
+    """The site renders the library's methodology, never the release's copy."""
+    assert not (snapshot / BENCHMARK_NARRATIVE_NAME).exists()
+    assert "narrative" not in read_manifest(snapshot)
 
 
 def test_a_snapshot_renders_without_the_release_it_was_taken_from(
@@ -300,18 +292,15 @@ def test_a_directory_holding_no_snapshot_is_refused(tmp_path: Path) -> None:
         read_prepared(tmp_path, TASK)
 
 
-def test_a_narrative_the_release_changes_prepares_again(
+def test_a_snapshot_file_edited_by_hand_is_refused(
     tmp_path: Path, write_release_root: WriteReleaseRoot
 ) -> None:
     """Snapshot names track the manifest, so a task's own bytes still verify."""
     root = write_release_root(tmp_path / "release", published={TASK: [MEASURED_METRIC]})
     prepared = prepared_snapshot(resolve(root), cache=tmp_path / "cache")
     # The prepared snapshot is the site's own flat cache shape, not a release
-    # tree, so its narrative sits bare at its root rather than nested under
-    # benchmark-info/.
-    (prepared / BENCHMARK_NARRATIVE_NAME).write_text(
-        "# Benchmark protocol\n\nEdited by hand.\n", encoding="utf-8"
-    )
+    # tree, so its protocol sits bare at its root.
+    (prepared / BENCHMARK_PROTOCOL_NAME).write_text("{}\n", encoding="utf-8")
     with pytest.raises(ValueError, match="file changed"):
         read_prepared(prepared, TASK)
 

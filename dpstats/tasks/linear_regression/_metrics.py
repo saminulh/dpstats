@@ -130,9 +130,9 @@ def _l2_error_to_ols(output: LinearRegressionOutput, *, ols_coef: Any) -> float:
             OLS coefficient vector fitted on the instance.
 
     Notes:
-        Computes :math:`\lVert\hat\beta-\hat\beta_{\mathrm{OLS}}\rVert_2`,
+        Computes :math:`\lVert\hat\beta-\hat\beta_{\rm OLS}\rVert_2`,
         the :math:`\ell_2` error to the OLS coefficient vector
-        :math:`\hat\beta_{\mathrm{OLS}}`.
+        :math:`\hat\beta_{\rm OLS}`.
     """
     return float(np.linalg.norm(output.beta - np.asarray(ols_coef, dtype=float)))
 
@@ -142,7 +142,7 @@ l2_error_to_ols = Metric(
     name="l2_error_to_ols",
     calculation=_l2_error_to_ols,
     requires=(ols_coef,),
-    formula=r"\lVert \hat{\beta} - \hat{\beta}_{\mathrm{OLS}} \rVert_2",
+    formula=r"\lVert \hat{\beta} - \hat{\beta}_{\rm OLS} \rVert_2",
     label="L2 error vs OLS",
     baseline=ols_l2_se,
 )
@@ -194,12 +194,12 @@ def _prediction_rmse_to_ols(
             OLS coefficient vector fitted on the instance.
 
     Notes:
-        Computes :math:`\frac{1}{\sqrt n}\lVert X(\hat\beta-\hat\beta_{\mathrm{OLS}})\rVert_2`,
+        Computes :math:`\frac{1}{\sqrt n}\lVert X(\hat\beta-\hat\beta_{\rm OLS})\rVert_2`,
         where :math:`X` is the sample's design matrix and :math:`n` is the
         number of samples.
 
         Divided by ``ols_prediction_se``, :math:`\sqrt{s^2 d/n}`, it is the
-        Mahalanobis distance of :math:`\hat\beta` from :math:`\hat\beta_{\mathrm{OLS}}`
+        Mahalanobis distance of :math:`\hat\beta` from :math:`\hat\beta_{\rm OLS}`
         under the OLS covariance estimate :math:`s^2(X^\top X)^{-1}`, over
         :math:`\sqrt d`. Its square has the form of the F statistic for the
         hypothesis that the coefficients equal :math:`\hat\beta`; it is not
@@ -217,7 +217,7 @@ prediction_rmse_to_ols = Metric(
         "input",
         ols_coef,
     ),
-    formula=r"\frac{1}{\sqrt{n}} \lVert X(\hat{\beta} - \hat{\beta}_{\mathrm{OLS}}) \rVert_2",
+    formula=r"\frac{1}{\sqrt{n}} \lVert X(\hat{\beta} - \hat{\beta}_{\rm OLS}) \rVert_2",
     label="Prediction RMSE vs OLS",
     baseline=ols_prediction_se,
 )
@@ -237,10 +237,10 @@ def _l2_error_to_ground_truth_relative_to_ols(
 
     Notes:
         Computes
-        :math:`\lVert\hat\beta-\beta^\star\rVert_2/\lVert\hat\beta_{\mathrm{OLS}}-\beta^\star\rVert_2`,
+        :math:`\lVert\hat\beta-\beta^\star\rVert_2/\lVert\hat\beta_{\rm OLS}-\beta^\star\rVert_2`,
         the :math:`\ell_2` error to the ground-truth coefficient vector
         :math:`\beta^\star` divided by the same error of the OLS coefficient
-        vector :math:`\hat\beta_{\mathrm{OLS}}`.
+        vector :math:`\hat\beta_{\rm OLS}`.
     """
     truth = np.asarray(ground_truth, dtype=float)
     ols = np.asarray(ols_coef, dtype=float)
@@ -256,7 +256,7 @@ l2_error_to_ground_truth_relative_to_ols = Metric(
         ols_coef,
     ),
     formula=r"\frac{\lVert \hat{\beta} - \beta^{\star} \rVert_2}"
-    r"{\lVert \hat{\beta}_{\mathrm{OLS}} - \beta^{\star} \rVert_2}",
+    r"{\lVert \hat{\beta}_{\rm OLS} - \beta^{\star} \rVert_2}",
     label="L2 error relative to OLS",
 )
 

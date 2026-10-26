@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 from dpstats.workspace.layout import (
     BENCHMARK_INFO_DIRECTORY,
-    BENCHMARK_NARRATIVE_NAME,
     PROVENANCE_DIRECTORY,
 )
 
@@ -79,15 +78,13 @@ OUTCOME_TABLE = (
     "Timeout",
     "Memory limit",
 )
-PROTOCOL_BASELINE_TABLE = (
+BASELINE_TABLE = (
     "Baseline",
     "Declared by",
     "Definition",
     "Applies to",
     "Role",
 )
-PROTOCOL_GRID_TABLE = ("Minimum", "Maximum", "Scale", "Steps")
-PROTOCOL_STANDINGS_TABLE = ("Rule", "Value")
 CORPUS_TABLE = ("Source", "Year", "Tasks", "Instances", "Sample sizes")
 
 FACT_TABLE = ("Fact", "Value")
@@ -365,8 +362,7 @@ TEMPLATES: dict[str, TemplateSpec] = {
             Section(
                 "narrative",
                 "",
-                f"the release's {BENCHMARK_INFO_DIRECTORY}/{BENCHMARK_NARRATIVE_NAME}, "
-                "verbatim under its own title",
+                "docs/content/methodology.md, verbatim under its own title",
                 required=False,
             ),
             Section("build_source", "", "the release identity this build reads", False),
@@ -454,6 +450,17 @@ TEMPLATES: dict[str, TemplateSpec] = {
                 "prepared results surfaces' baseline catalogues",
                 repeated=True,
             ),
+            Section(
+                "baselines",
+                "Baselines",
+                "every baseline of the task: each Metric's statistical baseline "
+                "from list_built_in_metrics(Task) described by "
+                "list_built_in_metric_arguments(Task), applying to the Metrics whose "
+                "baseline it is; the protocol's external baselines with their "
+                "descriptions and Metrics; and the ranking's computed baselines",
+                required=False,
+                columns=BASELINE_TABLE,
+            ),
         ),
     ),
     "T21": TemplateSpec(
@@ -522,42 +529,6 @@ TEMPLATES: dict[str, TemplateSpec] = {
                 "instances.<uuid>.source: its variables, coefficient and claims",
                 required=False,
             ),
-        ),
-    ),
-    "T23": TemplateSpec(
-        name="T23",
-        title="Task methodology",
-        routes=("{task}/methodology/",),
-        sections=(
-            Section(
-                "lead",
-                "",
-                "the released ranking's headline Metric, headline baseline and "
-                "headline threshold",
-            ),
-            Section(
-                "standings",
-                "Standings",
-                "the released ranking's weighting and eligibility",
-                columns=PROTOCOL_STANDINGS_TABLE,
-            ),
-            Section(
-                "baselines",
-                "Baselines",
-                "every baseline of the task: each Metric's statistical baseline "
-                "from list_built_in_metrics(Task) described by "
-                "list_built_in_metric_arguments(Task), applying to the Metrics whose "
-                "baseline it is; the protocol's external baselines with their "
-                "descriptions and Metrics; and the ranking's computed baselines",
-                columns=PROTOCOL_BASELINE_TABLE,
-            ),
-            Section(
-                "grid",
-                "Threshold grid",
-                "the released ranking's tau_grid",
-                columns=PROTOCOL_GRID_TABLE,
-            ),
-            Section("build_source", "", "the release identity this build reads"),
         ),
     ),
     "T22": TemplateSpec(

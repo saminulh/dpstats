@@ -77,6 +77,7 @@ def claimed_sources(docs: Path, nav: list[Any], task_ids: Iterable[str]) -> set[
         Path("content") / "site-copy.yml",
         Path("content") / "home.md",
         Path("content") / "corpus-about.md",
+        Path("content") / "methodology.md",
         INTERACTIVE_WORKFLOW,
     }
     for target in navigation_targets(nav):

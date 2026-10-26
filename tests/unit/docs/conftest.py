@@ -894,12 +894,11 @@ def serve_release(monkeypatch: pytest.MonkeyPatch) -> ServeRelease:
             metadata.write_text("commit\n")
             return str(target)
 
-        transport = import_module("dpstats.workspace.fetch")
-        monkeypatch.setattr(
-            transport,
-            "huggingface_hub",
-            SimpleNamespace(HfApi=Api, hf_hub_download=download),
-        )
+        hub = SimpleNamespace(HfApi=Api, hf_hub_download=download)
+        # The library's fetch installs the tree; the site build resolves the
+        # repository's latest revision itself.
+        for module in ("dpstats.workspace.fetch", "results_roots"):
+            monkeypatch.setattr(import_module(module), "huggingface_hub", hub)
         return downloads
 
     return serve

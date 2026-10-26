@@ -1,8 +1,10 @@
 """Read the committed release pin the documentation build renders results from.
 
 The lock is a required build input rather than a fallback. It either names one
-immutable Distribution Release, or it declares in as many words that no release
-is pinned. A build that cannot read the lock stops instead of publishing pages
+benchmark version of a Distribution Release repository, or it declares in as
+many words that no release is pinned. Results updates are routine revisions of
+a version, so a build reads the repository's latest revision and refuses one
+that names another version; a new version is a deliberate edit of this file. A build that cannot read the lock stops instead of publishing pages
 that quietly name no release.
 
 The lock names no task. A release declares the tasks it released in its own
@@ -14,8 +16,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from dpstats.transport.validators import is_immutable_revision
-
 # The committed lock's file name, beside the authored library documentation.
 LOCK_NAME = "benchmark.lock"
 
@@ -23,20 +23,21 @@ LOCK_NAME = "benchmark.lock"
 NO_RELEASE = "none"
 
 # Every setting one pinned-release lock states.
-PIN_SETTINGS = ("repo_id", "revision")
+PIN_SETTINGS = ("repo_id", "version")
 
 
 @dataclass(frozen=True)
 class BenchmarkPin:
-    """The one immutable Distribution Release a build renders results from.
+    """The benchmark version a build renders results from.
 
     Attributes:
         repo_id: The dataset repository the release is published in.
-        revision: The immutable revision the release is fetched at.
+        version: The benchmark version the build renders; the release at the
+            repository's latest revision must name it.
     """
 
     repo_id: str
-    revision: str
+    version: str
 
 
 def read_benchmark_lock(path: Path) -> BenchmarkPin | None:
@@ -71,13 +72,10 @@ def read_benchmark_lock(path: Path) -> BenchmarkPin | None:
     missing = [name for name in PIN_SETTINGS if name not in settings]
     if missing:
         raise ValueError(f"{path} is missing the setting(s): {missing}.")
-    revision = settings["revision"]
-    if not is_immutable_revision(revision):
-        raise ValueError(
-            f"{path} names revision {revision!r}, which is not one full "
-            "lowercase commit; a release is rendered at an immutable revision."
-        )
-    return BenchmarkPin(repo_id=settings["repo_id"], revision=revision)
+    empty = [name for name in PIN_SETTINGS if not settings[name]]
+    if empty:
+        raise ValueError(f"{path} states the setting(s) {empty} with no value.")
+    return BenchmarkPin(repo_id=settings["repo_id"], version=settings["version"])
 
 
 def _read_settings(path: Path) -> dict[str, str]:

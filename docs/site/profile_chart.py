@@ -81,13 +81,16 @@ def metrics_page_href(depth: int, task_id: str, metric: str) -> str:
     return f'{"../" * depth}{task_id}/metrics/#{metric_anchor(metric)}'
 
 
-def methodology_page_href(depth: int, task_id: str) -> str:
-    """The link to a task's methodology page, addressed from the site root."""
-    return f'{"../" * depth}{task_id}/methodology/'
+def baselines_page_href(depth: int, task_id: str) -> str:
+    """The link to the Metrics page carrying a task's baselines table.
+
+    Addressed from the site root, as ``metrics_page_href`` is.
+    """
+    return f'{"../" * depth}{task_id}/metrics/'
 
 
-def methodology_baseline_href(page: str, baseline: str) -> str:
-    """The link to one baseline's entry on a methodology page at *page*."""
+def baseline_href(page: str, baseline: str) -> str:
+    """The link to one baseline's row in the baselines table on *page*."""
     return f"{page}#baseline-{baseline}"
 
 

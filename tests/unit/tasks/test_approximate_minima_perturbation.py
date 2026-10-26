@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -213,12 +214,20 @@ def test_ridge_exceeds_smoothness_and_falls_with_more_noise_or_budget() -> None:
 
 
 @pytest.mark.parametrize(
-    ("tolerance", "share"), [(0.01, 0.01), (0.1, 0.01), (0.1, 0.1)]
+    ("tolerance", "resolved", "share"),
+    [
+        (0.01, 0.01, 0.01),
+        (0.1, 0.1, 0.01),
+        (0.1, 0.1, 0.1),
+        # The default rule resolves to 1/n on the three-row problem.
+        ("inverse_n", 1.0 / 3.0, 0.01),
+    ],
 )
 def test_split_budgets_and_both_noise_draws_reach_the_release(
     accounting_spy: AccountingSpy,
     fake_randomness: FakeRandomness,
-    tolerance: float,
+    tolerance: float | Literal["inverse_n"],
+    resolved: float,
     share: float,
 ) -> None:
     fake_randomness.script(
@@ -251,9 +260,9 @@ def test_split_budgets_and_both_noise_draws_reach_the_release(
         properties.gradient_lipschitz_constant,
         1.3,
     )
-    assert output_call.sensitivity == pytest.approx(2.0 * tolerance / ridge)
+    assert output_call.sensitivity == pytest.approx(2.0 * resolved / ridge)
     output_scale = accounting.calibrate_gaussian_scale(
-        output_budget, 2.0 * tolerance / ridge
+        output_budget, 2.0 * resolved / ridge
     )
     # A zero design leaves the minimizer -b/lambda, then the output draw is added.
     expected = -objective_scale / ridge * np.array([2.0, -1.0])

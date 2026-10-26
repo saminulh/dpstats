@@ -397,8 +397,8 @@ def metrics(
 ) -> Metrics:
     """The task's metric registry: the mapping, the summary, then each metric.
 
-    *baselines* links each Metric's offered baselines into the task's
-    protocol-and-baselines page, where the build renders one.
+    *baselines* links each Metric's offered baselines into the page's own
+    baselines table, where the build renders one.
     """
     sections = []
     registry = list_built_in_metric_arguments(task)

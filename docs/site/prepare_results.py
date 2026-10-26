@@ -46,8 +46,6 @@ from dpstats.transport.canonical import (
     file_sha256,
 )
 from dpstats.workspace.layout import (
-    BENCHMARK_INFO_DIRECTORY,
-    BENCHMARK_NARRATIVE_NAME,
     BENCHMARK_PROTOCOL_NAME,
     registry_directory_name,
 )
@@ -83,7 +81,7 @@ INSTANCE_ARGUMENTS_NAME = "instance-arguments.json"
 
 # The prepared-snapshot format this module writes and reads. A snapshot naming
 # any other format is refused: its stored index carries different facts.
-PREPARED_VERSION = 18
+PREPARED_VERSION = 19
 
 # Where prepared snapshots are cached, one directory per release and per code
 # that prepared it.
@@ -206,9 +204,6 @@ def _prepare(release: ReleaseInput, destination: Path) -> Path:
     """
     destination.mkdir(parents=True)
     (destination / BENCHMARK_PROTOCOL_NAME).write_bytes(release.protocol)
-    narrative = release.root / BENCHMARK_INFO_DIRECTORY / BENCHMARK_NARRATIVE_NAME
-    if narrative.is_file():
-        (destination / BENCHMARK_NARRATIVE_NAME).write_bytes(narrative.read_bytes())
     records = {
         task_id: _prepare_task(release, task_id, task, destination)
         for task_id, task in release.tasks.items()
@@ -225,7 +220,6 @@ def _prepare(release: ReleaseInput, destination: Path) -> Path:
                 prepared_at=datetime.now(timezone.utc).isoformat(),
                 identity=release.identity,
                 published=release.published,
-                narrative=narrative.is_file(),
                 code=_measurement_code(),
                 files=files,
                 tasks=records,

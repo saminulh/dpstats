@@ -428,7 +428,7 @@
     var baselineStatus = page.querySelector('[data-baseline-status]');
     var baselineDefinitionLink = page.querySelector('[data-baseline-summary-link]');
     var algorithmBaselineHref = page.dataset.algorithmBaselineHref || '';
-    var protocolHref = page.dataset.protocolHref || '';
+    var baselinesHref = page.dataset.baselinesHref || '';
     var trialAggregation = page.querySelector('[data-trial-aggregation]');
     var viewTabs = page.querySelector('[data-view-tabs]');
     var settings = page.querySelector('[data-evaluation-settings]');
@@ -694,14 +694,14 @@
     }
 
     /* The Definition link follows the reader's own baseline: a named one
-       reads at its entry on the task's protocol page, while reading against
+       reads at its row in the task's baselines table, while reading against
        none or a chosen algorithm reads the library's baseline API instead. */
     function syncBaselineDefinition() {
       if (!baselineDefinitionLink) return;
       var algorithmic = state.baseline === 'none' || window.dpPanel.baselineAlgorithm(state.baseline);
       baselineDefinitionLink.href = algorithmic
         ? algorithmBaselineHref
-        : protocolHref + '#baseline-' + state.baseline;
+        : baselinesHref + '#baseline-' + state.baseline;
       chrome.describeBaseline(state.metric, state.baseline);
     }
 

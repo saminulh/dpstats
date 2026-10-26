@@ -121,7 +121,7 @@
         return option.key === value;
       });
       if (entry) {
-        // Escaped markup from the protocol page's own definition renderer.
+        // Escaped markup from the baselines table's own definition renderer.
         baselineDescription.innerHTML = entry.description || '';
         baselineDescription.classList.remove('dp-authored-copy', 'dp-copy-slot');
         delete baselineDescription.dataset.copySlot;

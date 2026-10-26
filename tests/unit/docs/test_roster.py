@@ -403,7 +403,7 @@ def test_t21_standing_is_read_in_budget_order_not_string_order() -> None:
         "../explore/",
         (),
         "../class/",
-        methodology_url="../methodology/",
+        methodology_url="../../../methodology/",
     )
     body = render(TEMPLATES["T21"], page)
     one = body.index("ε = 1.0")
@@ -452,7 +452,7 @@ def test_each_standing_row_links_to_the_leaderboard_at_its_own_budget() -> None:
         "../explore/",
         (),
         "../class/",
-        methodology_url="../methodology/",
+        methodology_url="../../../methodology/",
     )
     hrefs = {row.budget: row.metric.url for row in page.standings}
     assert hrefs["ε = 3.0"].count("budget=Family%28eps%3D3.0%29") == 1
@@ -524,7 +524,7 @@ def _page_with_note(note: str, description: str = ""):
         "",
         (),
         "../class/",
-        methodology_url="../methodology/",
+        methodology_url="../../../methodology/",
     )
 
 
@@ -570,7 +570,7 @@ def test_a_tuned_page_points_to_methodology_instead_of_its_tuning_record() -> No
     )
     source = render(TEMPLATES["T21"], page).split("## Source", 1)[1]
     assert "This configuration was tuned on the public corpus" in source
-    assert '<a href="../methodology/">Methodology</a>' in source
+    assert '<a href="../../../methodology/">Methodology</a>' in source
     assert "tuning campaign" not in source
     assert "Campaign arm" not in source
 
@@ -638,7 +638,7 @@ def test_the_breakdown_ranks_each_budget_on_the_public_corpus(
         "../explore/",
         public,
         "../class/",
-        methodology_url="../methodology/",
+        methodology_url="../../../methodology/",
     )
     ranks = {row.budget: row.rank for row in page.outcomes}
     # Second behind u2; u3's equal share ties it rather than pushing it down.

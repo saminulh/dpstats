@@ -31,10 +31,7 @@ from dpstats.tasks import (
     list_built_in_algorithms,
     list_built_in_metrics,
 )
-from dpstats.workspace.layout import (
-    BENCHMARK_NARRATIVE_NAME,
-    BENCHMARK_PROTOCOL_NAME,
-)
+from dpstats.workspace.layout import BENCHMARK_PROTOCOL_NAME
 from dpstats.transport.canonical import canonical_json_bytes
 from dpstats.transport.validators import is_immutable_revision
 from dpstats.workspace.fetch import DISTRIBUTION_RELEASE_REPOSITORY
@@ -131,7 +128,6 @@ from templates.roster import (  # noqa: E402
 from templates.model import (  # noqa: E402
     AreaIndex,
     Link,
-    Protocol,
     RosterLanding,
     RosterLink,
 )
@@ -139,12 +135,11 @@ from templates.blocks import link, markdown_table  # noqa: E402
 from templates.render import MissingSource, TASK_PAGE_MARKER, render  # noqa: E402
 from templates.conformance import NAV_FILE, refuse_untemplated  # noqa: E402
 from templates.spec import TEMPLATES  # noqa: E402
-from protocol_page import protocol_page  # noqa: E402
+from baseline_catalogue import baseline_catalogue  # noqa: E402
 from methodology import (  # noqa: E402
     METHODOLOGY_ROUTE,
     methodology_page,
-    narrative_title,
-    read_narrative,
+    read_methodology,
     release_relative_links,
     tuning_fragment,
 )
@@ -341,7 +336,7 @@ def write_templates() -> None:
 # Where a results preview's baseline Definition links and its introduction's
 # Roster link land: the filler pages beside them, since the preview publishes
 # no task's own.
-METHODOLOGY_PREVIEW = "../t23-task-methodology/"
+BASELINES_PREVIEW = "../t18-task-metrics/"
 ROSTER_PREVIEW = "../t22-roster-landing/"
 
 
@@ -404,7 +399,7 @@ def write_results_templates() -> list[tuple[str, str]]:
             depth=2,
             explore=explore,
             roster=ROSTER_PREVIEW,
-            protocol=METHODOLOGY_PREVIEW,
+            baselines=BASELINES_PREVIEW,
             # The Explore preview's introduction links the Leaderboard preview.
             leaderboard="../"
             + next(
@@ -425,7 +420,7 @@ def write_results_templates() -> list[tuple[str, str]]:
                 home=True,
                 base=".",
                 explore=explore,
-                protocol=METHODOLOGY_PREVIEW,
+                baselines=BASELINES_PREVIEW,
             )
             body = home_leaderboards(
                 [
@@ -762,14 +757,15 @@ def _opening_selection(data: TaskData, slug: str) -> Selection:
 def _release_identity() -> ReleaseIdentity | None:
     """How a reader's own notebook opens the release these pages render.
 
-    A published build pins one revision, which a notebook fetches for itself.
+    A published build names the revision it installed, which a notebook
+    fetches for itself.
     A preview reads a local cut: a hosted one names the Distribution Release
     revision that cut is, a local one the tree itself.
     """
     if RELEASE is None:
         return None
     if PIN is not None and RELEASE.published:
-        return ReleaseIdentity(PIN.repo_id, PIN.revision, "", RELEASE.version)
+        return ReleaseIdentity(PIN.repo_id, RELEASE.revision, "", RELEASE.version)
     if RECREATE_REVISION:
         return ReleaseIdentity(
             DISTRIBUTION_RELEASE_REPOSITORY, RECREATE_REVISION, "", RELEASE.version
@@ -788,7 +784,7 @@ def _results_surface(
     notebook: ReleaseIdentity | None = None,
     explore: str | None = None,
     roster: str | None = None,
-    protocol: str | None = None,
+    baselines: str | None = None,
     leaderboard: str | None = None,
     skipped: Sequence[Mapping[str, str]] = (),
     removed: int = 0,
@@ -812,8 +808,9 @@ def _results_surface(
     Explore and Roster pages, which a Leaderboard's introduction links where
     the build publishes them.
 
-    ``protocol`` is the page-relative link to the methodology page every baseline's
-    Definition link points into, the task's own where ``None``.
+    ``baselines`` is the page-relative link to the page carrying the baselines
+    table every baseline's Definition link points into, the task's own Metrics
+    page where ``None``.
 
     ``leaderboard`` is the page-relative link an Explore page's introduction
     gives the task's Leaderboard, the task's own where ``None``.
@@ -854,7 +851,7 @@ def _results_surface(
                 home=home,
                 explore_href=explore,
                 roster_href=roster,
-                protocol_href=protocol,
+                baselines_href=baselines,
                 methodology_href=methodology_href,
             ),
             sidecars={INDEX_NAME: _surface_index(reported, prefix)},
@@ -869,7 +866,7 @@ def _results_surface(
         provenance=prefix + PROVENANCE_NAME,
         absent=absent,
         notebooks=NOTEBOOK_NAMES if offered is not None else None,
-        protocol_href=protocol,
+        baselines_href=baselines,
         leaderboard_href=leaderboard,
     )
     sidecars = {INDEX_NAME: _surface_index(data, prefix)}
@@ -965,8 +962,6 @@ def _link_shared_provenance(shared: dict[str, Any]) -> dict[str, Any]:
 # the task's slug: "<slug>/roster/index.md" and "<slug>/roster/<uuid>/index.md"
 # always carry 2 and 3 path separators.
 T22_DEPTH = 2
-# The T23 methodology page sits at the same depth.
-METHODOLOGY_DEPTH = 2
 T21_DEPTH = 3
 T22_CLIMB = "../" * T22_DEPTH
 T21_CLIMB = "../" * T21_DEPTH
@@ -983,22 +978,6 @@ def _prefixed_docs(component: dict[str, Any], climb: str) -> dict[str, Any]:
             for child in component.get("children", ())
         ],
     }
-
-
-def task_methodology(snapshot: Path, slug: str, title: str) -> Protocol:
-    """One task's T23 record, from the snapshot's protocol and the library."""
-    return protocol_page(
-        BUILT_IN_TASKS[slug],
-        f"{title}: methodology",
-        read_comparison(snapshot / BENCHMARK_PROTOCOL_NAME, slug),
-        RELEASE.identity if RELEASE is not None else "",
-        methodology=Link(
-            narrative_title(read_narrative(snapshot, BENCHMARK_NARRATIVE_NAME)),
-            f"{'../' * METHODOLOGY_DEPTH}{METHODOLOGY_ROUTE}",
-        ),
-        depth=METHODOLOGY_DEPTH,
-        explored=read_explored(snapshot, slug),
-    )
 
 
 def write_results(
@@ -1165,7 +1144,7 @@ def write_results(
             else []
         )
         tuning_url = f"{T21_CLIMB}{METHODOLOGY_ROUTE}" + tuning_fragment(
-            read_narrative(snapshot, BENCHMARK_NARRATIVE_NAME)
+            read_methodology(LIB_DOCS)
         )
         for entry in entries_full:
             described = provenance[entry.uuid]
@@ -1207,11 +1186,6 @@ def write_results(
             )
         entries.append("- [Roster](roster/index.md)")
         break
-    protocol_page_record = task_methodology(snapshot, slug, title)
-    _write_page(
-        f"{slug}/methodology/index.md", render(TEMPLATES["T23"], protocol_page_record)
-    )
-    entries.append("- [Methodology](methodology/index.md)")
     return entries, home, roster, registered
 
 
@@ -1284,7 +1258,7 @@ def write_tasks(
 def _metric_baselines(
     task: Task, comparison: ReleasedComparison, explored: Sequence[str]
 ) -> dict[str, tuple[Link, ...]]:
-    """Each Explore Metric's offered baselines, linked into the task's catalogue.
+    """Each Explore Metric's offered baselines, linked into the page's own table.
 
     The pooled baseline and reading in a Metric's own units apply to every
     Metric alike, so a Metric lists its statistical baseline, the external
@@ -1293,7 +1267,7 @@ def _metric_baselines(
     """
     return {
         name: tuple(
-            Link(key, f"../methodology/#baseline-{key}")
+            Link(key, f"#baseline-{key}")
             for key in comparison.stored_for(name, metric.baseline_name)
             + tuple(
                 key
@@ -1568,24 +1542,23 @@ def write_reference_index() -> None:
     )
 
 
-def write_methodology(release: ReleaseInput | None, snapshot: Path | None) -> None:
-    """Write the site-wide Methodology page: the release's narrative.
+def write_methodology(release: ReleaseInput | None) -> None:
+    """Write the site-wide Methodology page from ``docs/content/methodology.md``.
 
-    The narrative renders as the release wrote it. A build reading no release
-    says so, as the Corpus area does, rather than publishing a page about no
-    release.
+    The narrative renders as written. A build reading no release says so in a
+    banner, as the Corpus area does.
     """
+    narrative = read_methodology(LIB_DOCS)
+    for target in release_relative_links(narrative):
+        print(
+            f"methodology: the narrative links {target!r}, a file the site does "
+            "not publish; it shows as text."
+        )
     if release is None:
-        record = methodology_page(None, "", banner=copy_text("corpus", "no_release"))
+        record = methodology_page(
+            narrative, "", banner=copy_text("corpus", "no_release")
+        )
     else:
-        narrative = read_narrative(snapshot, BENCHMARK_NARRATIVE_NAME)
-        if narrative is None:
-            print(f"methodology: {release.identity} ships no protocol narrative.")
-        for target in release_relative_links(narrative or ""):
-            print(
-                f"methodology: the narrative links {target!r}, a file inside the "
-                "release the site does not publish; it shows as text."
-            )
         record = methodology_page(narrative, release.identity)
     _write_page(f"{METHODOLOGY_ROUTE}index.md", render(TEMPLATES["T15"], record))
 
@@ -1641,8 +1614,9 @@ def write_task_space(
     """Write one task's space: every page an instance of exactly one template.
 
     *comparison* is the task's protocol entry and the Metrics its Explore
-    lists, where this build renders its results, so its Metrics page links
-    each of those Metrics' baselines.
+    lists, where this build renders its results, so its Metrics page ends on
+    the task's baselines table and links each of those Metrics' baselines
+    into it.
     """
     prefix = task.id
     head, sections = (
@@ -1658,6 +1632,10 @@ def write_task_space(
     metric_sections = library_source.metrics(
         task, None if comparison is None else _metric_baselines(task, *comparison)
     )
+    if comparison is not None:
+        metric_sections = replace(
+            metric_sections, baselines=baseline_catalogue(task, *comparison)
+        )
     pages: list[str] = []
 
     _write_page(
@@ -1750,8 +1728,6 @@ def write_task_space(
     quick = [Link(route.title, f"{route.route}/index.md") for route in routes]
     if any(entry == "- [Roster](roster/index.md)" for entry in surfaces):
         quick.append(Link("Roster", "roster/index.md"))
-    if any(entry == "- [Methodology](methodology/index.md)" for entry in surfaces):
-        quick.append(Link("Methodology", "methodology/index.md"))
     quick.append(Link("Definition", "definition.md"))
     if metric_sections.metrics:
         quick.append(Link("Metrics", "metrics.md"))
@@ -1999,7 +1975,7 @@ home = write_tasks(routes, SNAPSHOT, CORPUS)
 if SNAPSHOT is not None:
     print(f"build summary: {write_build_summary(SNAPSHOT)}")
 write_corpus(CORPUS, SNAPSHOT)
-write_methodology(RELEASE, SNAPSHOT)
+write_methodology(RELEASE)
 write_contact()
 write_area_landings()
 write_home(routes, home)

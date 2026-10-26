@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import math
+from typing import Annotated, Literal
 
 import numpy as np
-
+from pydantic import Field
 from typing_extensions import override
 
 from dpstats.algorithm import BaseAlgorithm
@@ -107,8 +108,10 @@ class AMP(BaseAlgorithm):
         - ``objective_noise_ratio``: Corresponds to $f$ in Redberg, Koskela
           and Wang (2023). Set as in their Section 5 evaluation.
         - ``gradient_tolerance``: Corresponds to the tolerance $τ$ on the
-          summed gradient in Redberg, Koskela and Wang (2023). Set as in their
-          Section 5 evaluation.
+          summed gradient in Redberg, Koskela and Wang (2023). The default
+          ``"inverse_n"`` sets $τ = 1/n$, the tolerance $γ = 1/n^2$ on the
+          averaged objective in the code of Iyengar et al. (2019); a number
+          fixes a constant tolerance.
         - ``output_budget_fraction``: Corresponds to $η$ in Iyengar et al.
           (2019), the share of the budget spent on the output noise. Set as in
           their simulations.
@@ -131,11 +134,12 @@ class AMP(BaseAlgorithm):
           steps fixed in advance by Theorem 3.18 of Bubeck (2015), starting
           from ``-b / lambda``,
           where ``b`` is the random linear term. In exact arithmetic the result
-          then meets the configured tolerance; there is no stopping rule based
+          then meets the resolved tolerance; there is no stopping rule based
           on the residual and no exact-solve mode.
 
     Reference:
         - iyengar2019towards: Algorithm 1.
+        - iyengar2019code: Listing ``amp_run_classification``.
         - redberg2023improving: Theorems 3.2 and 4.1.
         - canonne2022discrete: Proposition 2.11.
         - bubeck2015convex: Theorem 3.18.
@@ -149,11 +153,14 @@ class AMP(BaseAlgorithm):
         allow_inf_nan=False,
         description="Objective Gaussian deviation relative to the C-sensitive Gaussian.",
     )
-    gradient_tolerance: float = parameter_field(
-        default=0.01,
-        gt=0.0,
-        allow_inf_nan=False,
-        description="Raw summed-gradient tolerance of the approximate minimizer.",
+    gradient_tolerance: (
+        Annotated[float, Field(gt=0.0, allow_inf_nan=False)] | Literal["inverse_n"]
+    ) = parameter_field(
+        default="inverse_n",
+        description=(
+            "Summed-gradient tolerance of the approximate minimizer, "
+            "or 'inverse_n' for 1 / n_samples."
+        ),
     )
     output_budget_fraction: float = parameter_field(
         default=0.01,
@@ -191,6 +198,11 @@ class AMP(BaseAlgorithm):
                 "ridge above it is no positive ridge."
             )
 
+        gradient_tolerance = (
+            1.0 / metadata.n_samples
+            if self.gradient_tolerance == "inverse_n"
+            else self.gradient_tolerance
+        )
         if budget.is_unconstrained:
             if self.objective_noise_ratio <= 1.0:
                 raise InvalidRegime(
@@ -220,7 +232,7 @@ class AMP(BaseAlgorithm):
             # Sensitivity 2 * gradient_tolerance / lambda covers the distance to the
             # exact minimizer; the two releases compose as approximate DP.
             output_noise_scale = accounting.calibrate_gaussian_scale(
-                output_budget, 2.0 * self.gradient_tolerance / regularization
+                output_budget, 2.0 * gradient_tolerance / regularization
             )
 
         rng = np.random.default_rng(seed)
@@ -230,7 +242,7 @@ class AMP(BaseAlgorithm):
             gradient_bound,
             smoothness_bound,
             regularization,
-            self.gradient_tolerance,
+            gradient_tolerance,
         )
         theta = _run_fixed_accelerated_gradient(
             metadata.loss,

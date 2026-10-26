@@ -51,7 +51,6 @@ TASK_SPACE = (
     "T18",
     "T21",
     "T22",
-    "T23",
 )
 
 # The Corpus area's pages, filled from the release a build reads.
@@ -98,12 +97,16 @@ def test_a_rendered_page_carries_only_its_template_s_headings() -> None:
         ]
         if name == "T18":
             # The metric sections are one declared section carrying a heading
-            # per metric, so the metric registry decides the headings.
+            # per metric, so the metric registry decides the headings; the
+            # declared Baselines heading follows them.
             metrics = registry[name]
             assert isinstance(metrics, Metrics)
             assert headings == [
                 f"{metric.key} {{#{metric.anchor}}}" for metric in metrics.metrics
-            ] + [copy_span("task", "metric_arguments_heading") + " {#metric-arguments}"]
+            ] + [
+                copy_span("task", "metric_arguments_heading") + " {#metric-arguments}",
+                *declared,
+            ]
             continue
         if name == "T15":
             # The narrative carries its own headings, as the release wrote

@@ -601,25 +601,21 @@ tutorials:
   notebook_unrun: "This notebook couldn't run when the site was built, so the cells below have no output. It stopped at: {precondition}. Download it above and run it yourself."
 
 protocol:
-  # Methodology, the sentence under the methodology link: how the standings rank. [{headline}][headline] links the headline metric's definition, [{baseline}][baseline] the baseline's. Fields: {headline}, the headline metric; {baseline}, the baseline; {percent}, the protocol's quantile in percent (50 for the median).
-  ranking_rule: "The standings rank [{headline}][headline] against [{baseline}][baseline] by τ@{percent}, the error ratio that {percent}% of trials stay within; lower ranks first."
-  # Methodology, Baselines table, the definition of a best-of-class baseline. Fields: {aggregation}, the trial aggregation (e.g. median); {pool}, the privacy interpretation pooled.
+  # Task Metrics, Baselines table, and the Explore baseline descriptions, the definition of a best-of-class baseline. Fields: {aggregation}, the trial aggregation (e.g. median); {pool}, the privacy interpretation pooled.
   baseline_best_median: "The best {aggregation} error among the {pool}-class algorithms, for each problem instance and budget."
-  # Methodology, Baselines table, the definition of a best-of-named-algorithms baseline. Fields: {aggregation}, the trial aggregation; {algorithms}, the algorithms pooled.
+  # Task Metrics, Baselines table, and the Explore baseline descriptions, the definition of a best-of-named-algorithms baseline. Fields: {aggregation}, the trial aggregation; {algorithms}, the algorithms pooled.
   baseline_best_of: "The best {aggregation} error among {algorithms}, for each problem instance and budget."
-  # Methodology, Baselines table, the definition of a one-algorithm baseline. Fields: {aggregation}, the trial aggregation; {uuid}, the algorithm's identifier.
+  # Task Metrics, Baselines table, and the Explore baseline descriptions, the definition of a one-algorithm baseline. Fields: {aggregation}, the trial aggregation; {uuid}, the algorithm's identifier.
   baseline_algorithm: "The {aggregation} error of {uuid} on each problem instance."
-  # Task Methodology, Baselines table, the Declared by badge of a baseline the library declares.
+  # Task Metrics, Baselines table, the Declared by badge of a baseline the library declares.
   declared_library: "Library"
-  # Task Methodology, Baselines table, the Declared by badge of a baseline the benchmark protocol declares.
+  # Task Metrics, Baselines table, the Declared by badge of a baseline the benchmark protocol declares.
   declared_protocol: "Benchmark protocol"
-  # Task Methodology, Baselines table, the Role of the baseline the standings divide by.
+  # Task Metrics, Baselines table, the Role of the baseline the standings divide by.
   role_headline: "Headline baseline"
-  # Task Methodology, Baselines table, the Role of every other baseline.
+  # Task Metrics, Baselines table, the Role of every other baseline.
   role_offered: "Offered on Explore"
-  # Task Methodology, Standings table, the weighting rule's name.
-  rule_weighting: "Weighting"
-  # Task Methodology, Standings table, the eligibility rule's name; also the Leaderboard absences note's line listing algorithms with no privacy interpretation.
+  # Leaderboard absences note, the line listing algorithms with no privacy interpretation: the eligibility rule's name.
   rule_eligibility: "Eligibility"
 
 site:
@@ -911,7 +907,7 @@ notebook:
   outcomes_note: "Each bin shows its instances' share of the weight, split by how each trial ended: within the threshold, above it, or an error. With a second algorithm, it plots the probability of both being within the threshold, only one within the threshold, and neither. Instances with no property value are left out; if one of the algorithms never ran on an instance, that instance is omitted."
 
 baselines:
-  # What each baseline is called wherever it is offered or named (Baseline control, chart formula, axis definitions); its full definition is on the task's Methodology page.
+  # What each baseline is called wherever it is offered or named (Baseline control, chart formula, axis definitions); its full definition is in the Baselines table on the task's Metrics page.
   ols_se: "OLS standard error"
   ols_l2_se: "OLS standard error"
   published_se: "Published standard error"

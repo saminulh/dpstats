@@ -338,7 +338,6 @@ SITE_COPY_KEYS = {
         "notebook_unrun",
     },
     "protocol": {
-        "ranking_rule",
         "baseline_best_median",
         "baseline_best_of",
         "baseline_algorithm",
@@ -346,7 +345,6 @@ SITE_COPY_KEYS = {
         "declared_protocol",
         "role_headline",
         "role_offered",
-        "rule_weighting",
         "rule_eligibility",
     },
     "site": {
@@ -557,7 +555,6 @@ SITE_COPY_FIELDS: dict[tuple[str, str], set[str]] = {
     ("explore", "point_more_instances"): {"count"},
     ("explore", "notebook_build_error"): {"error"},
     ("roster", "ranking_note"): {"budget", "metric", "percent"},
-    ("protocol", "ranking_rule"): {"baseline", "headline", "percent"},
     ("leaderboard", "column_headline"): {"percent"},
     ("leaderboard", "unreached"): {"percent"},
     ("leaderboard", "slice_at_most"): {"feature", "value"},

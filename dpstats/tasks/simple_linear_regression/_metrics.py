@@ -36,7 +36,7 @@ def _l2_error_to_ground_truth(
             Ground-truth slope and intercept, in that order.
 
     Notes:
-        Computes :math:`\lVert(\hat a,\hat b)-(a^\star,b^\star)\rVert_2`,
+        Computes :math:`\lVert(\hat\alpha,\hat\beta)-(\alpha^\star,\beta^\star)\rVert_2`,
         the :math:`\ell_2` error to the ground-truth slope and intercept.
     """
     ground_truth = np.asarray(ground_truth, dtype=float)
@@ -51,7 +51,7 @@ l2_error_to_ground_truth = Metric(
     name="l2_error_to_ground_truth",
     calculation=_l2_error_to_ground_truth,
     requires=(ground_truth,),
-    formula=r"\lVert (\hat{a}, \hat{b}) - (a^{\star}, b^{\star}) \rVert_2",
+    formula=r"\lVert (\hat{\alpha}, \hat{\beta}) - (\alpha^{\star}, \beta^{\star}) \rVert_2",
     label="L2 error vs ground truth",
 )
 
@@ -65,7 +65,7 @@ def _l2_error_to_ols(output: SimpleLinearRegressionOutput, *, ols_coef: Any) -> 
             OLS slope and intercept, in that order.
 
     Notes:
-        Computes :math:`\lVert(\hat a,\hat b)-(\hat a_{\mathrm{OLS}},\hat b_{\mathrm{OLS}})\rVert_2`,
+        Computes :math:`\lVert(\hat\alpha,\hat\beta)-(\hat\alpha_{\rm OLS},\hat\beta_{\rm OLS})\rVert_2`,
         the :math:`\ell_2` error to the OLS slope and intercept.
     """
     ols_coef = np.asarray(ols_coef, dtype=float)
@@ -80,8 +80,8 @@ l2_error_to_ols = Metric(
     name="l2_error_to_ols",
     calculation=_l2_error_to_ols,
     requires=(ols_coef,),
-    formula=r"\lVert (\hat{a}, \hat{b}) - "
-    r"(\hat{a}_{\mathrm{OLS}}, \hat{b}_{\mathrm{OLS}}) \rVert_2",
+    formula=r"\lVert (\hat{\alpha}, \hat{\beta}) - "
+    r"(\hat{\alpha}_{\rm OLS}, \hat{\beta}_{\rm OLS}) \rVert_2",
     label="L2 error vs OLS",
 )
 

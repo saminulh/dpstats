@@ -42,8 +42,8 @@ from profile_chart import (
     privacy_interpretation_href,
     REVEALED,
     absences_note,
-    methodology_baseline_href,
-    methodology_page_href,
+    baseline_href,
+    baselines_page_href,
     budget_panel_heading,
     default_metric,
     baseline_summary,
@@ -298,7 +298,7 @@ def _metric_section(
     baseline: str,
     baseline_key: str,
     depth: int,
-    protocol: str,
+    baselines_page: str,
     percent: str,
 ) -> str:
     """Supply official standings to the shared results layout."""
@@ -312,7 +312,7 @@ def _metric_section(
         baseline_label=baseline,
         baseline_key=baseline_key,
         definition_href=href,
-        baseline_definition_href=methodology_baseline_href(protocol, baseline_key),
+        baseline_definition_href=baseline_href(baselines_page, baseline_key),
         depth=depth,
     )
 
@@ -360,7 +360,7 @@ def leaderboard_body(
     home: bool = False,
     explore_href: str | None = None,
     roster_href: str | None = None,
-    protocol_href: str | None = None,
+    baselines_href: str | None = None,
     methodology_href: str | None = None,
 ) -> str:
     """Render one task's Leaderboard, one section per metric it reports.
@@ -388,16 +388,16 @@ def leaderboard_body(
             introduction's bare ``[Explore]`` as plain text.
         roster_href: The page-relative link to this task's Roster page, which
             the introduction's bare ``[Roster]`` names.
-        protocol_href: The page-relative link to this task's methodology page,
-            or ``None`` for the task's own, which every baseline's Definition
-            link points into.
+        baselines_href: The page-relative link to the page carrying this
+            task's baselines table, or ``None`` for the task's own Metrics page,
+            which every baseline's Definition link points into.
         methodology_href: The page-relative link to the site-wide Methodology
             page, which the introduction's bare ``[Methodology]`` names.
 
     Raises:
         ValueError: If there is nothing to report, which is not a page.
     """
-    protocol = protocol_href or methodology_page_href(depth, task_id)
+    baselines_page = baselines_href or baselines_page_href(depth, task_id)
     by_metric: dict[str, list[PanelStandings]] = {}
     for panel in standings:
         by_metric.setdefault(panel.metric, []).append(panel)
@@ -499,7 +499,7 @@ def leaderboard_body(
             _baseline_control(
                 baselines,
                 opening,
-                href=methodology_baseline_href(protocol, baseline_keys[opening]),
+                href=baseline_href(baselines_page, baseline_keys[opening]),
                 metric_href=metrics_page_href(depth, task_id, opening),
                 description=str(
                     policy["baselines"][opening]["options"][0].get("description", "")
@@ -525,7 +525,7 @@ def leaderboard_body(
                 baseline=baselines[metric],
                 baseline_key=baseline_keys[metric],
                 depth=depth,
-                protocol=protocol,
+                baselines_page=baselines_page,
                 percent=f"{float(policy['headline_quantile']) * 100:g}",
             )
             for metric, panels in by_metric.items()

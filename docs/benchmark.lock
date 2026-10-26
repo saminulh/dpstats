@@ -1,9 +1,12 @@
 # The Distribution Release this documentation site renders results from.
 #
-# Either state `release = none`, or name one immutable release with `repo_id`
-# and `revision` (a full lowercase commit). The release declares the tasks it
-# released; this file does not.
+# Either state `release = none`, or name the dataset repository with `repo_id`
+# and the benchmark version with `version`. The build renders that
+# repository's latest revision and records its commit on every page; it
+# refuses a revision of another version, so a new version is an edit here and
+# a Results update is not. The release declares the tasks it released; this
+# file does not.
 #
 # While no release is named here, this build renders no results routes.
 repo_id = dpstatsbench/distribution
-revision = cafaf5a298dd944ed3c1290704ce01624a221a2f
+version = 2026-10-23

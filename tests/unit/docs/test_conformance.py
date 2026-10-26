@@ -416,13 +416,12 @@ def test_one_defect_is_reported_by_its_own_check(
     assert findings(site, check) == expected
 
 
-@pytest.mark.parametrize(
-    "route", ["library/tutorials/analyze_results/", f"{TASK}/methodology/"]
-)
-def test_maintainer_owned_pages_may_carry_a_retired_unit_phrase(
-    site: Path, route: str
-) -> None:
-    write(site, route, "<p>The per-seed and scientific cell prose.</p>")
+def test_maintainer_owned_pages_may_carry_a_retired_unit_phrase(site: Path) -> None:
+    write(
+        site,
+        "library/tutorials/analyze_results/",
+        "<p>The per-seed and scientific cell prose.</p>",
+    )
     assert findings(site, "vocabulary:") == []
 
 

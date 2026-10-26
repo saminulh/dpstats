@@ -63,8 +63,8 @@ class MetricSection:
     formula: str
     needs: tuple[str, ...]
     notes: str = ""
-    # Each baseline the Metric is offered, linked to its entry in the task's
-    # protocol-and-baselines catalogue; empty where the build has no release.
+    # Each baseline the Metric is offered, linked to its entry in the page's
+    # baselines table; empty where the build has no release.
     baselines: tuple[Link, ...] = ()
 
 
@@ -284,14 +284,34 @@ class InstancePage:
 
 
 @dataclass(frozen=True)
+class BaselineEntry:
+    """T18: one baseline of the task's catalogue.
+
+    ``declarer`` names the side declaring it, the library or the benchmark
+    protocol. ``definition``, ``applies`` and ``role`` are already rendered.
+    """
+
+    name: str
+    declarer: str
+    definition: str
+    applies: str
+    role: str
+
+
+@dataclass(frozen=True)
 class Metrics:
-    """T18: the task's metric registry, summarized and then in full."""
+    """T18: the task's metric registry, summarized and then in full.
+
+    ``baselines`` catalogues every baseline the task offers; empty where the
+    build has no release.
+    """
 
     title: str
     access: Access
     metrics: tuple[MetricSection, ...]
     metric_argument_descriptions: tuple[tuple[str, str], ...] = ()
     arguments_intro: str = ""
+    baselines: tuple[BaselineEntry, ...] = ()
 
 
 # The two kinds of component the one component page renders.
@@ -490,43 +510,6 @@ class RosterPage:
     class_url: str
     provenance: str = ""
     unranked_note: bool = False
-
-
-@dataclass(frozen=True)
-class ProtocolBaseline:
-    """T23: one baseline of the task's catalogue.
-
-    ``declarer`` names the side declaring it, the library or the benchmark
-    protocol. ``definition``, ``applies`` and ``role`` are already rendered.
-    """
-
-    name: str
-    declarer: str
-    definition: str
-    applies: str
-    role: str
-
-
-@dataclass(frozen=True)
-class Protocol:
-    """T23: one Benchmarked task's comparison policy and baseline catalogue.
-
-    ``methodology`` links the site-wide Methodology page, which explains the
-    benchmark this page only states the comparison of.
-    ``baseline`` links the headline baseline's catalogue entry. ``grid`` is the
-    minimum, maximum, scale and step count, already formatted. ``standings``
-    cells are HTML.
-    """
-
-    title: str
-    methodology: Link
-    headline: Link
-    baseline: Link
-    percent: str
-    baselines: tuple[ProtocolBaseline, ...]
-    grid: tuple[str, str, str, str]
-    identity: str
-    standings: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
